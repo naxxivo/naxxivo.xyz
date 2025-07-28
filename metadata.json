@@ -1,0 +1,5 @@
+{
+  "name": "Naxxivo",
+  "description": "A social technology platform for connecting with other users, featuring user profiles, search, and a modern interface. Built with React and PocketBase.",
+  "requestFramePermissions": []
+}
