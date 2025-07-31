@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -63,9 +62,10 @@ const FollowsPage: React.FC = () => {
         setUserList([]);
 
         try {
+            const profileColumns = 'id, username, created_at, role, name, bio, photo_url, cover_url, address, website_url, youtube_url, facebook_url';
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
-                .select('*')
+                .select(profileColumns)
                 .eq('id', userId)
                 .single();
 
@@ -75,7 +75,7 @@ const FollowsPage: React.FC = () => {
             const isFollowersTab = activeTab === 'followers';
             const queryTable = 'follows';
             const matchColumn = isFollowersTab ? 'following_id' : 'follower_id';
-            const selectProfile = isFollowersTab ? 'profiles:profiles!follows_follower_id_fkey(*)' : 'profiles:profiles!follows_following_id_fkey(*)';
+            const selectProfile = isFollowersTab ? `profiles:profiles!follows_follower_id_fkey(${profileColumns})` : `profiles:profiles!follows_following_id_fkey(${profileColumns})`;
 
             const { data: followData, error: followError } = await supabase
                 .from(queryTable)
@@ -127,7 +127,7 @@ const FollowsPage: React.FC = () => {
                 const { error } = await supabase.from('follows').delete().match({ follower_id: currentUser.id, following_id: targetUserId });
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }] as any);
+                const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }]);
                 if (error) throw error;
             }
         } catch (err: any) {

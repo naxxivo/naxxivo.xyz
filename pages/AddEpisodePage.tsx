@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -27,7 +26,7 @@ const AddEpisodePage: React.FC = () => {
   useEffect(() => {
     const fetchSeries = async () => {
       if (!seriesId) return;
-      const { data, error } = await supabase.from('anime_series').select('*').eq('id', seriesId).single();
+      const { data, error } = await supabase.from('anime_series').select('id, user_id, title, description, thumbnail_url, banner_url, created_at').eq('id', seriesId).single();
       if (error || !data) {
         setError("Could not find the series to add an episode to.");
         navigate('/anime');
@@ -68,7 +67,7 @@ const AddEpisodePage: React.FC = () => {
 
       const { error: insertError } = await supabase
         .from('anime_episodes')
-        .insert([episodePayload] as any);
+        .insert([episodePayload]);
         
       if (insertError) throw insertError;
 

@@ -24,12 +24,13 @@ const MessagesPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
+      const profileColumns = 'id, username, created_at, role, name, bio, photo_url, cover_url, address, website_url, youtube_url, facebook_url';
       const { data: messages, error } = await supabase
         .from('messages')
         .select(`
-          *,
-          sender:profiles!messages_sender_id_fkey(*),
-          recipient:profiles!messages_recipient_id_fkey(*)
+          id, sender_id, recipient_id, content, is_read, status, created_at,
+          sender:profiles!messages_sender_id_fkey(${profileColumns}),
+          recipient:profiles!messages_recipient_id_fkey(${profileColumns})
         `)
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false });

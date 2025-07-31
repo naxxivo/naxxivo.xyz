@@ -26,7 +26,7 @@ const WatchEpisodePage: React.FC = () => {
       try {
         const { data, error: episodeError } = await supabase
           .from('anime_episodes')
-          .select('*, anime_series(*)')
+          .select('id, series_id, episode_number, title, video_url, created_at, anime_series(id, user_id, title, description, thumbnail_url, banner_url, created_at)')
           .eq('series_id', seriesId)
           .eq('episode_number', episodeNumber)
           .single();
@@ -36,7 +36,7 @@ const WatchEpisodePage: React.FC = () => {
 
         const { count, error: countError } = await supabase
           .from('anime_episodes')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('series_id', seriesId);
 
         if (countError) throw countError;

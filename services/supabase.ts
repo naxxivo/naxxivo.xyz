@@ -18,8 +18,8 @@ import { Database } from '../types';
 // ===================================================================================
 
 
-const supabaseUrl = 'https://wemrdmdtbkoqwerekbwo.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlbXJkbWR0YmtvcXdlcmVrYndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5Njg4MzYsImV4cCI6MjA2OTU0NDgzNn0.dN0hSuLLIwTojxCT0wCJQD2lm1xSsnXCzQf5ankd8nU';
+const supabaseUrl = 'https://vhafkicrbzrkkhcijnaj.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYWZraWNyYnpya2toY2lqbmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMzU3MDEsImV4cCI6MjA2MTkxMTcwMX0.ZXJA6PHYYz7CSNn42Oecg8hs9_ORC2yE6AohmxW7A_M';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
@@ -136,40 +136,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
   );
   COMMENT ON TABLE public.anime_episodes IS 'Stores individual episodes for an anime series.';
 
-  -- Table: market_categories
-  CREATE TABLE public.market_categories (
-      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      name text NOT NULL UNIQUE,
-      created_at timestamp with time zone NOT NULL DEFAULT now()
-  );
-  COMMENT ON TABLE public.market_categories IS 'Stores product categories for the marketplace.';
-
-  -- Table: market_products
-  CREATE TABLE public.market_products (
-      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-      category_id bigint NOT NULL REFERENCES public.market_categories(id) ON DELETE RESTRICT,
-      title text NOT NULL,
-      description text,
-      price numeric(10, 2) NOT NULL CHECK (price >= 0),
-      currency text NOT NULL DEFAULT 'USD',
-      location text,
-      condition text, -- e.g., 'New', 'Used - Like New', 'Used - Good'
-      status text NOT NULL DEFAULT 'available', -- e.g., 'available', 'sold', 'pending'
-      created_at timestamp with time zone NOT NULL DEFAULT now()
-  );
-  COMMENT ON TABLE public.market_products IS 'Stores products listed in the marketplace.';
-
-  -- Table: market_product_images
-  CREATE TABLE public.market_product_images (
-      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      product_id bigint NOT NULL REFERENCES public.market_products(id) ON DELETE CASCADE,
-      image_url text NOT NULL,
-      created_at timestamp with time zone NOT NULL DEFAULT now()
-  );
-  COMMENT ON TABLE public.market_product_images IS 'Stores multiple images for each product.';
-
-
   -- ROW LEVEL SECURITY (RLS) POLICIES
   
   -- Profiles RLS
@@ -230,32 +196,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
   CREATE POLICY "Users can delete their own anime episodes." ON public.anime_episodes FOR DELETE USING (
     exists(select 1 from public.anime_series where id = series_id and user_id = auth.uid())
   );
-
-  -- Market Categories RLS
-  ALTER TABLE public.market_categories ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "Market categories are public." ON public.market_categories FOR SELECT USING (true);
-
-  -- Market Products RLS
-  ALTER TABLE public.market_products ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "Market products are viewable by everyone." ON public.market_products FOR SELECT USING (true);
-  CREATE POLICY "Users can list their own products." ON public.market_products FOR INSERT WITH CHECK (auth.uid() = user_id);
-  CREATE POLICY "Users can update their own products." ON public.market_products FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-  CREATE POLICY "Users can delete their own products." ON public.market_products FOR DELETE USING (auth.uid() = user_id);
-
-  -- Market Product Images RLS
-  ALTER TABLE public.market_product_images ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "Product images are viewable by everyone." ON public.market_product_images FOR SELECT USING (true);
-  CREATE POLICY "Users can add images to their own products." ON public.market_product_images FOR INSERT WITH CHECK (
-    exists(select 1 from public.market_products where id = product_id and user_id = auth.uid())
-  );
-  CREATE POLICY "Users can delete images from their own products." ON public.market_product_images FOR DELETE USING (
-    exists(select 1 from public.market_products where id = product_id and user_id = auth.uid())
-  );
-
-  -- PRE-POPULATE CATEGORIES
-  INSERT INTO public.market_categories (name) VALUES
-  ('Electronics'), ('Fashion & Apparel'), ('Home & Garden'), ('Vehicles'), ('Toys & Hobbies'), ('Books & Media'), ('Collectibles & Art'), ('Other');
-
   --- SCRIPT END ---
 
 
@@ -293,4 +233,162 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
     for each row execute procedure public.handle_new_user();
 
   --- TRIGGER SCRIPT END ---
+
+
+  ===================================================================================
+  !! IMPORTANT: RUN THIS SCRIPT TO ENABLE ADMIN PANEL !!
+  ===================================================================================
+
+  This script adds user roles, creates a function to check for admin status, and
+  updates all security policies to give admins full control.
+
+  --- ADMIN PANEL SCRIPT START ---
+
+  -- 1. Add 'role' column to profiles table
+  ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user';
+
+  -- 2. Create a function to check if the current user is an admin
+  CREATE OR REPLACE FUNCTION public.is_admin()
+  RETURNS boolean
+  LANGUAGE plpgsql
+  AS $$
+  DECLARE
+      user_role text;
+  BEGIN
+      IF auth.uid() IS NULL THEN
+          RETURN FALSE;
+      END IF;
+      SELECT role INTO user_role FROM public.profiles WHERE id = auth.uid();
+      RETURN user_role = 'admin';
+  END;
+  $$;
+
+  -- 3. Update RLS policies for all tables to grant admin access
+  
+  -- PROFILES
+  DROP POLICY IF EXISTS "Admins can do anything." ON public.profiles;
+  CREATE POLICY "Admins can do anything." ON public.profiles FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+  -- POSTS
+  DROP POLICY IF EXISTS "Admins can do anything." ON public.posts;
+  CREATE POLICY "Admins can do anything." ON public.posts FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+  -- COMMENTS
+  DROP POLICY IF EXISTS "Admins can delete any comment." ON public.comments;
+  CREATE POLICY "Admins can delete any comment." ON public.comments FOR DELETE
+  USING (public.is_admin());
+
+  -- MESSAGES (Admins can read all messages for moderation, but not send as others)
+  DROP POLICY IF EXISTS "Admins can read all messages." ON public.messages;
+  CREATE POLICY "Admins can read all messages." ON public.messages FOR SELECT
+  USING (public.is_admin());
+  
+  -- FOLLOWS
+  DROP POLICY IF EXISTS "Admins can manage follows." ON public.follows;
+  CREATE POLICY "Admins can manage follows." ON public.follows FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+  -- ANIME SERIES
+  DROP POLICY IF EXISTS "Admins can manage anime series." ON public.anime_series;
+  CREATE POLICY "Admins can manage anime series." ON public.anime_series FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+  -- ANIME EPISODES
+  DROP POLICY IF EXISTS "Admins can manage anime episodes." ON public.anime_episodes;
+  CREATE POLICY "Admins can manage anime episodes." ON public.anime_episodes FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+  --- ADMIN PANEL SCRIPT END ---
+
+
+  ===================================================================================
+  !! IMPORTANT: RUN THIS SCRIPT TO UPGRADE THE MARKETPLACE !!
+  ===================================================================================
+  -- This script drops the old marketplace tables and creates a new, advanced version
+  -- that supports direct image uploads.
+
+  --- MARKETPLACE UPGRADE SCRIPT START ---
+
+  -- 1. Drop old tables
+  DROP TABLE IF EXISTS public.market_product_images CASCADE;
+  DROP TABLE IF EXISTS public.market_products CASCADE;
+  DROP TABLE IF EXISTS public.market_categories CASCADE;
+
+  -- 2. Recreate tables with new structure
+  CREATE TABLE public.market_categories (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      name text NOT NULL UNIQUE,
+      created_at timestamp with time zone NOT NULL DEFAULT now()
+  );
+  COMMENT ON TABLE public.market_categories IS 'Stores product categories for the marketplace.';
+
+  CREATE TABLE public.market_products (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+      category_id bigint NOT NULL REFERENCES public.market_categories(id) ON DELETE RESTRICT,
+      title text NOT NULL,
+      description text,
+      price numeric(10, 2) NOT NULL CHECK (price >= 0),
+      currency text NOT NULL DEFAULT 'USD',
+      location text,
+      condition text,
+      status text NOT NULL DEFAULT 'available',
+      created_at timestamp with time zone NOT NULL DEFAULT now()
+  );
+  COMMENT ON TABLE public.market_products IS 'Stores products listed in the marketplace.';
+
+  -- NOTE: This table now stores a PATH to the image in storage, not a public URL.
+  CREATE TABLE public.market_product_images (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      product_id bigint NOT NULL REFERENCES public.market_products(id) ON DELETE CASCADE,
+      image_path text NOT NULL,
+      created_at timestamp with time zone NOT NULL DEFAULT now()
+  );
+  COMMENT ON TABLE public.market_product_images IS 'Stores image paths for each product in Supabase Storage.';
+
+  -- 3. Create Storage Bucket for product images
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('product_images', 'product_images', true)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- 4. Set RLS Policies for new tables
+  -- Categories
+  ALTER TABLE public.market_categories ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "Market categories are public." ON public.market_categories FOR SELECT USING (true);
+  -- Products
+  ALTER TABLE public.market_products ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "Market products are viewable by everyone." ON public.market_products FOR SELECT USING (true);
+  CREATE POLICY "Users can list their own products." ON public.market_products FOR INSERT WITH CHECK (auth.uid() = user_id);
+  CREATE POLICY "Users can update their own products." ON public.market_products FOR UPDATE USING (auth.uid() = user_id);
+  CREATE POLICY "Users can delete their own products." ON public.market_products FOR DELETE USING (auth.uid() = user_id OR public.is_admin());
+  CREATE POLICY "Admins can manage market products." ON public.market_products FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+  -- Images
+  ALTER TABLE public.market_product_images ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "Product images are viewable by everyone." ON public.market_product_images FOR SELECT USING (true);
+  CREATE POLICY "Users can add images to their own products." ON public.market_product_images FOR INSERT WITH CHECK (exists(select 1 from public.market_products where id = product_id and user_id = auth.uid()));
+  CREATE POLICY "Users can delete images from their own products." ON public.market_product_images FOR DELETE USING (exists(select 1 from public.market_products where id = product_id and user_id = auth.uid()));
+  CREATE POLICY "Admins can manage market product images." ON public.market_product_images FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+  -- 5. Set RLS Policies for Storage Bucket
+  -- Allow public read access
+  CREATE POLICY "Product images are publicly accessible." ON storage.objects FOR SELECT USING (bucket_id = 'product_images');
+  -- Allow authenticated users to upload images
+  CREATE POLICY "Authenticated users can upload product images." ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'product_images' AND auth.role() = 'authenticated');
+  -- Allow owners or admins to delete images
+  CREATE POLICY "Users can delete their own product images." ON storage.objects FOR DELETE USING (bucket_id = 'product_images' AND owner = auth.uid());
+  CREATE POLICY "Admins can delete any product image." ON storage.objects FOR DELETE USING (bucket_id = 'product_images' AND public.is_admin());
+
+  -- 6. Pre-populate categories
+  INSERT INTO public.market_categories (name) VALUES
+  ('Electronics'), ('Fashion & Apparel'), ('Home & Garden'), ('Vehicles'), ('Toys & Hobbies'), ('Books & Media'), ('Collectibles & Art'), ('Other');
+
+  --- MARKETPLACE UPGRADE SCRIPT END ---
 */

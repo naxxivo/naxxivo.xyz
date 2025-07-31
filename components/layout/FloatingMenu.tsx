@@ -1,12 +1,13 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../App';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     HomeIcon, CloudArrowUpIcon, UserGroupIcon, ChatBubbleLeftRightIcon, UserCircleIcon, 
     Cog6ToothIcon, PlusIcon, XMarkIcon, TvIcon, ShoppingBagIcon, FilmIcon,
-    ArrowRightCircleIcon, ArrowLeftCircleIcon
+    ArrowRightCircleIcon, ArrowLeftCircleIcon, ShieldCheckIcon
 } from '@heroicons/react/24/solid';
 
 interface MenuItem {
@@ -14,6 +15,7 @@ interface MenuItem {
     icon: React.ElementType;
     label: string;
     action?: () => void;
+    adminOnly?: boolean;
 }
 
 interface FloatingMenuItemProps {
@@ -32,7 +34,7 @@ const FloatingMenuItem: React.FC<FloatingMenuItemProps> = ({ item, index, totalI
     const x = radius * Math.cos(angle);
     const y = radius * Math.sin(angle);
 
-    const isActive = item.href ? location.pathname === item.href : false;
+    const isActive = item.href ? location.pathname.startsWith(item.href) : false;
 
     const content = (
         <motion.div
@@ -57,7 +59,6 @@ const FloatingMenuItem: React.FC<FloatingMenuItemProps> = ({ item, index, totalI
             </div>
         </motion.div>
     );
-
     return content;
 };
 
@@ -71,7 +72,7 @@ const FloatingMenu: React.FC = () => {
         return null;
     }
 
-    const menuPages: MenuItem[][] = [
+    const allMenuItems: MenuItem[][] = [
         // Page 1: Content
         [
             { href: '/', icon: HomeIcon, label: 'Home' },
@@ -87,9 +88,14 @@ const FloatingMenu: React.FC = () => {
             { href: `/profile/${user.id}`, icon: UserCircleIcon, label: 'Profile' },
             { href: '/users', icon: UserGroupIcon, label: 'Users' },
             { href: '/settings', icon: Cog6ToothIcon, label: 'Settings' },
+            { href: '/admin', icon: ShieldCheckIcon, label: 'Admin Panel', adminOnly: true },
             { action: () => setPageIndex(0), icon: ArrowLeftCircleIcon, label: 'Back' }
         ]
     ];
+    
+    const menuPages = allMenuItems.map(page => 
+        page.filter(item => !item.adminOnly || (item.adminOnly && user.role === 'admin'))
+    );
     
     const toggleMenu = () => {
       if(isOpen) {

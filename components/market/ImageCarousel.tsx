@@ -24,8 +24,9 @@ const variants = {
 };
 
 const ImageCarousel: React.FC<ImageCarouselProps> = ({ images }) => {
-  const fallbackImages = ['https://via.placeholder.com/800x600.png?text=No+Image'];
-  const imageList = images.length > 0 ? images : fallbackImages;
+  const fallbackImage = 'https://via.placeholder.com/800x600.png?text=No+Image';
+  
+  const imageList = images.length > 0 ? images : [fallbackImage];
 
   const [[page, direction], setPage] = useState([0, 0]);
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MarketProductWithDetails } from '../../types';
 import { motion } from 'framer-motion';
+import { supabase } from '../../services/supabase';
 
 interface ProductCardProps {
   product: MarketProductWithDetails;
@@ -9,7 +10,10 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const fallbackImage = 'https://via.placeholder.com/400x400.png?text=No+Image';
-  const primaryImage = product.market_product_images[0]?.image_url || fallbackImage;
+  const primaryImagePath = product.market_product_images[0]?.image_path;
+  const primaryImage = primaryImagePath 
+      ? supabase.storage.from('product_images').getPublicUrl(primaryImagePath).data.publicUrl
+      : fallbackImage;
 
   return (
     <Link to={`/market/product/${product.id}`}>

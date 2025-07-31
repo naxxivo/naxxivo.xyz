@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../App';
@@ -28,7 +27,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
       
       const { data, error } = await supabase
         .from('messages')
-        .select(`*, sender:profiles!messages_sender_id_fkey(*)`)
+        .select(`id, sender_id, recipient_id, content, is_read, status, created_at, sender:profiles!messages_sender_id_fkey(name, username, photo_url)`)
         .or(`and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
@@ -38,7 +37,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
         setMessages(data as unknown as MessageWithProfile[]);
       }
       
-      const { data: otherUserData, error: pError } = await supabase.from('profiles').select('*').eq('id', otherUserId).single();
+      const { data: otherUserData, error: pError } = await supabase.from('profiles').select('id, username, name, bio, photo_url, cover_url, website_url, youtube_url, facebook_url, address, role, created_at').eq('id', otherUserId).single();
       if (pError) {
         console.error("Error fetching other user:", pError.message);
       } else {
@@ -56,12 +55,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
 
   useEffect(() => {
     if(!user) return;
-    const channel = supabase.channel(`direct-chat:${[user.id, otherUserId].sort().join('-')}`).on<Database['public']['Tables']['messages']['Row']>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user.id}`},
+    const channel = supabase.channel(`direct-chat:${[user.id, otherUserId].sort().join('-')}`).on<Message>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user.id}`},
       async (payload) => {
         const {data: senderProfile} = await supabase.from('profiles').select('name, username, photo_url').eq('id', payload.new.sender_id).single();
         if (senderProfile) {
             const newMessage: MessageWithProfile = {
-                ...(payload.new as Message),
+                ...(payload.new),
                 sender: senderProfile as unknown as Pick<Profile, 'name' | 'photo_url' | 'username'>,
             };
             setMessages((prev) => [...prev, newMessage]);
@@ -76,7 +75,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
     if (newMessage.trim() === '' || !user) return;
     const content = newMessage.trim();
     setNewMessage('');
-    const { data: insertedMessage, error } = await supabase.from('messages').insert([{ sender_id: user.id, recipient_id: otherUserId, content: content }] as any).select('*, sender:profiles!messages_sender_id_fkey(name, username, photo_url)').single();
+    const { data: insertedMessage, error } = await supabase.from('messages').insert([{ sender_id: user.id, recipient_id: otherUserId, content: content }]).select('*, sender:profiles!messages_sender_id_fkey(name, username, photo_url)').single();
     if (error) {
       console.error('Error sending message:', error);
       setNewMessage(content);

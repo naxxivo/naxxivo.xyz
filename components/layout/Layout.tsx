@@ -11,8 +11,8 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { theme } = useTheme();
-  usePetals(theme === 'light');
+  const { theme, petalsEnabled } = useTheme();
+  usePetals(theme === 'light' && petalsEnabled);
 
   return (
     <div className="min-h-screen bg-secondary-white dark:bg-dark-bg text-secondary-purple dark:text-dark-text transition-colors duration-300">

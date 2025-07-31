@@ -1,8 +1,10 @@
 
+
 import React from 'react';
 import PageTransition from '../components/ui/PageTransition';
 import { useTheme } from '../components/theme/ThemeProvider';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
+import Switch from '../components/ui/Switch';
 
 const colorPalettes = [
   { name: 'Sakura Pink', color: '#FF6584' },
@@ -14,7 +16,7 @@ const colorPalettes = [
 ];
 
 const SettingsPage: React.FC = () => {
-  const { theme, setTheme, accentColor, setAccentColor } = useTheme();
+  const { theme, setTheme, accentColor, setAccentColor, petalsEnabled, setPetalsEnabled } = useTheme();
 
   return (
     <PageTransition>
@@ -69,6 +71,22 @@ const SettingsPage: React.FC = () => {
               Personalize the look of buttons and highlights across the app.
             </p>
           </div>
+
+           {/* Visual Effects Setting */}
+           <div>
+            <h2 className="text-2xl font-bold mb-4">Visual Effects</h2>
+            <div className="flex items-center justify-between bg-gray-200/50 dark:bg-dark-bg/50 p-4 rounded-lg">
+                <div>
+                    <h3 className="font-semibold">Falling Petals Effect</h3>
+                    <p className="text-sm text-secondary-purple/80 dark:text-dark-text/70">Enable or disable the falling cherry blossom petals on light mode.</p>
+                </div>
+                <Switch 
+                    checked={petalsEnabled} 
+                    onChange={setPetalsEnabled} 
+                />
+            </div>
+          </div>
+
 
         </div>
       </div>

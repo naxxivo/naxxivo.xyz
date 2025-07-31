@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../App';
@@ -35,7 +34,7 @@ export const usePostActions = (
                 if (error) throw error;
             } else {
                 const { error } = await supabase.from('likes')
-                    .insert([{ post_id: post.id, user_id: user.id }] as any);
+                    .insert([{ post_id: post.id, user_id: user.id }]);
                 if (error) throw error;
             }
         } catch (error: any) {

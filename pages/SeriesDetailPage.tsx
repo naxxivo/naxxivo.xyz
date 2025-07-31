@@ -23,7 +23,7 @@ const SeriesDetailPage: React.FC = () => {
       
       const { data, error } = await supabase
         .from('anime_series')
-        .select('*, anime_episodes(*)')
+        .select('id, user_id, title, description, thumbnail_url, banner_url, created_at, anime_episodes(id, series_id, episode_number, title, video_url, created_at)')
         .eq('id', seriesId)
         .order('episode_number', { foreignTable: 'anime_episodes', ascending: true })
         .single();

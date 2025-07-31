@@ -1,17 +1,11 @@
 import { User } from '@supabase/supabase-js';
 
-// The auto-generated Database type from Supabase was causing "Type instantiation is excessively deep"
-// errors due to the schema's complexity (e.g., self-referencing tables).
-// By setting it to `any`, we bypass the complex type-checking within the Supabase client library itself.
-// The application already uses manually defined types for query results (e.g., Post, Profile),
-// so we maintain type safety where it matters most, and this change resolves the compilation errors.
-export type Database = any;
-
 // Manually define Row types to break circular dependencies and fix type instability.
 export type Profile = {
   id: string;
   username: string;
   created_at: string;
+  role: string;
   name: string | null;
   bio: string | null;
   photo_url: string | null;
@@ -49,6 +43,11 @@ export type Message = {
   content: string;
   is_read: boolean;
   status: string;
+  created_at: string;
+};
+export type Follow = {
+  follower_id: string;
+  following_id: string;
   created_at: string;
 };
 export type AnimeSeries = {
@@ -89,8 +88,79 @@ export type MarketProduct = {
 export type MarketProductImage = {
   id: number;
   product_id: number;
-  image_url: string;
+  image_path: string;
   created_at: string;
+};
+
+// By defining the Database structure manually with our own types, we avoid the "Type instantiation is excessively deep"
+// error that can come from Supabase's automatic type generation on complex schemas. This also fixes the `... is not assignable to never`
+// error in `insert` and `update` calls by providing a concrete type instead of `any`.
+export type Database = {
+  public: {
+    Tables: {
+      profiles: {
+        Row: Profile;
+        Insert: Partial<Profile>;
+        Update: Partial<Profile>;
+      };
+      posts: {
+        Row: PostRow;
+        Insert: Partial<PostRow>;
+        Update: Partial<PostRow>;
+      };
+      comments: {
+        Row: Comment;
+        Insert: Partial<Comment>;
+        Update: Partial<Comment>;
+      };
+      likes: {
+        Row: Like;
+        Insert: Partial<Like>;
+        Update: Partial<Like>;
+      };
+      messages: {
+        Row: Message;
+        Insert: Partial<Message>;
+        Update: Partial<Message>;
+      };
+      follows: {
+        Row: Follow;
+        Insert: Partial<Follow>;
+        Update: Partial<Follow>;
+      };
+      anime_series: {
+        Row: AnimeSeries;
+        Insert: Partial<AnimeSeries>;
+        Update: Partial<AnimeSeries>;
+      };
+      anime_episodes: {
+        Row: AnimeEpisode;
+        Insert: Partial<AnimeEpisode>;
+        Update: Partial<AnimeEpisode>;
+      };
+      market_categories: {
+        Row: MarketCategory;
+        Insert: Partial<MarketCategory>;
+        Update: Partial<MarketCategory>;
+      };
+      market_products: {
+        Row: MarketProduct;
+        Insert: Partial<MarketProduct>;
+        Update: Partial<MarketProduct>;
+      };
+      market_product_images: {
+        Row: MarketProductImage;
+        Insert: Partial<MarketProductImage>;
+        Update: Partial<MarketProductImage>;
+      };
+    };
+    Functions: {
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+    };
+  };
 };
 
 
@@ -222,5 +292,5 @@ export type MarketProductWithDetails = {
     created_at: string;
     market_categories: Pick<MarketCategory, 'name'> | null;
     profiles: Pick<Profile, 'id' | 'name' | 'photo_url' | 'username'> | null;
-    market_product_images: Pick<MarketProductImage, 'image_url'>[];
+    market_product_images: Pick<MarketProductImage, 'image_path'>[];
 };

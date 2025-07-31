@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -9,7 +5,7 @@ import { supabase } from '../services/supabase';
 import Button from '../components/ui/Button';
 import PageTransition from '../components/ui/PageTransition';
 import Input from '../components/ui/Input';
-import { Database } from '../types';
+import { Database, PostRow } from '../types';
 import VideoPlayer from '../components/anime/VideoPlayer';
 
 const UploadPage: React.FC = () => {
@@ -34,7 +30,7 @@ const UploadPage: React.FC = () => {
     setError(null);
 
     try {
-      const postToInsert: Database['public']['Tables']['posts']['Insert'] = {
+      const postToInsert: Partial<PostRow> = {
         user_id: user.id,
         content_url: contentUrl,
       };
@@ -43,7 +39,7 @@ const UploadPage: React.FC = () => {
         postToInsert.caption = caption.trim();
       }
       
-      const { error: insertError } = await supabase.from('posts').insert([postToInsert] as any);
+      const { error: insertError } = await supabase.from('posts').insert([postToInsert]);
 
       if (insertError) throw insertError;
 

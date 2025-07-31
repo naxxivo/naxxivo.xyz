@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../App';
@@ -22,7 +21,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, onCommentAdded 
   useEffect(() => {
     const fetchComments = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from('comments').select(`*, profiles(name, username, photo_url)`).eq('post_id', postId).order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('comments').select(`id, user_id, post_id, parent_comment_id, content, created_at, profiles(name, username, photo_url)`).eq('post_id', postId).order('created_at', { ascending: false });
       if (error) console.error('Error fetching comments:', error);
       else setComments((data as unknown as CommentWithProfile[]) || []);
       setLoading(false);
@@ -34,7 +33,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, onCommentAdded 
     e.preventDefault();
     if (!user || !newComment.trim()) return;
     setIsPosting(true);
-    const { data, error } = await supabase.from('comments').insert([{ post_id: postId, user_id: user.id, content: newComment.trim() }] as any).select('*, profiles(name, username, photo_url)').single();
+    const { data, error } = await supabase.from('comments').insert([{ post_id: postId, user_id: user.id, content: newComment.trim() }]).select('*, profiles(name, username, photo_url)').single();
     if (error) {
       alert('Failed to post comment.');
     } else if (data) {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -42,7 +41,7 @@ const CreateSeriesPage: React.FC = () => {
     try {
       const { data, error: insertError } = await supabase
         .from('anime_series')
-        .insert([{ ...formData, user_id: user.id }] as any)
+        .insert([{ ...formData, user_id: user.id }])
         .select()
         .single();
         

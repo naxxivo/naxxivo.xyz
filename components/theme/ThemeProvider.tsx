@@ -8,6 +8,8 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
   accentColor: string;
   setAccentColor: (color: string) => void;
+  petalsEnabled: boolean;
+  setPetalsEnabled: (enabled: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -21,6 +23,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [accentColor, setAccentColorState] = useState<string>(() => {
     return localStorage.getItem('accentColor') || '#FF6584'; // Default to primary-pink
   });
+  
+  const [petalsEnabled, setPetalsEnabled] = useState<boolean>(() => {
+    const savedPetals = localStorage.getItem('petalsEnabled');
+    return savedPetals ? JSON.parse(savedPetals) : true;
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -33,15 +40,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Handle accent color
     root.style.setProperty('--color-accent', accentColor);
     localStorage.setItem('accentColor', accentColor);
+    
+    // Handle petals setting
+    localStorage.setItem('petalsEnabled', JSON.stringify(petalsEnabled));
 
-  }, [theme, accentColor]);
+  }, [theme, accentColor, petalsEnabled]);
 
   const value = useMemo(() => ({
     theme,
     setTheme: setThemeState,
     accentColor,
-    setAccentColor: setAccentColorState
-  }), [theme, accentColor]);
+    setAccentColor: setAccentColorState,
+    petalsEnabled,
+    setPetalsEnabled,
+  }), [theme, accentColor, petalsEnabled]);
 
 
   return (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Post, PostCardProps, PostRow } from '../../types';
@@ -48,7 +47,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
   const handleUpdate = async () => {
     if (!isOwner) return;
     // We only update the caption, other data will be preserved from the original post object
-    const { data, error } = await supabase.from('posts').update({ caption: editedCaption }).eq('id', post.id).select().single();
+    const { data, error } = await supabase
+      .from('posts')
+      .update({ caption: editedCaption })
+      .eq('id', post.id)
+      .select('id, user_id, caption, content_url, created_at')
+      .single();
+
     if (error) {
       alert('Failed to update post: ' + error.message);
     } else if (data) {

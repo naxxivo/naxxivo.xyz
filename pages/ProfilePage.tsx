@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -48,7 +47,7 @@ const ProfilePage: React.FC = () => {
       setLoadingProfile(true);
       setError(null);
 
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+      const { data, error } = await supabase.from('profiles').select('id, username, name, bio, photo_url, cover_url, website_url, youtube_url, facebook_url, address, role, created_at').eq('id', userId).maybeSingle();
       
       if (error) {
         setError("Could not fetch this user's profile due to an error.");
@@ -80,7 +79,7 @@ const ProfilePage: React.FC = () => {
 
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`*, profiles(username, name, photo_url), likes(count), comments(count)`)
+        .select(`id, user_id, caption, content_url, created_at, profiles(username, name, photo_url), likes(count), comments(count)`)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
@@ -112,14 +111,14 @@ const ProfilePage: React.FC = () => {
         try {
             const { count: followers, error: followersError } = await supabase
                 .from('follows')
-                .select('*', { count: 'exact', head: true })
+                .select('follower_id', { count: 'exact', head: true })
                 .eq('following_id', userId);
             if (followersError) throw followersError;
             setFollowerCount(followers || 0);
 
             const { count: following, error: followingError } = await supabase
                 .from('follows')
-                .select('*', { count: 'exact', head: true })
+                .select('follower_id', { count: 'exact', head: true })
                 .eq('follower_id', userId);
             if (followingError) throw followingError;
             setFollowingCount(following || 0);
@@ -150,8 +149,8 @@ const ProfilePage: React.FC = () => {
       const { created_at, ...upsertData } = profileData;
       const { data: updatedProfile, error } = await supabase
         .from('profiles')
-        .upsert([{ ...upsertData, id: currentUser.id }] as any)
-        .select('*')
+        .upsert({ ...upsertData, id: currentUser.id })
+        .select()
         .single();
 
       if (error) {
@@ -168,7 +167,7 @@ const ProfilePage: React.FC = () => {
     if (!currentUser || !userId || isFollowing) return;
     setIsFollowing(true);
     setFollowerCount(prev => prev + 1);
-    const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: userId }] as any);
+    const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: userId }]);
     if (error) {
       setIsFollowing(false);
       setFollowerCount(prev => prev - 1);

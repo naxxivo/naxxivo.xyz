@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { Post } from '../types';
@@ -6,6 +8,29 @@ import PostCard from '../components/post/PostCard';
 import { AnimeLoader } from '../components/ui/Loader';
 import PageTransition from '../components/ui/PageTransition';
 import { useAuth } from '../App';
+import { motion, Variants } from 'framer-motion';
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 100
+    }
+  }
+};
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -20,7 +45,11 @@ const HomePage: React.FC = () => {
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
-          *,
+          id,
+          user_id,
+          caption,
+          content_url,
+          created_at,
           profiles (
             username,
             name,
@@ -90,12 +119,19 @@ const HomePage: React.FC = () => {
       {error && <p className="text-center text-red-500">{error}</p>}
       
       {!loading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} onPostUpdated={handlePostUpdated} onPostDeleted={handlePostDeleted} />
+            <motion.div key={post.id} variants={itemVariants}>
+              <PostCard post={post} onPostUpdated={handlePostUpdated} onPostDeleted={handlePostDeleted} />
+            </motion.div>
           ))}
           {posts.length === 0 && <p className="text-center col-span-full">No posts yet. Be the first to share something!</p>}
-        </div>
+        </motion.div>
       )}
     </PageTransition>
   );
