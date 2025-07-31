@@ -42,7 +42,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
       if (pError) {
         console.error("Error fetching other user:", pError.message);
       } else {
-        setOtherUser(otherUserData as Profile);
+        setOtherUser(otherUserData as unknown as Profile);
       }
       
       setLoading(false);
@@ -62,7 +62,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
         if (senderProfile) {
             const newMessage: MessageWithProfile = {
                 ...(payload.new as Message),
-                sender: senderProfile as Pick<Profile, 'name' | 'photo_url' | 'username'>,
+                sender: senderProfile as unknown as Pick<Profile, 'name' | 'photo_url' | 'username'>,
             };
             setMessages((prev) => [...prev, newMessage]);
         }

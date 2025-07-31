@@ -70,7 +70,7 @@ const FollowsPage: React.FC = () => {
                 .single();
 
             if (profileError) throw new Error("Could not load user's profile.");
-            setProfile(profileData as Profile);
+            setProfile(profileData as unknown as Profile);
             
             const isFollowersTab = activeTab === 'followers';
             const queryTable = 'follows';

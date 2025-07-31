@@ -53,8 +53,8 @@ const ProfilePage: React.FC = () => {
       if (error) {
         setError("Could not fetch this user's profile due to an error.");
       } else {
-        setProfile(data as Profile | null);
-        if (data) setProfileData(data as Profile);
+        setProfile(data as unknown as Profile | null);
+        if (data) setProfileData(data as unknown as Profile);
       }
       setLoadingProfile(false);
     };
@@ -90,7 +90,7 @@ const ProfilePage: React.FC = () => {
         let likedPostIds = new Set<number>();
         if (currentUser) {
            const { data: likesData } = await supabase.from('likes').select('post_id').eq('user_id', currentUser.id);
-           if (likesData) likedPostIds = new Set((likesData as {post_id: number}[]).map(l => l.post_id));
+           if (likesData) likedPostIds = new Set((likesData as unknown as {post_id: number}[]).map(l => l.post_id));
         }
         const processedPosts = (postsData as any[]).map(p => ({
           ...p,
@@ -158,7 +158,7 @@ const ProfilePage: React.FC = () => {
         alert('Error saving profile: ' + error.message);
       } else if (updatedProfile) {
         await refreshUser();
-        setProfile(updatedProfile as Profile);
+        setProfile(updatedProfile as unknown as Profile);
         setIsEditing(false);
         alert('Profile saved successfully!');
       }

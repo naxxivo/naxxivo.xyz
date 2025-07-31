@@ -17,6 +17,7 @@ const AuthPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const auth = useAuth();
 
@@ -30,31 +31,36 @@ const AuthPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
-      setLoading(false);
+      // On success, the onAuthStateChange listener in App.tsx will handle navigation.
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      // Sign Up Flow
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+            username: username.toLowerCase(),
+            photo_url: `https://api.dicebear.com/8.x/pixel-art/svg?seed=${username.toLowerCase() || 'default'}`
+          }
+        }
+      });
+
       if (error) {
         setError(error.message);
-        setLoading(false);
-        return;
+      } else {
+        setMessage('Account created! Please check your email to verify your account.');
+        // Don't navigate away, let the user see the success message.
+        // We can switch to the login view so they can log in after verifying.
+        setTimeout(() => setIsLogin(true), 3000);
       }
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{ id: data.user.id, username: username.toLowerCase(), name: name }] as any);
-        if (profileError) {
-          setError(`Account created, but failed to create profile. The username might be taken. Error: ${profileError.message}`);
-        } else {
-          alert('Account created! Please check your email to verify.');
-          navigate('/', { replace: true });
-        }
-      }
-      setLoading(false);
     }
+    setLoading(false);
   };
   
   if (auth.loading || auth.user) {
@@ -66,13 +72,13 @@ const AuthPage: React.FC = () => {
       <div className="max-w-md mx-auto mt-10 bg-white/60 dark:bg-dark-card/70 backdrop-blur-lg p-8 rounded-2xl shadow-2xl shadow-primary-blue/20">
         <div className="flex justify-center mb-6">
           <button
-            onClick={() => setIsLogin(true)}
+            onClick={() => { setIsLogin(true); setError(null); setMessage(null); }}
             className={`font-display text-lg px-6 py-2 rounded-l-lg transition-all ${isLogin ? 'bg-accent text-white shadow-lg' : 'bg-gray-200 dark:bg-dark-bg text-secondary-purple dark:text-dark-text'}`}
           >
             Login
           </button>
           <button
-            onClick={() => setIsLogin(false)}
+            onClick={() => { setIsLogin(false); setError(null); setMessage(null); }}
             className={`font-display text-lg px-6 py-2 rounded-r-lg transition-all ${!isLogin ? 'bg-accent text-white shadow-lg' : 'bg-gray-200 dark:bg-dark-bg text-secondary-purple dark:text-dark-text'}`}
           >
             Sign Up
@@ -81,6 +87,10 @@ const AuthPage: React.FC = () => {
         <h2 className="text-3xl font-bold text-center mb-6 font-display from-accent to-primary-blue bg-gradient-to-r bg-clip-text text-transparent transition-all duration-300">
           {isLogin ? 'Welcome Back!' : 'Join NAXXIVO!'}
         </h2>
+        
+        {message && <p className="text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/50 p-3 rounded-lg text-sm text-center mb-4">{message}</p>}
+        {error && <p className="text-red-500 bg-red-100 dark:bg-red-900/50 p-3 rounded-lg text-sm text-center mb-4">{error}</p>}
+        
         <form onSubmit={handleAuth} className="space-y-6">
           {!isLogin && (
             <>
@@ -91,10 +101,8 @@ const AuthPage: React.FC = () => {
           <Input id="email" label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Input id="password" label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
           
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          
           <div className="pt-4">
-            <Button type="submit" text={loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up')} disabled={loading} className="w-full" />
+            <Button type="submit" text={loading ? 'Loading...' : (isLogin ? 'Login' : 'Create Account')} disabled={loading} className="w-full" />
           </div>
         </form>
       </div>

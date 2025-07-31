@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -32,7 +33,7 @@ const CreateProductPage: React.FC = () => {
         console.error("Failed to fetch categories", error);
         setError("Could not load categories. Please try again.");
       } else {
-        setCategories((data as MarketCategory[]) || []);
+        setCategories((data as unknown as MarketCategory[]) || []);
       }
     };
     fetchCategories();
@@ -74,8 +75,13 @@ const CreateProductPage: React.FC = () => {
         
       if (productError) throw productError;
       
-      const newProduct = productData as MarketProduct;
+      if (!productData) {
+        throw new Error("Product creation failed silently. Please try again.");
+      }
+      
+      const newProduct = productData as unknown as MarketProduct;
       const images = imageUrls.split('\n').map(url => url.trim()).filter(url => url);
+      
       if(images.length > 0) {
         const imagePayload = images.map(image_url => ({
             product_id: newProduct.id,
@@ -83,7 +89,9 @@ const CreateProductPage: React.FC = () => {
         }));
         const { error: imageError } = await supabase.from('market_product_images').insert(imagePayload as any);
         if(imageError) {
+            // Don't throw an error, but let the user know.
             console.warn("Product created, but failed to add images:", imageError);
+            alert(`Product listed, but we couldn't save some images. You can edit the listing to try again. Error: ${imageError.message}`);
         }
       }
 
@@ -91,7 +99,7 @@ const CreateProductPage: React.FC = () => {
       navigate(`/market/product/${newProduct.id}`);
 
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      setError(err.message || 'An unexpected error occurred while creating the product.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -111,7 +119,7 @@ const CreateProductPage: React.FC = () => {
             <textarea id="description" rows={4} value={formData.description} onChange={handleInputChange} className="mt-1 block w-full px-4 py-2 bg-white/50 dark:bg-dark-bg/50 border-2 border-primary-blue/20 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300 outline-none shadow-inner" placeholder="Describe your item in detail..." />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input id="price" label="Price (USD)" type="number" value={formData.price} onChange={handleInputChange} placeholder="e.g., 25.00" required step="0.01" />
+            <Input id="price" label="Price (USD)" type="number" value={formData.price} onChange={handleInputChange} placeholder="e.g., 25.00" required step="0.01" min="0" />
             <div>
               <label htmlFor="category_id" className="block text-sm font-medium mb-1">Category</label>
               <select id="category_id" value={formData.category_id} onChange={handleInputChange} required className="w-full px-4 py-2 bg-white/50 dark:bg-dark-bg/50 border-2 border-primary-blue/20 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300 outline-none shadow-inner">

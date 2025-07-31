@@ -30,7 +30,7 @@ const MarketplacePage: React.FC = () => {
           .select('*')
           .order('name', { ascending: true });
         if (categoriesError) throw categoriesError;
-        setCategories(categoriesData as MarketCategory[] || []);
+        setCategories(categoriesData as unknown as MarketCategory[] || []);
 
         // Fetch Products
         let query = supabase

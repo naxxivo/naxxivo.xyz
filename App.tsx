@@ -54,19 +54,21 @@ const App: React.FC = () => {
       console.error('Error fetching profile:', error);
       return null;
     }
+    
+    const profile = data as unknown as (Profile | null);
 
-    if (data) { // Profile exists
+    if (profile) { // Profile exists
       return {
         ...authUser,
-        username: data.username,
-        name: data.name,
-        bio: data.bio,
-        photo_url: data.photo_url,
-        cover_url: data.cover_url,
-        address: data.address,
-        website_url: data.website_url,
-        youtube_url: data.youtube_url,
-        facebook_url: data.facebook_url,
+        username: profile.username,
+        name: profile.name,
+        bio: profile.bio,
+        photo_url: profile.photo_url,
+        cover_url: profile.cover_url,
+        address: profile.address,
+        website_url: profile.website_url,
+        youtube_url: profile.youtube_url,
+        facebook_url: profile.facebook_url,
       };
     } else { // Profile does not exist, create a fallback
       const username = authUser.email?.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() || `user${Date.now()}`;
@@ -86,30 +88,50 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setLoading(true);
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        try {
+    const initializeSession = async () => {
+      setLoading(true);
+      // Get the initial session right away
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+          console.error("Error getting session on initial load:", error);
+      } else {
           setSession(session);
           if (session?.user) {
-            const userProfile = await fetchUserProfile(session.user);
-            setUser(userProfile);
+              const userProfile = await fetchUserProfile(session.user);
+              setUser(userProfile);
           } else {
-            setUser(null);
+              setUser(null);
           }
-        } catch(e) {
-          console.error("Error during auth state change handling:", e);
-          setUser(null);
-        } finally {
-          setLoading(false);
-        }
       }
-    );
+      setLoading(false); // Initial load is done
+
+      // Now, set up the listener for subsequent auth changes (login, logout, token refresh)
+      const { data: authListener } = supabase.auth.onAuthStateChange(
+          async (_event, newSession) => {
+              setSession(newSession);
+              if (newSession?.user) {
+                  const userProfile = await fetchUserProfile(newSession.user);
+                  setUser(userProfile);
+              } else {
+                  setUser(null);
+              }
+          }
+      );
+
+      // Return the cleanup function for the listener
+      return () => {
+          authListener.subscription.unsubscribe();
+      };
+    };
+
+    const unsubscribe = initializeSession();
 
     return () => {
-      authListener.subscription.unsubscribe();
+      // In case the component unmounts before initializeSession returns
+      unsubscribe.then(cleanup => cleanup && cleanup());
     };
-  }, []);
+}, []);
 
 
   const handleLogout = async () => {

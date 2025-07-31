@@ -32,7 +32,7 @@ const AddEpisodePage: React.FC = () => {
         setError("Could not find the series to add an episode to.");
         navigate('/anime');
       } else {
-        setSeries(data as AnimeSeries);
+        setSeries(data as unknown as AnimeSeries);
       }
       setLoadingSeries(false);
     };

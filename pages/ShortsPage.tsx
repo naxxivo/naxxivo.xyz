@@ -53,7 +53,7 @@ const ShortsPage: React.FC = () => {
                     .select('post_id')
                     .eq('user_id', user.id);
                 if (likesError) console.error("Could not fetch user likes for shorts", likesError);
-                else if (likesData) likedPostIds = new Set((likesData as {post_id: number}[]).map(l => l.post_id));
+                else if (likesData) likedPostIds = new Set((likesData as unknown as {post_id: number}[]).map(l => l.post_id));
             }
 
             const processedPosts: Post[] = (postsData as any[]).map(p => ({

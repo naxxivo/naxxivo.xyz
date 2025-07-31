@@ -49,7 +49,7 @@ const CreateSeriesPage: React.FC = () => {
       if (insertError) throw insertError;
 
       alert('Series created successfully!');
-      if(data) navigate(`/anime/${(data as AnimeSeries).id}`);
+      if(data) navigate(`/anime/${(data as unknown as AnimeSeries).id}`);
 
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');

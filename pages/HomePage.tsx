@@ -54,7 +54,7 @@ const HomePage: React.FC = () => {
           .eq('user_id', user.id);
 
         if (likesError) console.error("Could not fetch user likes", likesError);
-        else if(likesData) likedPostIds = new Set((likesData as {post_id: number}[]).map(l => l.post_id));
+        else if(likesData) likedPostIds = new Set((likesData as unknown as {post_id: number}[]).map(l => l.post_id));
       }
 
       const processedPosts: Post[] = (postsData as any[]).map(p => ({

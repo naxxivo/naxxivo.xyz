@@ -4,35 +4,30 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types';
 
 // ===================================================================================
-// !! IMPORTANT DEPLOYMENT NOTICE !!
+// !! IMPORTANT: MIGRATE TO YOUR NEW SUPABASE PROJECT !!
 // ===================================================================================
-// BEFORE YOU DEPLOY TO VERCEL, YOU MUST DO THE FOLLOWING IN YOUR SUPABASE PROJECT:
+// 1. Go to your new Supabase project's dashboard.
+// 2. Navigate to Project Settings > API.
+// 3. Find the 'Project URL' and the 'anon' 'public' key.
+// 4. Replace the placeholder values below with your new credentials.
 //
-// 1. REVOKE THE SERVICE KEY YOU SHARED. IT IS A MAJOR SECURITY RISK.
-//    - In your Supabase Dashboard -> Project Settings -> API -> `service_role` key -> "Revoke".
-//
-// 2. CONFIGURE YOUR DOMAIN FOR AUTHENTICATION
+// 5. IMPORTANT: In your NEW Supabase project, you must also configure your domain for authentication.
 //    - Go to Supabase Dashboard -> Authentication -> URL Configuration
 //    - Site URL: https://naxxivo.xyz
 //    - Additional Redirect URLs: https://naxxivo.xyz/**
-//
-// For a production app, you should use Vercel's Environment Variables for the keys below
-// instead of hardcoding them. The `anon` key is safe for browsers, but using environment
-// variables is best practice. NEVER expose the `service_role` key in your frontend code.
 // ===================================================================================
 
 
-const supabaseUrl = 'https://vhafkicrbzrkkhcijnaj.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYWZraWNyYnpya2toY2lqbmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMzU3MDEsImV4cCI6MjA2MTkxMTcwMX0.ZXJA6PHYYz7CSNn42Oecg8hs9_ORC2yE6AohmxW7A_M';
+const supabaseUrl = 'https://wemrdmdtbkoqwerekbwo.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlbXJkbWR0YmtvcXdlcmVrYndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5Njg4MzYsImV4cCI6MjA2OTU0NDgzNn0.dN0hSuLLIwTojxCT0wCJQD2lm1xSsnXCzQf5ankd8nU';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 /* 
-  === SUPABASE DATABASE SETUP (REVISED SCHEMA) ===
+  === SUPABASE DATABASE SETUP (FULL SCHEMA) ===
   
-  This is the revised, normalized schema for the application.
-  Run this entire script in your Supabase SQL Editor to set up the database correctly.
-  NOTE: Running this script will DELETE existing tables if they exist.
+  This is the complete SQL script for your application.
+  Run this entire script in your NEW Supabase project's SQL Editor to set up the database correctly.
 
   --- SCRIPT START ---
 
@@ -262,4 +257,40 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
   ('Electronics'), ('Fashion & Apparel'), ('Home & Garden'), ('Vehicles'), ('Toys & Hobbies'), ('Books & Media'), ('Collectibles & Art'), ('Other');
 
   --- SCRIPT END ---
+
+
+  ===================================================================================
+  !! IMPORTANT: RUN THIS SCRIPT TO FIX USER SIGN-UP !!
+  ===================================================================================
+
+  This script creates a trigger that automatically creates a user profile on the backend
+  when a new user signs up. This fixes the "violates row-level security" error and
+  makes the sign-up process secure and reliable.
+
+  --- TRIGGER SCRIPT START ---
+
+  -- Function to create a profile for a new user from auth.users
+  create or replace function public.handle_new_user()
+  returns trigger
+  language plpgsql
+  security definer set search_path = public
+  as $$
+  begin
+    insert into public.profiles (id, username, name, photo_url)
+    values (
+      new.id,
+      new.raw_user_meta_data->>'username',
+      new.raw_user_meta_data->>'name',
+      new.raw_user_meta_data->>'photo_url'
+    );
+    return new;
+  end;
+  $$;
+
+  -- Trigger to call the function when a new user signs up in auth.users
+  create or replace trigger on_auth_user_created
+    after insert on auth.users
+    for each row execute procedure public.handle_new_user();
+
+  --- TRIGGER SCRIPT END ---
 */

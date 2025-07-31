@@ -32,7 +32,7 @@ const WatchEpisodePage: React.FC = () => {
           .single();
 
         if (episodeError) throw episodeError;
-        setEpisode(data as AnimeEpisodeWithSeries);
+        setEpisode(data as unknown as AnimeEpisodeWithSeries);
 
         const { count, error: countError } = await supabase
           .from('anime_episodes')

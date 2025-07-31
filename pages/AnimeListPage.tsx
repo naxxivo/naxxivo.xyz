@@ -27,7 +27,7 @@ const AnimeListPage: React.FC = () => {
         console.error('Error fetching anime series:', error);
         setError('Could not load anime series. Please try again later.');
       } else {
-        setSeries((data as AnimeSeries[]) || []);
+        setSeries((data as unknown as AnimeSeries[]) || []);
       }
       setLoading(false);
     };
