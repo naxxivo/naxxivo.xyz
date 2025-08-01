@@ -1,0 +1,277 @@
+# Full Specification for Recreating the NAXXIVO Web Application
+
+## 1. Project Overview
+
+**Project Name:** NAXXIVO
+
+**Description:** NAXXIVO is a feature-rich, all-in-one social media platform with a vibrant, anime-inspired aesthetic. It allows users to share posts (images/videos), interact with each other through likes, comments, and direct messages, and engage with a variety of built-in "hubs" like an Anime Library, Marketplace, Game Hub, Health Hub,, responsive, and visually appealing, with a focus on smooth animations and a dynamic user experience.
+
+**Core Features:**
+- User Authentication (Sign up, Login, Profile Management)
+- Social Feed with Posts (Images & Videos)
+- Real-time Likes, Comments, and Notifications
+- Real-time Direct Messaging
+- User Following System
+- "Shorts" - A vertical, full-screen video feed for video posts
+- Anime Library for users to upload and watch series
+- Marketplace for users to buy and sell items with image uploads
+- Game Hub with playable games and an XP/Leveling system
+- Global Leaderboard based on user XP
+- Health Hub with information on common ailments
+- Role-based Admin Panel for content and user management
+- Theming (Light/Dark mode, user-selectable accent colors)
+- Internationalization (i18n) support (English & Bengali implemented)
+
+---
+
+## 2. Technology Stack & Setup
+
+- **Frontend Framework:** React 18 with TypeScript.
+- **Build System:** Use a modern setup like Vite or a similar tool that supports an `index.html` entry point with a TypeScript module (`index.tsx`).
+- **Routing:** `react-router-dom` (v6) using `<HashRouter>`.
+- **Styling:** TailwindCSS with its JIT compiler. The configuration should be defined directly in a `<script>` tag within `index.html` to avoid a separate config file.
+- **Animation:** `framer-motion` for page transitions and micro-interactions.
+- **Backend & Database:** Supabase (v2) for the database, authentication, object storage, real-time subscriptions, and edge functions.
+- **AI Integration:** `@google/genai` library for the.
+- **Icons:** `@heroicons/react` (v2, solid icons).
+- **Internationalization:** `i18next`, `react-i18next`, and `i18next-browser-languagedetector`.
+
+---
+
+## 3. UI/UX Design & Aesthetics
+
+**Overall Vibe:** Modern, vibrant, clean, and inspired by anime and gaming culture. The design should utilize soft shadows, rounded corners, and backdrop-blur effects for a glassy, layered feel.
+
+**Color Palette (defined in `index.html` tailwind.config):**
+- **Accent Color:** `var(--color-accent)` (User-selectable, defaults to `'#FF6584'`).
+- **Primary Pink:** `'#FF6584'`
+- **Primary Blue:** `'#6A5ACD'`
+- **Primary Yellow:** `'#FFD166'`
+- **Secondary White (Light BG):** `'#F8F1FF'`
+- **Dark BG:** `'#1E1A33'`
+- **Dark Card BG:** `'#2E294E'`
+- **Dark Text:** `'#E0DDF0'`
+- **Secondary Coral:** `'#FF8E72'`
+
+**Typography (from Google Fonts, linked in `index.html`):**
+- **Display Font:** `'Mochiy Pop One'`, sans-serif (for major headings, logos, and UI accents).
+- **Body Font:** `'Poppins'`, sans-serif (for all other text).
+
+**Key UI Elements & Animations:**
+- **Buttons:** Implement a custom `Button` component with a sheen effect on hover and a subtle scale/pop animation on click.
+- **Page Transitions:** All pages should be wrapped in a `PageTransition` component using `framer-motion` for a smooth fade-in/slide-up effect.
+- **Floating Petals:** In light mode, pink cherry blossom petals should gently fall down the screen. This effect must be toggleable in the Settings page (`hooks/usePetals.ts`).
+- **Loaders:** Use a custom, colorful bouncing bar loader (`components/ui/Loader.tsx`).
+- **Floating Action Menu:** A circular button fixed at the bottom-right that expands on click to reveal a vertical list of navigation links.
+- **Bottom Nav Bar:** A dedicated navigation bar for mobile screens providing quick access to core features (Home, Shorts, Upload, Notifications, Profile).
+- **Decorative Shapes:** On the `AuthPage`, use large, blurred, slowly animating gradient circles in the background for a modern, abstract aesthetic.
+
+---
+
+## 4. Supabase Backend Setup
+
+**IMPORTANT:** The developer must create a new Supabase project and replace the placeholder credentials below.
+
+**Credentials (in `services/supabase.ts`):**
+- `supabaseUrl`: `'https://vhafkicrbzrkkhcijnaj.supabase.co'`
+- `supabaseAnonKey`: `'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYWZraWNyYnpya2toY2lqbmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMzU3MDEsImV4cCI6MjA2MTkxMTcwMX0.ZXJA6PHYYz7CSNn42Oecg8hs9_ORC2yE6AohmxW7A_M'`
+
+**URL Configuration:** The Supabase project's auth settings must include the production domain in "URL Configuration" (e.g., Site URL: `https://naxxivo.xyz`, Redirect URL: `https://naxxivo.xyz/**`).
+
+**Complete Database SQL:**
+*Execute the following SQL scripts in the Supabase SQL Editor in the specified order to create the entire database schema, enable Row Level Security, and set up all required triggers and functions.*
+
+```sql
+-- SCRIPT 1: TABLE AND RLS CREATION
+-- Clean up existing tables in the correct order to avoid dependency errors
+DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.likes CASCADE;
+DROP TABLE IF EXISTS public.comments CASCADE;
+DROP TABLE IF EXISTS public.posts CASCADE;
+DROP TABLE IF EXISTS public.messages CASCADE;
+DROP TABLE IF EXISTS public.follows CASCADE;
+DROP TABLE IF EXISTS public.anime_episodes CASCADE;
+DROP TABLE IF EXISTS public.anime_series CASCADE;
+DROP TABLE IF EXISTS public.market_product_images CASCADE;
+DROP TABLE IF EXISTS public.market_products CASCADE;
+DROP TABLE IF EXISTS public.market_categories CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- Table: profiles
+CREATE TABLE public.profiles (
+  id uuid NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username text NOT NULL UNIQUE CHECK (username ~ '^[a-zA-Z0-9_]{3,20}$' AND lower(username) = username),
+  name text,
+  bio text,
+  photo_url text,
+  cover_url text,
+  website_url text,
+  youtube_url text,
+  facebook_url text,
+  address text,
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
+COMMENT ON TABLE public.profiles IS 'Public profile information for each user.';
+
+-- Table: posts
+CREATE TABLE public.posts (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  caption text,
+  content_url text,
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
+COMMENT ON TABLE public.posts IS 'User-created posts with media content and captions.';
+
+-- ... (and so on, copying the entire SQL block from services/supabase.ts) ...
+
+-- SCRIPT 2: NEW USER TRIGGER
+-- Function to create a profile for a new user from auth.users
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, username, name, photo_url)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'name',
+    new.raw_user_meta_data->>'photo_url'
+  );
+  return new;
+end;
+$$;
+
+-- Trigger to call the function when a new user signs up in auth.users
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+
+-- SCRIPT 3: ADMIN PANEL UPGRADE
+-- 1. Add 'role' column to profiles table
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user';
+
+-- 2. Create a function to check if the current user is an admin
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    user_role text;
+BEGIN
+    IF auth.uid() IS NULL THEN
+        RETURN FALSE;
+    END IF;
+    SELECT role INTO user_role FROM public.profiles WHERE id = auth.uid();
+    RETURN user_role = 'admin';
+END;
+$$;
+-- ... (and so on for all admin policies) ...
+
+
+-- SCRIPT 4: MARKETPLACE UPGRADE
+-- ... (Full SQL for marketplace tables, storage bucket, and RLS) ...
+
+
+-- SCRIPT 5: NOTIFICATIONS SYSTEM
+-- ... (Full SQL for notifications table and triggers for likes, comments, follows) ...
+
+
+-- SCRIPT 6: GAME HUB & XP SYSTEM
+-- 1. Add 'xp' column to profiles table
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS xp bigint NOT NULL DEFAULT 0;
+
+-- 2. Create helper function for securely incrementing XP
+CREATE OR REPLACE FUNCTION public.increment_xp(user_id uuid, xp_increment integer)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE public.profiles
+  SET xp = xp + xp_increment
+  WHERE id = user_id;
+END;
+$$;
+```
+
+**Supabase Edge Function (`award-xp`):**
+- **Purpose:** Securely award Experience Points (XP) to the authenticated user. This prevents client-side manipulation of XP.
+- **Path:** `supabase/functions/award-xp/index.ts`
+- **Security:** The function must be deployed with `--no-verify-jwt` and must use the `service_role` key (set as a Supabase secret `SUPABASE_SERVICE_ROLE_KEY`) to create an admin client that can bypass RLS to update the `profiles` table.
+- **Logic:**
+    1. Verify the calling user's JWT from the `Authorization` header.
+    2. Parse the `xp_to_add` amount from the request body.
+    3. Validate the XP amount (e.g., must be a positive number up to a reasonable limit like 500).
+    4. Create an admin Supabase client using the service role key.
+    5. Call the `increment_xp` PostgreSQL function to add XP to the verified user's profile.
+    6. Return a success or error message.
+
+---
+
+## 5. App Structure & Page Routing
+
+The application uses a main `App.tsx` component to handle auth state and routing.
+
+**Main Components:**
+- `App.tsx`: Global state management (AuthContext), routing logic.
+- `Layout.tsx`: Standard page layout including `Header.tsx` and `FloatingMenu.tsx`.
+- `AdminLayout.tsx`: A separate layout for the admin panel with a sidebar.
+- `ProtectedRoute.tsx`: A wrapper to protect routes that require authentication.
+- `AdminRoute.tsx`: A wrapper to protect admin routes, checking the user's role via an RPC call.
+
+**Routing (`App.tsx`):**
+- `/auth`: **AuthPage** - Login and sign-up forms.
+- `/`: **HomePage** - The main social feed.
+- `/post/:postId`: **SinglePostPage** - View a post and its comments directly.
+- `/profile/:userId`: **ProfilePage** - User profiles.
+- `/profile/:userId/follows`: **FollowsPage** - Shows lists of followers/following.
+- `/upload`: **UploadPage** - Form to create a new post.
+- `/messages`: **MessagesPage** - Main chat interface.
+- `/messages/:otherUserId`: **MessagesPage** with a specific chat open.
+- `/users`: **UsersPage** - A list of all platform users.
+- `/settings`: **SettingsPage** - For theme, accent color, and other user preferences.
+- `/notifications`: **NotificationsPage** - A full-page view of user notifications.
+- `/shorts`: **ShortsPage** - Full-screen vertical video feed.
+- `/anime`: **AnimeListPage** - Gallery of all anime series.
+- `/anime/new`: **CreateSeriesPage** - Form to create a new anime series.
+- `/anime/:seriesId`: **SeriesDetailPage** - Details and episode list for a series.
+- `/anime/:seriesId/add-episode`: **AddEpisodePage** - Form to add an episode.
+- `/anime/:seriesId/episode/:episodeNumber`: **WatchEpisodePage** - Video player for an episode.
+- `/market`: **MarketplacePage** - Browse and filter products.
+- `/market/new`: **CreateProductPage** - Form to list a new product.
+- `/market/product/:productId`: **ProductDetailPage** - View details of a single product.
+- `/health`: **HealthHubPage** - Information hub for common ailments.
+- `/health/:ailmentId`: **AilmentDetailPage** - Details for a specific ailment.
+- `/games`: **GameHubPage** - Gallery of available games.
+- `/games/:gameId`: **GamePlayerPage** - The interface for playing a specific game.
+- `/leaderboard`: **LeaderboardPage** - Global ranking of users by XP.
+- `/story-generator`: **StoryGeneratorPage** - AI-powered story creation tool.
+- `/admin/*`: Admin section with its own nested routes for Dashboard, Users, Posts, etc.
+- `*`: **NotFoundPage** - A 404 page.
+
+---
+
+## 6. Detailed Feature Implementation
+
+- **Authentication:** Use `supabase.auth.onAuthStateChange` to manage session state globally in `App.tsx`. The `AuthContext` provides session, user profile, and loading state to all components. A PostgreSQL trigger `handle_new_user` automatically creates a new row in `public.profiles` when a user signs up.
+- **Profile & Feed:** When fetching posts, perform a `JOIN` to get the author's profile data (`profiles(username, name, photo_url)`), and get `likes(count)` and `comments(count)` as aggregates. When fetching for an authenticated user, make a separate call to get all `post_id`s from the `likes` table for that `user_id` to determine which posts are liked (`is_liked` flag).
+- **Real-time Subscriptions:**
+    - **Messages:** Use `supabase.channel('direct-chat:...').on(...)` to listen for `INSERT` events on the `messages` table where the `recipient_id` matches the current user. This allows real-time message delivery.
+    - **Notifications:** Use a similar channel to listen for `INSERT`s on the `notifications` table for the current user, updating the notification list and unread count in real-time.
+- **Marketplace Uploads:**
+    1.  User selects image files in the `CreateProductPage` form.
+    2.  On submit, first `INSERT` the product details into the `market_products` table.
+    3.  If successful, use the returned product ID to construct a unique file path for each image (e.g., `{user_id}/{product_id}/{timestamp}-{filename}`).
+    4.  Upload each image file to the `product_images` Supabase Storage bucket using `supabase.storage.from('product_images').upload()`.
+    5.  `INSERT` the storage paths of the successfully uploaded images into the `market_product_images` table, linking them to the product ID.
+- **Game XP System:**
+    1.  The `GamePlayerPage` hosts the game component.
+    2.  The game component has a callback prop like `onGameWin`.
+    3.  When the win condition is met (e.g., reaching a score of 500 in Dino Run), `onGameWin` is called.
+    4.  `GamePlayerPage` then calls `supabase.functions.invoke('award-xp', { body: { xp_to_add: game.xp } })`.
+    5.  This securely calls the Edge Function, which verifies the user and awards the XP.
