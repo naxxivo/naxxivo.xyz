@@ -1,7 +1,6 @@
 
 
 
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -118,7 +117,7 @@ const MarketplacePage: React.FC = () => {
         {user && (
           <div className="mt-6">
             <Link to="/market/new">
-              <Button text="List an Item" />
+              <Button>List an Item</Button>
             </Link>
           </div>
         )}

@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PageTransition from '../components/ui/PageTransition';
@@ -14,7 +16,7 @@ const NotFoundPage: React.FC = () => {
         <h2 className="text-3xl font-bold mt-4">Oops! You've Wandered Off...</h2>
         <p className="mt-2 mb-8">It seems you've found a secret level that doesn't exist yet.</p>
         <Link to="/">
-            <Button text="Go Back to Home" />
+            <Button>Go Back to Home</Button>
         </Link>
       </div>
     </PageTransition>

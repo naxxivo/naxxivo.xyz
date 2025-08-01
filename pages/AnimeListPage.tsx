@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -67,7 +68,7 @@ const AnimeListPage: React.FC = () => {
         {user && (
           <div className="mt-6">
             <Link to="/anime/new">
-              <Button text="Create New Series" />
+              <Button>Create New Series</Button>
             </Link>
           </div>
         )}

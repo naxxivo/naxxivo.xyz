@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -54,7 +55,7 @@ const AuthPage: React.FC = () => {
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Account created! Please check your email to verify your account.');
+        setMessage("Account created! Please check your email to verify your account.");
         // Don't navigate away, let the user see the success message.
         // We can switch to the login view so they can log in after verifying.
         setTimeout(() => setIsLogin(true), 3000);
@@ -85,7 +86,7 @@ const AuthPage: React.FC = () => {
           </button>
         </div>
         <h2 className="text-3xl font-bold text-center mb-6 font-display from-accent to-primary-blue bg-gradient-to-r bg-clip-text text-transparent transition-all duration-300">
-          {isLogin ? 'Welcome Back!' : 'Join NAXXIVO!'}
+          {isLogin ? "Welcome Back!" : "Join NAXXIVO!"}
         </h2>
         
         {message && <p className="text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/50 p-3 rounded-lg text-sm text-center mb-4">{message}</p>}
@@ -102,7 +103,9 @@ const AuthPage: React.FC = () => {
           <Input id="password" label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
           
           <div className="pt-4">
-            <Button type="submit" text={loading ? 'Loading...' : (isLogin ? 'Login' : 'Create Account')} disabled={loading} className="w-full" />
+            <Button type="submit" disabled={loading} className="w-full">
+                {loading ? "Loading..." : (isLogin ? "Login" : "Create Account")}
+            </Button>
           </div>
         </form>
       </div>

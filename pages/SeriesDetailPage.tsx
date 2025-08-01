@@ -7,7 +7,9 @@ import { useAuth } from '../App';
 import PageTransition from '../components/ui/PageTransition';
 import { AnimeLoader } from '../components/ui/Loader';
 import Button from '../components/ui/Button';
-import { PlayIcon, PlusCircleIcon } from '@heroicons/react/24/solid';
+import { PlayIcon, PlusCircleIcon, ShareIcon } from '@heroicons/react/24/solid';
+import { useShare } from '../hooks/useShare';
+import ShareModal from '../components/ui/ShareModal';
 
 const SeriesDetailPage: React.FC = () => {
   const { seriesId } = useParams<{ seriesId: string }>();
@@ -15,6 +17,7 @@ const SeriesDetailPage: React.FC = () => {
   const [series, setSeries] = useState<AnimeSeriesWithEpisodes | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { share, isModalOpen, shareData, closeModal } = useShare();
 
   useEffect(() => {
     const fetchSeriesDetails = async () => {
@@ -40,6 +43,15 @@ const SeriesDetailPage: React.FC = () => {
     fetchSeriesDetails();
   }, [seriesId]);
 
+  const handleShare = () => {
+    if (!series) return;
+    share({
+      title: `Check out the series "${series.title}" on NAXXIVO!`,
+      text: series.description || `Watch episodes of ${series.title}.`,
+      url: `${window.location.origin}/#/anime/${series.id}`
+    });
+  };
+
   if (loading) return <AnimeLoader />;
   if (error || !series) return <p className="text-center text-red-500 py-10">{error || 'Series not found.'}</p>;
 
@@ -57,13 +69,20 @@ const SeriesDetailPage: React.FC = () => {
             <h1 className="font-display text-4xl md:text-5xl font-bold drop-shadow-lg">{series.title}</h1>
             <p className="mt-2 text-base opacity-90 max-w-2xl">{series.description}</p>
           </div>
-          {isCreator && (
-            <Link to={`/anime/${series.id}/add-episode`}>
-              <Button text="Add Episode" variant="secondary" className="!flex items-center gap-2">
-                <PlusCircleIcon className="w-5 h-5"/>
+          <div className="flex flex-col sm:flex-row gap-2">
+             <Button onClick={handleShare} className="!flex items-center gap-2">
+                <ShareIcon className="w-5 h-5"/>
+                Share
               </Button>
-            </Link>
-          )}
+            {isCreator && (
+              <Link to={`/anime/${series.id}/add-episode`}>
+                <Button variant="secondary" className="!flex items-center gap-2 w-full">
+                  <PlusCircleIcon className="w-5 h-5"/>
+                  Add Episode
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
       
@@ -87,6 +106,7 @@ const SeriesDetailPage: React.FC = () => {
           )}
         </div>
       </div>
+       <ShareModal isOpen={isModalOpen} onClose={closeModal} shareData={shareData} />
     </PageTransition>
   );
 };

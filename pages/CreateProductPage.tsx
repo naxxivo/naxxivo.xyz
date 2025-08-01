@@ -1,3 +1,6 @@
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -198,7 +201,9 @@ const CreateProductPage: React.FC = () => {
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           <div className="pt-4">
-            <Button type="submit" text={loading ? "Listing..." : "List Product"} disabled={loading} className="w-full" />
+            <Button type="submit" disabled={loading} className="w-full">
+                {loading ? "Listing..." : "List Product"}
+            </Button>
           </div>
         </form>
       </div>

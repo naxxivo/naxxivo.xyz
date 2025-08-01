@@ -1,3 +1,6 @@
+
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -33,11 +36,12 @@ const UserCard: React.FC<{
             </div>
             {!isCurrentUser && (
               <Button
-                text={profile.is_following ? 'Unfollow' : 'Follow'}
                 onClick={() => onFollowToggle(profile.id, profile.is_following)}
                 variant={profile.is_following ? 'secondary' : 'primary'}
                 className="px-4 py-1 text-sm !min-w-[100px]"
-              />
+              >
+                  {profile.is_following ? "Unfollow" : "Follow"}
+              </Button>
             )}
         </div>
     );
@@ -144,7 +148,7 @@ const FollowsPage: React.FC = () => {
             <div className="max-w-4xl mx-auto">
                 {profile && (
                     <h1 className="font-display text-4xl font-bold text-center mb-4">
-                        <Link to={`/profile/${profile.id}`} className="hover:text-accent transition-colors">@{profile.username}'s</Link> Network
+                        <Link to={`/profile/${profile.id}`} className="hover:text-accent transition-colors">@{profile.username}</Link>'s Network
                     </h1>
                 )}
                 

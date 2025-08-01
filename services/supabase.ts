@@ -32,6 +32,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
   --- SCRIPT START ---
 
   -- Clean up existing tables in the correct order to avoid dependency errors
+  DROP TABLE IF EXISTS public.notifications CASCADE;
   DROP TABLE IF EXISTS public.likes CASCADE;
   DROP TABLE IF EXISTS public.comments CASCADE;
   DROP TABLE IF EXISTS public.posts CASCADE;
@@ -391,4 +392,98 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
   ('Electronics'), ('Fashion & Apparel'), ('Home & Garden'), ('Vehicles'), ('Toys & Hobbies'), ('Books & Media'), ('Collectibles & Art'), ('Other');
 
   --- MARKETPLACE UPGRADE SCRIPT END ---
+
+
+  ===================================================================================
+  !! IMPORTANT: RUN THIS SCRIPT TO ENABLE REAL-TIME NOTIFICATIONS !!
+  ===================================================================================
+  -- This script creates the notifications table and database triggers to
+  -- automatically generate notifications for key events.
+
+  --- NOTIFICATION SCRIPT START ---
+
+  -- 1. Create notifications table
+  CREATE TABLE public.notifications (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE, -- User who receives the notification
+      sender_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE, -- User who triggered the notification
+      type text NOT NULL, -- 'like', 'comment', 'follow'
+      post_id bigint REFERENCES public.posts(id) ON DELETE CASCADE,
+      is_read boolean NOT NULL DEFAULT false,
+      created_at timestamp with time zone NOT NULL DEFAULT now()
+  );
+  COMMENT ON TABLE public.notifications IS 'Stores user notifications for interactions.';
+
+  -- 2. Add RLS for notifications
+  ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "Users can view their own notifications." ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+  CREATE POLICY "Users can mark their own notifications as read." ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+
+  -- 3. Create Trigger Function
+  -- This function handles creating a notification and ensures a user doesn't get a notification for their own action.
+  CREATE OR REPLACE FUNCTION public.create_notification_on_action()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  AS $$
+  DECLARE
+      notification_type text;
+      recipient_id uuid;
+      post_author_id uuid;
+      followed_user_id uuid;
+  BEGIN
+      -- Determine notification type from trigger operation
+      IF TG_TABLE_NAME = 'likes' THEN
+          notification_type := 'like';
+          SELECT user_id INTO post_author_id FROM public.posts WHERE id = NEW.post_id;
+          recipient_id := post_author_id;
+      ELSIF TG_TABLE_NAME = 'comments' THEN
+          notification_type := 'comment';
+          SELECT user_id INTO post_author_id FROM public.posts WHERE id = NEW.post_id;
+          recipient_id := post_author_id;
+      ELSIF TG_TABLE_NAME = 'follows' THEN
+          notification_type := 'follow';
+          recipient_id := NEW.following_id;
+      END IF;
+
+      -- Do not create a notification if the user is acting on their own content/profile
+      IF TG_TABLE_NAME = 'likes' OR TG_TABLE_NAME = 'comments' THEN
+          IF NEW.user_id = recipient_id THEN
+              RETURN NULL;
+          END IF;
+      ELSIF TG_TABLE_NAME = 'follows' THEN
+          IF NEW.follower_id = recipient_id THEN
+              RETURN NULL;
+          END IF;
+      END IF;
+      
+      -- Insert the notification
+      INSERT INTO public.notifications (user_id, sender_id, type, post_id)
+      VALUES (
+          recipient_id,
+          COALESCE(NEW.user_id, NEW.follower_id), -- user_id from likes/comments, follower_id from follows
+          notification_type,
+          NEW.post_id
+      );
+
+      RETURN NEW;
+  END;
+  $$;
+
+  -- 4. Create Triggers for likes, comments, and follows
+  CREATE OR REPLACE TRIGGER on_new_like
+      AFTER INSERT ON public.likes
+      FOR EACH ROW
+      EXECUTE PROCEDURE public.create_notification_on_action();
+
+  CREATE OR REPLACE TRIGGER on_new_comment
+      AFTER INSERT ON public.comments
+      FOR EACH ROW
+      EXECUTE PROCEDURE public.create_notification_on_action();
+      
+  CREATE OR REPLACE TRIGGER on_new_follow
+      AFTER INSERT ON public.follows
+      FOR EACH ROW
+      EXECUTE PROCEDURE public.create_notification_on_action();
+
+  --- NOTIFICATION SCRIPT END ---
 */

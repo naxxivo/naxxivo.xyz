@@ -1,10 +1,13 @@
 
 
+
 import React from 'react';
 import PageTransition from '../components/ui/PageTransition';
 import { useTheme } from '../components/theme/ThemeProvider';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
+import { SunIcon, MoonIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
 import Switch from '../components/ui/Switch';
+import { useAuth } from '../App';
+import { Link } from 'react-router-dom';
 
 const colorPalettes = [
   { name: 'Sakura Pink', color: '#FF6584' },
@@ -17,6 +20,7 @@ const colorPalettes = [
 
 const SettingsPage: React.FC = () => {
   const { theme, setTheme, accentColor, setAccentColor, petalsEnabled, setPetalsEnabled } = useTheme();
+  const { user } = useAuth();
 
   return (
     <PageTransition>
@@ -27,7 +31,6 @@ const SettingsPage: React.FC = () => {
 
         <div className="bg-white/60 dark:bg-dark-card/70 backdrop-blur-lg p-8 rounded-2xl shadow-2xl shadow-primary-blue/20 space-y-8">
           
-          {/* Dark Mode Setting */}
           <div>
             <h2 className="text-2xl font-bold mb-4">Display Mode</h2>
             <div className="flex items-center space-x-4 bg-gray-200 dark:bg-dark-bg p-2 rounded-full">
@@ -51,7 +54,6 @@ const SettingsPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Accent Color Setting */}
           <div>
             <h2 className="text-2xl font-bold mb-4">Accent Color</h2>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
@@ -72,7 +74,6 @@ const SettingsPage: React.FC = () => {
             </p>
           </div>
 
-           {/* Visual Effects Setting */}
            <div>
             <h2 className="text-2xl font-bold mb-4">Visual Effects</h2>
             <div className="flex items-center justify-between bg-gray-200/50 dark:bg-dark-bg/50 p-4 rounded-lg">
@@ -87,7 +88,25 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-
+          {user?.role === 'admin' && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Administration</h2>
+              <Link to="/admin">
+                <div className="flex items-center justify-between bg-gray-200/50 dark:bg-dark-bg/50 p-4 rounded-lg hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors cursor-pointer">
+                  <div className="flex items-center space-x-4">
+                    <ShieldCheckIcon className="h-8 w-8 text-accent" />
+                    <div>
+                      <h3 className="font-semibold">Access Admin Panel</h3>
+                      <p className="text-sm text-secondary-purple/80 dark:text-dark-text/70">Manage users, content, and platform settings.</p>
+                    </div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </PageTransition>

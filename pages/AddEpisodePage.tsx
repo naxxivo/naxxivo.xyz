@@ -1,3 +1,6 @@
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -96,7 +99,7 @@ const AddEpisodePage: React.FC = () => {
               Add Episode
             </h1>
             <p className="text-lg text-secondary-purple/80 dark:text-dark-text/80">
-                For <Link to={`/anime/${seriesId}`} className="font-bold hover:underline">{series?.title}</Link>
+                For {series?.title}
             </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -120,7 +123,7 @@ const AddEpisodePage: React.FC = () => {
           />
            <Input 
             id="video_url"
-            label="Video URL"
+            label="Image or Video URL"
             type="url"
             value={formData.video_url}
             onChange={handleInputChange}
@@ -131,7 +134,9 @@ const AddEpisodePage: React.FC = () => {
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           <div className="pt-4">
-            <Button type="submit" text={loading ? "Adding..." : "Add Episode"} disabled={loading} className="w-full" />
+            <Button type="submit" disabled={loading} className="w-full">
+                {loading ? "Loading..." : "Add Episode"}
+            </Button>
           </div>
         </form>
       </div>
