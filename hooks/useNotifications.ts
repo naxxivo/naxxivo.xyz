@@ -1,10 +1,8 @@
 
-
-
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../services/supabase';
-import { useAuth } from '../App';
-import { NotificationWithSender, Profile } from '../types';
+import { supabase } from '@/locales/en/pages/services/supabase';
+import { useAuth } from '@/App';
+import { NotificationWithSender, Profile } from '@/types';
 import { PostgrestError } from '@supabase/supabase-js';
 
 export const useNotifications = () => {

@@ -1,18 +1,18 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Post, PostCardProps, PostRow } from '../../types';
-import { useAuth } from '../../App';
-import { supabase } from '../../services/supabase';
+import { Post, PostCardProps, PostRow } from '@/types';
+import { useAuth } from '@/App';
+import { supabase } from '@/locales/en/pages/services/supabase';
 import { HeartIcon as HeartIconSolid, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon, ShareIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline, ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/outline';
-import CommentSection from './CommentSection';
+import CommentSection from '@/components/post/CommentSection';
 import { AnimatePresence, motion } from 'framer-motion';
-import Button from '../ui/Button';
-import VideoPlayer from '../anime/VideoPlayer';
-import { usePostActions } from '../../hooks/usePostActions';
-import { useShare } from '../../hooks/useShare';
-import ShareModal from '../ui/ShareModal';
+import Button from '@/components/ui/Button';
+import VideoPlayer from '@/components/anime/VideoPlayer';
+import { usePostActions } from '@/hooks/usePostActions';
+import { useShare } from '@/hooks/useShare';
+import ShareModal from '@/components/ui/ShareModal';
 
 const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted, isSinglePostView = false }) => {
   const { user } = useAuth();

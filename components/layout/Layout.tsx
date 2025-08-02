@@ -1,9 +1,9 @@
 
 import React from 'react';
-import Header from './Header';
-import { usePetals } from '../../hooks/usePetals';
-import { useTheme } from '../theme/ThemeProvider';
-import FloatingMenu from './FloatingMenu';
+import Header from '@/components/layout/Header';
+import { usePetals } from '@/hooks/usePetals';
+import { useTheme } from '@/components/theme/ThemeProvider';
+import FloatingMenu from '@/components/layout/FloatingMenu';
 
 interface LayoutProps {
   children: React.ReactNode;

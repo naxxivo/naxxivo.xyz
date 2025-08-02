@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
-import { supabase } from '../services/supabase';
-import { useAuth } from '../App';
-import { Post, Like } from '../types';
+import { supabase } from '@/locales/en/pages/services/supabase';
+import { useAuth } from '@/App';
+import { Post, Like } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 export const usePostActions = (

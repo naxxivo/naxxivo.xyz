@@ -2,9 +2,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { SunIcon, MoonIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/solid';
-import { useTheme } from '../theme/ThemeProvider';
-import { useAuth } from '../../App';
-import NotificationBell from '../notifications/NotificationBell';
+import { useTheme } from '@/components/theme/ThemeProvider';
+import { useAuth } from '@/App';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 const Header: React.FC = () => {
   const { theme, setTheme } = useTheme();

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, Variants } from 'framer-motion';
-import { Ailment } from '../../types';
+import { Ailment } from '@/types';
 
 interface AilmentCardProps {
   ailment: Ailment;
