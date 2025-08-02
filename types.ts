@@ -16,6 +16,7 @@ export type Profile = {
   website_url: string | null;
   youtube_url: string | null;
   facebook_url: string | null;
+  xp_balance: number;
 };
 export type PostRow = {
   id: number;
@@ -69,34 +70,10 @@ export type AnimeEpisode = {
   video_url: string;
   created_at: string;
 };
-export type MarketCategory = {
-  id: number;
-  name: string;
-  created_at: string;
-};
-export type MarketProduct = {
-  id: number;
-  user_id: string;
-  category_id: number;
-  title: string;
-  description: string | null;
-  price: number;
-  currency: string;
-  location: string | null;
-  condition: string | null;
-  status: string;
-  created_at: string;
-};
-export type MarketProductImage = {
-  id: number;
-  product_id: number;
-  image_path: string;
-  created_at: string;
-};
 
 
 // Explicit Insert and Update types to fix 'never' and 'type instantiation' errors.
-type ProfileInsert = {
+export type ProfileInsert = {
   id: string;
   username: string;
   name?: string | null;
@@ -108,85 +85,62 @@ type ProfileInsert = {
   facebook_url?: string | null;
   address?: string | null;
   role?: string;
+  xp_balance?: number;
 };
-type ProfileUpdate = Partial<ProfileInsert>;
+export type ProfileUpdate = Partial<ProfileInsert>;
 
-type PostRowInsert = {
+export type PostRowInsert = {
   user_id: string;
   caption?: string | null;
   content_url?: string | null;
 };
-type PostRowUpdate = Partial<PostRowInsert>;
+export type PostRowUpdate = Partial<PostRowInsert>;
 
-type CommentInsert = {
+export type CommentInsert = {
   user_id: string;
   post_id: number;
   parent_comment_id?: number | null;
   content: string;
 };
-type CommentUpdate = Partial<CommentInsert>;
+export type CommentUpdate = Partial<CommentInsert>;
 
-type LikeInsert = {
+export type LikeInsert = {
   user_id: string;
   post_id: number;
 };
-type LikeUpdate = Partial<LikeInsert>;
+export type LikeUpdate = Partial<LikeInsert>;
 
-type MessageInsert = {
+export type MessageInsert = {
   sender_id: string;
   recipient_id: string;
   content: string;
   is_read?: boolean;
   status?: string;
 };
-type MessageUpdate = Partial<MessageInsert>;
+export type MessageUpdate = Partial<MessageInsert>;
 
-type FollowInsert = {
+export type FollowInsert = {
   follower_id: string;
   following_id: string;
 };
-type FollowUpdate = Partial<FollowInsert>;
+export type FollowUpdate = Partial<FollowInsert>;
 
-type AnimeSeriesInsert = {
+export type AnimeSeriesInsert = {
   user_id: string;
   title: string;
   description?: string | null;
   thumbnail_url?: string | null;
   banner_url?: string | null;
 };
-type AnimeSeriesUpdate = Partial<AnimeSeriesInsert>;
+export type AnimeSeriesUpdate = Partial<AnimeSeriesInsert>;
 
-type AnimeEpisodeInsert = {
+export type AnimeEpisodeInsert = {
   series_id: number;
   episode_number: number;
   title?: string | null;
   video_url: string;
 };
-type AnimeEpisodeUpdate = Partial<AnimeEpisodeInsert>;
-
-type MarketCategoryInsert = {
-  name: string;
-};
-type MarketCategoryUpdate = Partial<MarketCategoryInsert>;
-
-type MarketProductInsert = {
-  user_id: string;
-  category_id: number;
-  title: string;
-  description?: string | null;
-  price: number;
-  currency?: string;
-  location?: string | null;
-  condition?: string | null;
-  status?: string;
-};
-type MarketProductUpdate = Partial<MarketProductInsert>;
-
-type MarketProductImageInsert = {
-  product_id: number;
-  image_path: string;
-};
-type MarketProductImageUpdate = Partial<MarketProductImageInsert>;
+export type AnimeEpisodeUpdate = Partial<AnimeEpisodeInsert>;
 
 
 // By defining the Database structure manually with our own types, we avoid the "Type instantiation is excessively deep"
@@ -235,26 +189,18 @@ export type Database = {
         Insert: AnimeEpisodeInsert;
         Update: AnimeEpisodeUpdate;
       };
-      market_categories: {
-        Row: MarketCategory;
-        Insert: MarketCategoryInsert;
-        Update: MarketCategoryUpdate;
-      };
-      market_products: {
-        Row: MarketProduct;
-        Insert: MarketProductInsert;
-        Update: MarketProductUpdate;
-      };
-      market_product_images: {
-        Row: MarketProductImage;
-        Insert: MarketProductImageInsert;
-        Update: MarketProductImageUpdate;
-      };
     };
     Functions: {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      add_xp: {
+        Args: {
+          user_id_to_add: string,
+          xp_to_add: number
+        };
+        Returns: void;
       };
     };
   };
@@ -262,25 +208,11 @@ export type Database = {
 
 
 // Simple, flat types for composition to avoid deep instantiation errors
-type SimpleProfile = {
+export type SimpleProfile = {
   name: string | null;
   photo_url: string | null;
   username: string;
-};
-
-type SimpleSellerProfile = {
-  id: string;
-  name: string | null;
-  photo_url: string | null;
-  username: string;
-};
-
-type SimpleMarketCategory = {
-  name: string;
-};
-
-type SimpleProductImage = {
-  image_path: string;
+  xp_balance: number;
 };
 
 // Composite types using the base types
@@ -318,6 +250,7 @@ export type AppUser = {
   website_url: string | null;
   youtube_url: string | null;
   facebook_url: string | null;
+  xp_balance: number;
 };
 
 
@@ -339,77 +272,23 @@ export interface PostCardProps {
   onPostDeleted: (postId: number) => void;
 }
 
-export type CommentWithProfile = {
-  id: number;
-  user_id: string;
-  post_id: number;
-  parent_comment_id: number | null;
-  content: string;
-  created_at: string;
+export type CommentWithProfile = Comment & {
   profiles: SimpleProfile | null;
 };
 
-export type ChatPartner = {
-    id: string;
-    username: string;
-    created_at: string;
-    name: string | null;
-    bio: string | null;
-    photo_url: string | null;
-    cover_url: string | null;
-    address: string | null;
-    website_url: string | null;
-    youtube_url: string | null;
-    facebook_url: string | null;
+export type ChatPartner = Profile & {
     last_message: string | null;
     last_message_at: string | null;
 };
 
-export type MessageWithProfile = {
-    id: number;
-    sender_id: string;
-    recipient_id: string;
-    content: string;
-    is_read: boolean;
-    status: string;
-    created_at: string;
-    sender: SimpleProfile | null;
+export type MessageWithProfile = Message & {
+    sender?: SimpleProfile | null;
 };
 
-export type AnimeSeriesWithEpisodes = {
-    id: number;
-    user_id: string;
-    title: string;
-    description: string | null;
-    thumbnail_url: string | null;
-    banner_url: string | null;
-    created_at: string;
+export type AnimeSeriesWithEpisodes = AnimeSeries & {
     anime_episodes: AnimeEpisode[];
 };
 
-export type AnimeEpisodeWithSeries = {
-    id: number;
-    series_id: number;
-    episode_number: number;
-    title: string | null;
-    video_url: string;
-    created_at: string;
+export type AnimeEpisodeWithSeries = AnimeEpisode & {
     anime_series: AnimeSeries;
-};
-
-export type MarketProductWithDetails = {
-    id: number;
-    user_id: string;
-    category_id: number;
-    title: string;
-    description: string | null;
-    price: number;
-    currency: string;
-    location: string | null;
-    condition: string | null;
-    status: string;
-    created_at: string;
-    market_categories: SimpleMarketCategory | null;
-    profiles: SimpleSellerProfile | null;
-    market_product_images: SimpleProductImage[];
 };

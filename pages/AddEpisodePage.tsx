@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 import Button from '../components/ui/Button';
 import PageTransition from '../components/ui/PageTransition';
 import Input from '../components/ui/Input';
-import { AnimeSeries } from '../types';
+import { AnimeSeries, AnimeEpisodeInsert } from '../types';
 import { AnimeLoader } from '../components/ui/Loader';
 
 const AddEpisodePage: React.FC = () => {
@@ -26,12 +26,12 @@ const AddEpisodePage: React.FC = () => {
   useEffect(() => {
     const fetchSeries = async () => {
       if (!seriesId) return;
-      const { data, error } = await supabase.from('anime_series').select('id, user_id, title, description, thumbnail_url, banner_url, created_at').eq('id', seriesId).single();
+      const { data, error } = await supabase.from('anime_series').select('*').eq('id', seriesId).single();
       if (error || !data) {
         setError("Could not find the series to add an episode to.");
         navigate('/anime');
       } else {
-        setSeries(data as unknown as AnimeSeries);
+        setSeries(data as AnimeSeries);
       }
       setLoadingSeries(false);
     };
@@ -58,7 +58,7 @@ const AddEpisodePage: React.FC = () => {
     setError(null);
 
     try {
-      const episodePayload = {
+      const episodePayload: AnimeEpisodeInsert = {
         series_id: Number(seriesId),
         episode_number: Number(formData.episode_number),
         title: formData.title || null,
@@ -67,7 +67,7 @@ const AddEpisodePage: React.FC = () => {
 
       const { error: insertError } = await supabase
         .from('anime_episodes')
-        .insert([episodePayload]);
+        .insert(episodePayload);
         
       if (insertError) throw insertError;
 

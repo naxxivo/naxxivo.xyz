@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 import Button from '../components/ui/Button';
 import PageTransition from '../components/ui/PageTransition';
 import Input from '../components/ui/Input';
-import { AnimeSeries } from '../types';
+import { AnimeSeries, AnimeSeriesInsert } from '../types';
 
 const CreateSeriesPage: React.FC = () => {
   const { user } = useAuth();
@@ -39,16 +39,24 @@ const CreateSeriesPage: React.FC = () => {
     setError(null);
 
     try {
+      const seriesPayload: AnimeSeriesInsert = {
+        user_id: user.id,
+        title: formData.title,
+        description: formData.description || null,
+        thumbnail_url: formData.thumbnail_url || null,
+        banner_url: formData.banner_url || null,
+      };
+
       const { data, error: insertError } = await supabase
         .from('anime_series')
-        .insert([{ ...formData, user_id: user.id }])
+        .insert(seriesPayload)
         .select()
         .single();
         
       if (insertError) throw insertError;
 
       alert('Series created successfully!');
-      if(data) navigate(`/anime/${(data as unknown as AnimeSeries).id}`);
+      if(data) navigate(`/anime/${(data as AnimeSeries).id}`);
 
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');

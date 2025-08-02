@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Post, PostCardProps, PostRow } from '../../types';
+import { Post, PostCardProps, PostRow, PostRowUpdate } from '../../types';
 import { useAuth } from '../../App';
 import { supabase } from '../../services/supabase';
 import { HeartIcon as HeartIconSolid, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/solid';
@@ -46,10 +46,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
 
   const handleUpdate = async () => {
     if (!isOwner) return;
+    const updatePayload: PostRowUpdate = { caption: editedCaption };
     // We only update the caption, other data will be preserved from the original post object
     const { data, error } = await supabase
       .from('posts')
-      .update({ caption: editedCaption })
+      .update(updatePayload)
       .eq('id', post.id)
       .select('id, user_id, caption, content_url, created_at')
       .single();
@@ -60,7 +61,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
        // Create a correctly shaped Post object for the callback
        const updatedPostForState: Post = {
          ...post, // a copy of the old post data (profiles, counts, etc)
-         ...(data as unknown as PostRow), // the new raw post data (id, caption, etc)
+         ...(data as PostRow), // the new raw post data (id, caption, etc)
          caption: editedCaption, // ensure the optimistic caption is set
        };
       onPostUpdated(updatedPostForState);
@@ -152,7 +153,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
         <AnimatePresence>
             {showComments && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }}>
-                    <CommentSection postId={post.id} onCommentAdded={onCommentAdded} />
+                    <CommentSection postId={post.id} postAuthorId={post.user_id} onCommentAdded={onCommentAdded} />
                 </motion.div>
             )}
         </AnimatePresence>

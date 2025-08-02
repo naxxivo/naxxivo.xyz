@@ -1,14 +1,17 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../App';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     HomeIcon, CloudArrowUpIcon, UserGroupIcon, ChatBubbleLeftRightIcon, UserCircleIcon, 
-    Cog6ToothIcon, PlusIcon, XMarkIcon, TvIcon, ShoppingBagIcon, FilmIcon,
+    Cog6ToothIcon, TvIcon, FilmIcon, TrophyIcon,
     ArrowRightCircleIcon, ArrowLeftCircleIcon, ShieldCheckIcon
 } from '@heroicons/react/24/solid';
+import { useTheme } from '../theme/ThemeProvider';
+import { menuButtonComponents } from '../ui/menu-buttons';
 
 interface MenuItem {
     href?: string;
@@ -67,6 +70,7 @@ const FloatingMenu: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [pageIndex, setPageIndex] = useState(0);
     const { user } = useAuth();
+    const { menuButtonStyle } = useTheme();
     
     if (!user) {
         return null;
@@ -78,7 +82,7 @@ const FloatingMenu: React.FC = () => {
             { href: '/', icon: HomeIcon, label: 'Home' },
             { href: '/shorts', icon: FilmIcon, label: 'Shorts' },
             { href: '/anime', icon: TvIcon, label: 'Anime' },
-            { href: '/market', icon: ShoppingBagIcon, label: 'Marketplace' },
+            { href: '/leaderboard', icon: TrophyIcon, label: 'Leaderboard' },
             { action: () => setPageIndex(1), icon: ArrowRightCircleIcon, label: 'More...' }
         ],
         // Page 2: Social & Account
@@ -106,6 +110,8 @@ const FloatingMenu: React.FC = () => {
     }
 
     const currentItems = menuPages[pageIndex] || [];
+    
+    const MenuButtonComponent = menuButtonComponents[menuButtonStyle] || menuButtonComponents.default;
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex items-center justify-center">
@@ -126,25 +132,7 @@ const FloatingMenu: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={toggleMenu}
-                style={{ animation: !isOpen ? 'bob 3s ease-in-out infinite' : 'none' }}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-secondary-coral text-white flex items-center justify-center shadow-xl focus:outline-none relative z-10"
-            >
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={isOpen ? 'x' : 'plus'}
-                        initial={{ rotate: -45, opacity: 0, scale: 0.5 }}
-                        animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                        exit={{ rotate: 45, opacity: 0, scale: 0.5 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        {isOpen ? <XMarkIcon className="h-8 w-8" /> : <PlusIcon className="h-8 w-8" />}
-                    </motion.div>
-                </AnimatePresence>
-            </motion.button>
+            <MenuButtonComponent isOpen={isOpen} onClick={toggleMenu} />
         </div>
     );
 };

@@ -1,9 +1,7 @@
 
 
-
-
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Routes, Route, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { supabase } from './services/supabase';
 import type { Session, User } from '@supabase/supabase-js';
@@ -26,15 +24,12 @@ import SeriesDetailPage from './pages/SeriesDetailPage';
 import WatchEpisodePage from './pages/WatchEpisodePage';
 import CreateSeriesPage from './pages/CreateSeriesPage';
 import AddEpisodePage from './pages/AddEpisodePage';
-import MarketplacePage from './pages/MarketplacePage';
-import CreateProductPage from './pages/CreateProductPage';
-import ProductDetailPage from './pages/ProductDetailPage';
 import ShortsPage from './pages/ShortsPage';
 import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminPostsPage from './pages/admin/AdminPostsPage';
-import AdminMarketplacePage from './pages/admin/AdminMarketplacePage';
+import LeaderboardPage from './pages/LeaderboardPage';
 
 interface AuthContextType {
   session: Session | null;
@@ -87,13 +82,14 @@ const App: React.FC = () => {
         website_url: profileData.website_url || null,
         youtube_url: profileData.youtube_url || null,
         facebook_url: profileData.facebook_url || null,
+        xp_balance: profileData.xp_balance || 0,
     };
   };
 
   const fetchUserProfile = async (authUser: User): Promise<AppUser | null> => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username, name, bio, photo_url, cover_url, website_url, youtube_url, facebook_url, address, role, created_at')
+      .select('id, username, created_at, role, name, bio, photo_url, cover_url, address, website_url, youtube_url, facebook_url, xp_balance')
       .eq('id', authUser.id)
       .maybeSingle(); 
 
@@ -168,87 +164,78 @@ const App: React.FC = () => {
     <AuthContext.Provider value={authContextValue}>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          {/* Admin Routes */}
+          {/* Admin Routes with its own Layout */}
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="posts" element={<AdminPostsPage />} />
-            <Route path="market" element={<AdminMarketplacePage />} />
           </Route>
 
-          {/* User-facing Routes */}
-          <Route path="/*" element={
-            <Layout>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/profile/:userId" element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/messages" element={
-                  <ProtectedRoute>
-                    <MessagesPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/messages/:otherUserId" element={
-                  <ProtectedRoute>
-                    <MessagesPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/upload" element={
-                  <ProtectedRoute>
-                    <UploadPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/users" element={
-                  <ProtectedRoute>
-                    <UsersPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/profile/:userId/follows" element={
-                  <ProtectedRoute>
-                    <FollowsPage />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Shorts Route */}
-                <Route path="/shorts" element={<ShortsPage />} />
+          {/* User-facing Routes with main Layout */}
+          <Route element={<Layout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/profile/:userId" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <MessagesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages/:otherUserId" element={
+              <ProtectedRoute>
+                <MessagesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/upload" element={
+              <ProtectedRoute>
+                <UploadPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/leaderboard" element={
+              <ProtectedRoute>
+                <LeaderboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile/:userId/follows" element={
+              <ProtectedRoute>
+                <FollowsPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Shorts Route */}
+            <Route path="/shorts" element={<ShortsPage />} />
 
-                {/* Anime Routes */}
-                <Route path="/anime" element={<AnimeListPage />} />
-                <Route path="/anime/new" element={
-                  <ProtectedRoute>
-                    <CreateSeriesPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/anime/:seriesId" element={<SeriesDetailPage />} />
-                <Route path="/anime/:seriesId/add-episode" element={
-                  <ProtectedRoute>
-                    <AddEpisodePage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/anime/:seriesId/episode/:episodeNumber" element={<WatchEpisodePage />} />
-
-                {/* Marketplace Routes */}
-                <Route path="/market" element={<MarketplacePage />} />
-                <Route path="/market/new" element={
-                  <ProtectedRoute>
-                    <CreateProductPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/market/product/:productId" element={<ProductDetailPage />} />
-                
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Layout>
-          } />
+            {/* Anime Routes */}
+            <Route path="/anime" element={<AnimeListPage />} />
+            <Route path="/anime/new" element={
+              <ProtectedRoute>
+                <CreateSeriesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/anime/:seriesId" element={<SeriesDetailPage />} />
+            <Route path="/anime/:seriesId/add-episode" element={
+              <ProtectedRoute>
+                <AddEpisodePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/anime/:seriesId/episode/:episodeNumber" element={<WatchEpisodePage />} />
+            
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Routes>
       </AnimatePresence>
     </AuthContext.Provider>

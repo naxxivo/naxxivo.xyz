@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { Profile } from '../types';
@@ -10,6 +11,7 @@ import PageTransition from '../components/ui/PageTransition';
 import { EnvelopeIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../App';
 import { motion } from 'framer-motion';
+import RankBadge from '../components/ui/RankBadge';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -40,7 +42,10 @@ const UserCard: React.FC<{ profile: Profile }> = ({ profile }) => {
     };
 
     return (
-        <div className="bg-white/70 dark:bg-dark-card/70 backdrop-blur-sm rounded-2xl shadow-lg p-4 transition-all duration-300 ease-out transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary-pink/30 dark:hover:shadow-accent/20 will-change-transform text-center">
+        <div className="relative bg-white/70 dark:bg-dark-card/70 backdrop-blur-sm rounded-2xl shadow-lg p-4 transition-all duration-300 ease-out transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary-pink/30 dark:hover:shadow-accent/20 will-change-transform text-center">
+            <div className="absolute -top-3 -right-3">
+                <RankBadge xp={profile.xp_balance} size="sm" />
+            </div>
             <Link to={`/profile/${profile.id}`}>
                 <img 
                     src={profile.photo_url || defaultAvatar} 
@@ -72,7 +77,7 @@ const UsersPage: React.FC = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, name, photo_url, role, created_at, bio, cover_url, address, website_url, youtube_url, facebook_url')
+        .select('id, username, name, photo_url, role, xp_balance, created_at, bio, cover_url, address, website_url, youtube_url, facebook_url')
         .order('created_at', { ascending: false });
 
       if (error) {

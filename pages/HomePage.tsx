@@ -74,7 +74,7 @@ const HomePage: React.FC = () => {
       const userIds = [...new Set(postsData.map(p => p.user_id).filter(Boolean))];
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, username, name, photo_url')
+        .select('id, username, name, photo_url, xp_balance')
         .in('id', userIds);
 
       if (profilesError) {
@@ -91,10 +91,10 @@ const HomePage: React.FC = () => {
           .eq('user_id', user.id);
 
         if (likesError) console.error("Could not fetch user likes", likesError);
-        else if(likesData) likedPostIds = new Set((likesData as unknown as {post_id: number}[]).map(l => l.post_id));
+        else if(likesData) likedPostIds = new Set((likesData as {post_id: number}[]).map(l => l.post_id));
       }
 
-      const processedPosts: Post[] = (postsData as any[]).map(p => ({
+      const processedPosts: Post[] = postsData.map(p => ({
         ...p,
         profiles: profilesMap.get(p.user_id) || null,
         is_liked: likedPostIds.has(p.id)

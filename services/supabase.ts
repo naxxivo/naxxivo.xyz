@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types';
 
@@ -38,9 +39,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
   DROP TABLE IF EXISTS public.follows CASCADE;
   DROP TABLE IF EXISTS public.anime_episodes CASCADE;
   DROP TABLE IF EXISTS public.anime_series CASCADE;
-  DROP TABLE IF EXISTS public.market_product_images CASCADE;
-  DROP TABLE IF EXISTS public.market_products CASCADE;
-  DROP TABLE IF EXISTS public.market_categories CASCADE;
   DROP TABLE IF EXISTS public.profiles CASCADE;
 
   -- Table: profiles
@@ -55,6 +53,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
     youtube_url text,
     facebook_url text,
     address text,
+    xp_balance integer NOT NULL DEFAULT 0, -- Added for Ranking System
     created_at timestamp with time zone NOT NULL DEFAULT now()
   );
   COMMENT ON TABLE public.profiles IS 'Public profile information for each user.';
@@ -307,87 +306,28 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
   --- ADMIN PANEL SCRIPT END ---
 
-
   ===================================================================================
-  !! IMPORTANT: RUN THIS SCRIPT TO UPGRADE THE MARKETPLACE !!
+  !! IMPORTANT: RUN THIS SCRIPT TO ENABLE XP & RANKING SYSTEM !!
   ===================================================================================
-  -- This script drops the old marketplace tables and creates a new, advanced version
-  -- that supports direct image uploads.
 
-  --- MARKETPLACE UPGRADE SCRIPT START ---
+  This script adds a secure function to add XP to a user's profile. This prevents
+  users from updating their own XP and ensures all XP is granted by the system.
 
-  -- 1. Drop old tables
-  DROP TABLE IF EXISTS public.market_product_images CASCADE;
-  DROP TABLE IF EXISTS public.market_products CASCADE;
-  DROP TABLE IF EXISTS public.market_categories CASCADE;
+  --- XP/RANKING SCRIPT START ---
+  
+  CREATE OR REPLACE FUNCTION public.add_xp(user_id_to_add uuid, xp_to_add integer)
+  RETURNS void
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  AS $$
+  BEGIN
+      UPDATE public.profiles
+      SET xp_balance = xp_balance + xp_to_add
+      WHERE id = user_id_to_add;
+  END;
+  $$;
 
-  -- 2. Recreate tables with new structure
-  CREATE TABLE public.market_categories (
-      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      name text NOT NULL UNIQUE,
-      created_at timestamp with time zone NOT NULL DEFAULT now()
-  );
-  COMMENT ON TABLE public.market_categories IS 'Stores product categories for the marketplace.';
+  --- XP/RANKING SCRIPT END ---
 
-  CREATE TABLE public.market_products (
-      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-      category_id bigint NOT NULL REFERENCES public.market_categories(id) ON DELETE RESTRICT,
-      title text NOT NULL,
-      description text,
-      price numeric(10, 2) NOT NULL CHECK (price >= 0),
-      currency text NOT NULL DEFAULT 'USD',
-      location text,
-      condition text,
-      status text NOT NULL DEFAULT 'available',
-      created_at timestamp with time zone NOT NULL DEFAULT now()
-  );
-  COMMENT ON TABLE public.market_products IS 'Stores products listed in the marketplace.';
 
-  -- NOTE: This table now stores a PATH to the image in storage, not a public URL.
-  CREATE TABLE public.market_product_images (
-      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      product_id bigint NOT NULL REFERENCES public.market_products(id) ON DELETE CASCADE,
-      image_path text NOT NULL,
-      created_at timestamp with time zone NOT NULL DEFAULT now()
-  );
-  COMMENT ON TABLE public.market_product_images IS 'Stores image paths for each product in Supabase Storage.';
-
-  -- 3. Create Storage Bucket for product images
-  INSERT INTO storage.buckets (id, name, public)
-  VALUES ('product_images', 'product_images', true)
-  ON CONFLICT (id) DO NOTHING;
-
-  -- 4. Set RLS Policies for new tables
-  -- Categories
-  ALTER TABLE public.market_categories ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "Market categories are public." ON public.market_categories FOR SELECT USING (true);
-  -- Products
-  ALTER TABLE public.market_products ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "Market products are viewable by everyone." ON public.market_products FOR SELECT USING (true);
-  CREATE POLICY "Users can list their own products." ON public.market_products FOR INSERT WITH CHECK (auth.uid() = user_id);
-  CREATE POLICY "Users can update their own products." ON public.market_products FOR UPDATE USING (auth.uid() = user_id);
-  CREATE POLICY "Users can delete their own products." ON public.market_products FOR DELETE USING (auth.uid() = user_id OR public.is_admin());
-  CREATE POLICY "Admins can manage market products." ON public.market_products FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-  -- Images
-  ALTER TABLE public.market_product_images ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "Product images are viewable by everyone." ON public.market_product_images FOR SELECT USING (true);
-  CREATE POLICY "Users can add images to their own products." ON public.market_product_images FOR INSERT WITH CHECK (exists(select 1 from public.market_products where id = product_id and user_id = auth.uid()));
-  CREATE POLICY "Users can delete images from their own products." ON public.market_product_images FOR DELETE USING (exists(select 1 from public.market_products where id = product_id and user_id = auth.uid()));
-  CREATE POLICY "Admins can manage market product images." ON public.market_product_images FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-
-  -- 5. Set RLS Policies for Storage Bucket
-  -- Allow public read access
-  CREATE POLICY "Product images are publicly accessible." ON storage.objects FOR SELECT USING (bucket_id = 'product_images');
-  -- Allow authenticated users to upload images
-  CREATE POLICY "Authenticated users can upload product images." ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'product_images' AND auth.role() = 'authenticated');
-  -- Allow owners or admins to delete images
-  CREATE POLICY "Users can delete their own product images." ON storage.objects FOR DELETE USING (bucket_id = 'product_images' AND owner = auth.uid());
-  CREATE POLICY "Admins can delete any product image." ON storage.objects FOR DELETE USING (bucket_id = 'product_images' AND public.is_admin());
-
-  -- 6. Pre-populate categories
-  INSERT INTO public.market_categories (name) VALUES
-  ('Electronics'), ('Fashion & Apparel'), ('Home & Garden'), ('Vehicles'), ('Toys & Hobbies'), ('Books & Media'), ('Collectibles & Art'), ('Other');
-
-  --- MARKETPLACE UPGRADE SCRIPT END ---
 */

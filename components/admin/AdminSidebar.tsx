@@ -47,10 +47,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, setOpen }) => {
                     <NewspaperIcon className="h-6 w-6 flex-shrink-0" />
                     <span className={`ml-3 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:invisible'}`}>Posts</span>
                 </NavLink>
-                <NavLink to="/admin/market" className={navLinkClasses}>
-                    <ShoppingBagIcon className="h-6 w-6 flex-shrink-0" />
-                    <span className={`ml-3 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:invisible'}`}>Marketplace</span>
-                </NavLink>
             </nav>
             <div className="px-4 py-4 mt-auto border-t border-gray-200 dark:border-gray-700">
                  <Link to="/" className="flex items-center px-4 py-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg">

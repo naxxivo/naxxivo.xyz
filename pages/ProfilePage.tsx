@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../App';
 import { supabase } from '../services/supabase';
-import { Post, Profile } from '../types';
+import { Post, Profile, ProfileInsert, FollowInsert } from '../types';
 import PageTransition from '../components/ui/PageTransition';
 import { AnimeLoader } from '../components/ui/Loader';
 import PostCard from '../components/post/PostCard';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import RankBadge from '../components/ui/RankBadge';
+import XPBar from '../components/ui/XPBar';
 
 const SocialIcon: React.FC<{ href: string | null, children: React.ReactNode }> = ({ href, children }) => {
   if (!href) return null;
@@ -47,13 +49,13 @@ const ProfilePage: React.FC = () => {
       setLoadingProfile(true);
       setError(null);
 
-      const { data, error } = await supabase.from('profiles').select('id, username, name, bio, photo_url, cover_url, website_url, youtube_url, facebook_url, address, role, created_at').eq('id', userId).maybeSingle();
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
       
       if (error) {
         setError("Could not fetch this user's profile due to an error.");
       } else {
-        setProfile(data as unknown as Profile | null);
-        if (data) setProfileData(data as unknown as Profile);
+        setProfile(data as Profile | null);
+        if (data) setProfileData(data);
       }
       setLoadingProfile(false);
     };
@@ -89,7 +91,7 @@ const ProfilePage: React.FC = () => {
         let likedPostIds = new Set<number>();
         if (currentUser) {
            const { data: likesData } = await supabase.from('likes').select('post_id').eq('user_id', currentUser.id);
-           if (likesData) likedPostIds = new Set((likesData as unknown as {post_id: number}[]).map(l => l.post_id));
+           if (likesData) likedPostIds = new Set((likesData as {post_id: number}[]).map(l => l.post_id));
         }
         const processedPosts = (postsData as any[]).map(p => ({
           ...p,
@@ -97,6 +99,7 @@ const ProfilePage: React.FC = () => {
             username: profile.username,
             name: profile.name,
             photo_url: profile.photo_url,
+            xp_balance: profile.xp_balance,
           },
           is_liked: likedPostIds.has(p.id)
         })) as Post[];
@@ -150,11 +153,24 @@ const ProfilePage: React.FC = () => {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!isOwnProfile || !currentUser) return;
-      const { created_at, ...upsertData } = profileData;
+      if (!isOwnProfile || !currentUser || !profileData.username) return;
+
+      const payload: ProfileInsert = {
+        id: currentUser.id,
+        username: profileData.username,
+        name: profileData.name || null,
+        bio: profileData.bio || null,
+        photo_url: profileData.photo_url || null,
+        cover_url: profileData.cover_url || null,
+        address: profileData.address || null,
+        website_url: profileData.website_url || null,
+        youtube_url: profileData.youtube_url || null,
+        facebook_url: profileData.facebook_url || null,
+      };
+
       const { data: updatedProfile, error } = await supabase
         .from('profiles')
-        .upsert({ ...upsertData, id: currentUser.id })
+        .upsert(payload)
         .select()
         .single();
 
@@ -162,7 +178,7 @@ const ProfilePage: React.FC = () => {
         alert('Error saving profile: ' + error.message);
       } else if (updatedProfile) {
         await refreshUser();
-        setProfile(updatedProfile as unknown as Profile);
+        setProfile(updatedProfile as Profile);
         setIsEditing(false);
         alert('Profile saved successfully!');
       }
@@ -172,7 +188,8 @@ const ProfilePage: React.FC = () => {
     if (!currentUser || !userId || isFollowing) return;
     setIsFollowing(true);
     setFollowerCount(prev => prev + 1);
-    const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: userId }]);
+    const followPayload: FollowInsert = { follower_id: currentUser.id, following_id: userId };
+    const { error } = await supabase.from('follows').insert(followPayload);
     if (error) {
       setIsFollowing(false);
       setFollowerCount(prev => prev - 1);
@@ -250,9 +267,15 @@ const ProfilePage: React.FC = () => {
             <div className="relative text-white rounded-3xl shadow-2xl shadow-primary-blue/30 overflow-hidden mb-12">
                 <img src={displayProfile.cover_url || defaultCover} alt="Cover" className="w-full h-48 md:h-64 object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+                
                 <div className="absolute top-1/2 left-8 right-8 md:left-12 transform -translate-y-1/4 flex flex-col md:flex-row items-center gap-6">
-                     <img src={displayProfile.photo_url || defaultAvatar} alt="User avatar" className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg -mt-16 md:mt-0" />
-                    <div className="text-center md:text-left pt-4 md:pt-8">
+                    <div className="relative">
+                        <img src={displayProfile.photo_url || defaultAvatar} alt="User avatar" className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg -mt-16 md:mt-0" />
+                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2">
+                            <RankBadge xp={displayProfile.xp_balance} size="lg" />
+                        </div>
+                    </div>
+                    <div className="text-center md:text-left pt-16 md:pt-8 md:pl-4">
                         <h1 className="font-display text-4xl font-bold drop-shadow-lg">{displayProfile.name || displayProfile.username}</h1>
                         <p className="font-mono text-lg text-primary-yellow/80">@{displayProfile.username}</p>
                         <div className="mt-4 flex items-center justify-center md:justify-start space-x-6 text-white/90">
@@ -267,6 +290,7 @@ const ProfilePage: React.FC = () => {
                         <p className="mt-2 text-base opacity-90 max-w-xl">{displayProfile.bio}</p>
                     </div>
                 </div>
+
                 <div className="absolute top-4 right-4 flex items-center gap-4">
                     {isOwnProfile ? (
                       <Button text="Edit Profile" onClick={() => setIsEditing(true)} />
@@ -277,7 +301,12 @@ const ProfilePage: React.FC = () => {
                       </>
                     )}
                 </div>
-                 <div className="absolute bottom-4 right-4 flex items-center gap-4">
+
+                <div className="absolute bottom-4 left-4 right-4">
+                   <XPBar xp={displayProfile.xp_balance} />
+                </div>
+                 
+                 <div className="absolute bottom-4 right-4 hidden">
                     <SocialIcon href={displayProfile.website_url}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg></SocialIcon>
                      <SocialIcon href={displayProfile.youtube_url}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></SocialIcon>
                     <SocialIcon href={displayProfile.facebook_url}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v2.385z"/></svg></SocialIcon>

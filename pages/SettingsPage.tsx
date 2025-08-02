@@ -5,6 +5,7 @@ import PageTransition from '../components/ui/PageTransition';
 import { useTheme } from '../components/theme/ThemeProvider';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 import Switch from '../components/ui/Switch';
+import { menuButtonStyles } from '../components/ui/menu-buttons';
 
 const colorPalettes = [
   { name: 'Sakura Pink', color: '#FF6584' },
@@ -16,7 +17,7 @@ const colorPalettes = [
 ];
 
 const SettingsPage: React.FC = () => {
-  const { theme, setTheme, accentColor, setAccentColor, petalsEnabled, setPetalsEnabled } = useTheme();
+  const { theme, setTheme, accentColor, setAccentColor, petalsEnabled, setPetalsEnabled, menuButtonStyle, setMenuButtonStyle } = useTheme();
 
   return (
     <PageTransition>
@@ -85,6 +86,28 @@ const SettingsPage: React.FC = () => {
                     onChange={setPetalsEnabled} 
                 />
             </div>
+          </div>
+          
+           {/* Floating Menu Style */}
+           <div>
+            <h2 className="text-2xl font-bold mb-4">Floating Menu Style</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              {menuButtonStyles.map((style) => {
+                const ButtonComponent = style.component;
+                const isActive = menuButtonStyle === style.style;
+                return (
+                  <div key={style.style} className="flex flex-col items-center gap-2 cursor-pointer" onClick={() => setMenuButtonStyle(style.style)}>
+                    <div className={`relative w-24 h-24 flex items-center justify-center rounded-2xl transition-all ${isActive ? 'bg-accent/20 ring-2 ring-accent' : 'bg-gray-200/50 dark:bg-dark-bg/50'}`}>
+                       <ButtonComponent isOpen={false} onClick={() => {}} />
+                    </div>
+                    <p className={`font-semibold text-sm transition-colors ${isActive ? 'text-accent' : ''}`}>{style.name}</p>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-sm mt-2 text-secondary-purple/80 dark:text-dark-text/70">
+              Choose your favorite animated button for the floating menu.
+            </p>
           </div>
 
 

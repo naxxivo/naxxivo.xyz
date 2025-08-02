@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../App';
-import { Profile } from '../types';
+import { Profile, FollowInsert } from '../types';
 import PageTransition from '../components/ui/PageTransition';
 import { AnimeLoader } from '../components/ui/Loader';
 import Button from '../components/ui/Button';
@@ -62,7 +62,7 @@ const FollowsPage: React.FC = () => {
         setUserList([]);
 
         try {
-            const profileColumns = 'id, username, created_at, role, name, bio, photo_url, cover_url, address, website_url, youtube_url, facebook_url';
+            const profileColumns = 'id, username, created_at, role, name, bio, photo_url, cover_url, address, website_url, youtube_url, facebook_url, xp_balance';
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select(profileColumns)
@@ -70,7 +70,7 @@ const FollowsPage: React.FC = () => {
                 .single();
 
             if (profileError) throw new Error("Could not load user's profile.");
-            setProfile(profileData as unknown as Profile);
+            setProfile(profileData as Profile);
             
             const isFollowersTab = activeTab === 'followers';
             const queryTable = 'follows';
@@ -127,7 +127,8 @@ const FollowsPage: React.FC = () => {
                 const { error } = await supabase.from('follows').delete().match({ follower_id: currentUser.id, following_id: targetUserId });
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }]);
+                const followPayload: FollowInsert = { follower_id: currentUser.id, following_id: targetUserId };
+                const { error } = await supabase.from('follows').insert(followPayload);
                 if (error) throw error;
             }
         } catch (err: any) {

@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../App';
-import { CommentWithProfile } from '../../types';
+import { CommentWithProfile, CommentInsert } from '../../types';
 import { AnimeLoader } from '../ui/Loader';
 import { Link } from 'react-router-dom';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
+import { awardXp } from '../../services/xpService';
 
 interface CommentSectionProps {
   postId: number;
+  postAuthorId: string;
   onCommentAdded: () => void;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({ postId, onCommentAdded }) => {
+const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, onCommentAdded }) => {
   const { user } = useAuth();
   const [comments, setComments] = useState<CommentWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,9 +23,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, onCommentAdded 
   useEffect(() => {
     const fetchComments = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from('comments').select(`id, user_id, post_id, parent_comment_id, content, created_at, profiles(name, username, photo_url)`).eq('post_id', postId).order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('comments').select(`id, user_id, post_id, parent_comment_id, content, created_at, profiles(name, username, photo_url, xp_balance)`).eq('post_id', postId).order('created_at', { ascending: false });
       if (error) console.error('Error fetching comments:', error);
-      else setComments((data as unknown as CommentWithProfile[]) || []);
+      else setComments((data as CommentWithProfile[]) || []);
       setLoading(false);
     };
     fetchComments();
@@ -33,13 +35,22 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, onCommentAdded 
     e.preventDefault();
     if (!user || !newComment.trim()) return;
     setIsPosting(true);
-    const { data, error } = await supabase.from('comments').insert([{ post_id: postId, user_id: user.id, content: newComment.trim() }]).select('*, profiles(name, username, photo_url)').single();
+
+    const commentPayload: CommentInsert = { post_id: postId, user_id: user.id, content: newComment.trim() };
+    const { data, error } = await supabase.from('comments').insert(commentPayload).select('*, profiles(name, username, photo_url, xp_balance)').single();
+
     if (error) {
       alert('Failed to post comment.');
     } else if (data) {
-      setComments([data as unknown as CommentWithProfile, ...comments]);
+      setComments([data as CommentWithProfile, ...comments]);
       setNewComment('');
       onCommentAdded();
+      
+      // Award XP
+      await awardXp(user.id, 'CREATE_COMMENT');
+      if (user.id !== postAuthorId) {
+        await awardXp(postAuthorId, 'RECEIVE_COMMENT');
+      }
     }
     setIsPosting(false);
   };

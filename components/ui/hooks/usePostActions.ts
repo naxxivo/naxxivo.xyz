@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/App';
-import { Post, Like } from '@/types';
+import { Post, LikeInsert } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { awardXp } from '@/services/xpService';
 
 export const usePostActions = (
     post: Post
@@ -33,9 +34,13 @@ export const usePostActions = (
                     .match({ post_id: post.id, user_id: user.id });
                 if (error) throw error;
             } else {
+                const likePayload: LikeInsert = { post_id: post.id, user_id: user.id };
                 const { error } = await supabase.from('likes')
-                    .insert([{ post_id: post.id, user_id: user.id }]);
+                    .insert(likePayload);
                 if (error) throw error;
+                // Award XP on successful like
+                await awardXp(user.id, 'GIVE_LIKE');
+                await awardXp(post.user_id, 'RECEIVE_LIKE');
             }
         } catch (error: any) {
             console.error("Error toggling like:", error.message);
