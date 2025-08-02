@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AnimeSeries } from '@/types';
+import { AnimeSeries } from '../../types';
 import { motion } from 'framer-motion';
 
 interface AnimeSeriesCardProps {

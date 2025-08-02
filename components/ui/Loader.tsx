@@ -1,11 +1,7 @@
 
 import React from 'react';
 
-interface AnimeLoaderProps {
-  text?: string;
-}
-
-export const AnimeLoader: React.FC<AnimeLoaderProps> = ({ text }) => {
+export const AnimeLoader: React.FC = () => {
   const colors = ['#FF6584', '#6A5ACD', '#FFD166', '#FF8E72', '#2E294E'];
   return (
     <div className="flex flex-col items-center justify-center p-8">
@@ -21,8 +17,8 @@ export const AnimeLoader: React.FC<AnimeLoaderProps> = ({ text }) => {
           ></div>
         ))}
       </div>
-      <p className="font-display text-black dark:text-white mt-4 text-lg animate-pulse">
-        {text || 'Loading... 頑張って!'}
+      <p className="font-display text-black mt-4 text-lg animate-pulse">
+        Loading... 頑張って!
       </p>
     </div>
   );

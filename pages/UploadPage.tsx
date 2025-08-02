@@ -1,6 +1,3 @@
-
-
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -102,9 +99,7 @@ const UploadPage: React.FC = () => {
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           <div className="pt-4">
-            <Button type="submit" disabled={loading || !contentUrl} className="w-full">
-                {loading ? "Posting..." : "Post It!"}
-            </Button>
+            <Button type="submit" text={loading ? "Posting..." : "Post It!"} disabled={loading || !contentUrl} className="w-full" />
           </div>
         </form>
       </div>

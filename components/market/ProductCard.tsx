@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MarketProductWithDetails } from '@/types';
+import { MarketProductWithDetails } from '../../types';
 import { motion } from 'framer-motion';
-import { supabase } from '@/locales/en/pages/services/supabase';
+import { supabase } from '../../services/supabase';
 
 interface ProductCardProps {
   product: MarketProductWithDetails;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -9,8 +8,6 @@ import { AnimeLoader } from '../components/ui/Loader';
 import PostCard from '../components/post/PostCard';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { useShare } from '../hooks/useShare';
-import ShareModal from '../components/ui/ShareModal';
 
 const SocialIcon: React.FC<{ href: string | null, children: React.ReactNode }> = ({ href, children }) => {
   if (!href) return null;
@@ -38,8 +35,6 @@ const ProfilePage: React.FC = () => {
   const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loadingFollowStats, setLoadingFollowStats] = useState(true);
-  
-  const { share, isModalOpen, shareData, closeModal } = useShare();
   
   const isOwnProfile = currentUser?.id === userId;
   
@@ -79,17 +74,17 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchUserPosts = async () => {
-      if (!userId) return;
+      if (!userId || !profile) return;
       setLoadingPosts(true);
 
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`id, user_id, caption, content_url, created_at, profiles(username, name, photo_url), likes(count), comments(count)`)
+        .select(`id, user_id, caption, content_url, created_at, likes(count), comments(count)`)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
       if (postsError) {
-        console.error('Error fetching user posts:', postsError);
+        console.error('Error fetching user posts:', postsError.message);
       } else if (postsData) {
         let likedPostIds = new Set<number>();
         if (currentUser) {
@@ -98,6 +93,11 @@ const ProfilePage: React.FC = () => {
         }
         const processedPosts = (postsData as any[]).map(p => ({
           ...p,
+          profiles: {
+            username: profile.username,
+            name: profile.name,
+            photo_url: profile.photo_url,
+          },
           is_liked: likedPostIds.has(p.id)
         })) as Post[];
         setPosts(processedPosts);
@@ -106,7 +106,7 @@ const ProfilePage: React.FC = () => {
       setLoadingPosts(false);
     };
     fetchUserPosts();
-  }, [userId, currentUser]);
+  }, [userId, currentUser, profile]);
 
   useEffect(() => {
     const fetchFollowStats = async () => {
@@ -154,7 +154,7 @@ const ProfilePage: React.FC = () => {
       const { created_at, ...upsertData } = profileData;
       const { data: updatedProfile, error } = await supabase
         .from('profiles')
-        .upsert([{ ...upsertData, id: currentUser.id }])
+        .upsert({ ...upsertData, id: currentUser.id })
         .select()
         .single();
 
@@ -211,15 +211,6 @@ const ProfilePage: React.FC = () => {
     const { id, value } = e.target;
     setProfileData(prev => ({...prev, [id]: value}));
   };
-  
-  const handleShareProfile = () => {
-    if (!profile) return;
-    share({
-      title: `Check out ${profile.name || profile.username}'s profile on NAXXIVO!`,
-      text: profile.bio || `See what ${profile.name || profile.username} is sharing.`,
-      url: `${window.location.origin}/#/profile/${profile.id}`
-    });
-  };
 
   if (loadingProfile) return <AnimeLoader />;
   if (error) return <p className="text-center text-red-500 py-10">{error}</p>
@@ -231,7 +222,7 @@ const ProfilePage: React.FC = () => {
     <PageTransition>
       {isEditing ? (
         <div className="bg-white/80 dark:bg-dark-card/80 backdrop-blur-md p-8 rounded-3xl shadow-2xl shadow-primary-blue/30">
-          <h2 className="font-display text-3xl font-bold mb-6">{profile ? "Edit Profile" : "Create Your Profile"}</h2>
+          <h2 className="font-display text-3xl font-bold mb-6">{profile ? 'Edit Your Profile' : 'Create Your Profile'}</h2>
           <form onSubmit={handleProfileUpdate} className="space-y-4">
               <Input id="name" label="Display Name" value={profileData.name || ''} onChange={handleInputChange} />
               <Input id="username" label="Username" value={profileData.username || ''} onChange={handleInputChange} required disabled/>
@@ -248,8 +239,8 @@ const ProfilePage: React.FC = () => {
               <Input id="youtube_url" label="YouTube URL" value={profileData.youtube_url || ''} onChange={handleInputChange} placeholder="https://..." />
               <Input id="facebook_url" label="Facebook URL" value={profileData.facebook_url || ''} onChange={handleInputChange} placeholder="https://facebook.com/..." />
               <div className="flex justify-end space-x-4 pt-4">
-                  <Button type="button" variant="secondary" onClick={() => profile ? setIsEditing(false) : navigate('/')}>Cancel</Button>
-                  <Button type="submit">Save Changes</Button>
+                  <Button type="button" text="Cancel" variant="secondary" onClick={() => profile ? setIsEditing(false) : navigate('/')} />
+                  <Button type="submit" text="Save Changes" />
               </div>
           </form>
         </div>
@@ -278,13 +269,12 @@ const ProfilePage: React.FC = () => {
                 </div>
                 <div className="absolute top-4 right-4 flex items-center gap-4">
                     {isOwnProfile ? (
-                      <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+                      <Button text="Edit Profile" onClick={() => setIsEditing(true)} />
                     ) : (
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button onClick={isFollowing ? handleUnfollow : handleFollow} variant={isFollowing ? 'secondary' : 'primary'}>{isFollowing ? "Unfollow" : "Follow"}</Button>
-                        <Button onClick={handleStartConversation} variant="secondary">Message</Button>
-                        <Button onClick={handleShareProfile}>Share</Button>
-                      </div>
+                      <>
+                        <Button text={isFollowing ? 'Unfollow' : 'Follow'} onClick={isFollowing ? handleUnfollow : handleFollow} variant={isFollowing ? 'secondary' : 'primary'} />
+                        <Button text="Message" onClick={handleStartConversation} variant="secondary" />
+                      </>
                     )}
                 </div>
                  <div className="absolute bottom-4 right-4 flex items-center gap-4">
@@ -301,7 +291,6 @@ const ProfilePage: React.FC = () => {
                 )) : <p className="col-span-full text-center">{isOwnProfile ? "You haven't posted anything yet!" : "This user hasn't posted anything yet."}</p>}
               </div>
             )}
-             <ShareModal isOpen={isModalOpen} onClose={closeModal} shareData={shareData} />
           </>
         )
       )}

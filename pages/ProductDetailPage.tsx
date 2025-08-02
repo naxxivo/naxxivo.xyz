@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -8,9 +7,7 @@ import PageTransition from '../components/ui/PageTransition';
 import { AnimeLoader } from '../components/ui/Loader';
 import Button from '../components/ui/Button';
 import ImageCarousel from '../components/market/ImageCarousel';
-import { MapPinIcon, SparklesIcon, EnvelopeIcon, ShareIcon } from '@heroicons/react/24/solid';
-import { useShare } from '../hooks/useShare';
-import ShareModal from '../components/ui/ShareModal';
+import { MapPinIcon, TagIcon, SparklesIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
 
 const ProductDetailPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -19,7 +16,6 @@ const ProductDetailPage: React.FC = () => {
   const [product, setProduct] = useState<MarketProductWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { share, isModalOpen, shareData, closeModal } = useShare();
 
   const fetchProductDetails = async () => {
     if (!productId) return;
@@ -69,15 +65,6 @@ const ProductDetailPage: React.FC = () => {
             fetchProductDetails(); // Re-fetch to update the UI
         }
     }
-  };
-
-  const handleShare = () => {
-    if (!product) return;
-    share({
-      title: `For Sale: ${product.title} on NAXXIVO Marketplace`,
-      text: `${product.description?.substring(0, 100)}... ($${product.price})`,
-      url: `${window.location.origin}/#/market/product/${product.id}`
-    });
   };
 
   if (loading) return <AnimeLoader />;
@@ -131,37 +118,25 @@ const ProductDetailPage: React.FC = () => {
                 </div>
                 {isOwner && product.status === 'available' && (
                      <Button 
+                        text="Mark as Sold"
                         onClick={handleMarkAsSold} 
                         variant="secondary"
                         className="w-full mt-4"
-                    >
-                        Mark as Sold
-                    </Button>
+                    />
                 )}
                  {!isOwner && user && product.status === 'available' && (
-                    <div className="flex gap-2 mt-4">
-                      <Button 
-                          onClick={handleMessageSeller} 
-                          className="w-full !flex items-center justify-center gap-2"
-                      >
-                          <EnvelopeIcon className="w-5 h-5"/>
-                          Message
-                      </Button>
-                       <Button 
-                          onClick={handleShare} 
-                          variant="secondary"
-                          className="w-full !flex items-center justify-center gap-2"
-                      >
-                          <ShareIcon className="w-5 h-5"/>
-                          Share
-                      </Button>
-                    </div>
+                    <Button 
+                        text="Message Seller"
+                        onClick={handleMessageSeller} 
+                        className="w-full mt-4 !flex items-center justify-center gap-2"
+                    >
+                        <EnvelopeIcon className="w-5 h-5"/>
+                    </Button>
                 )}
              </div>
           )}
         </div>
       </div>
-      <ShareModal isOpen={isModalOpen} onClose={closeModal} shareData={shareData} />
     </PageTransition>
   );
 };
