@@ -1,23 +1,18 @@
-
-
-
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../App';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     HomeIcon, CloudArrowUpIcon, UserGroupIcon, ChatBubbleLeftRightIcon, UserCircleIcon, 
-    Cog6ToothIcon, TvIcon, FilmIcon, TrophyIcon,
-    ArrowRightCircleIcon, ArrowLeftCircleIcon, ShieldCheckIcon
+    Cog6ToothIcon, TvIcon, FilmIcon, TrophyIcon, ShieldCheckIcon
 } from '@heroicons/react/24/solid';
 import { useTheme } from '../theme/ThemeProvider';
 import { menuButtonComponents } from '../ui/menu-buttons';
 
 interface MenuItem {
-    href?: string;
+    href: string;
     icon: React.ElementType;
     label: string;
-    action?: () => void;
     adminOnly?: boolean;
 }
 
@@ -26,49 +21,66 @@ interface FloatingMenuItemProps {
     index: number;
     totalItems: number;
     radius: number;
+    onNavigate: () => void;
 }
 
-const FloatingMenuItem: React.FC<FloatingMenuItemProps> = ({ item, index, totalItems, radius }) => {
+const FloatingMenuItem: React.FC<FloatingMenuItemProps> = ({ item, index, totalItems, radius, onNavigate }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [isHovered, setIsHovered] = useState(false);
 
-    // Distribute items in a 90-degree arc (from 180 to 270 degrees)
-    const angle = Math.PI + (Math.PI / 2) * (index / (totalItems - 1));
-    const x = radius * Math.cos(angle);
-    const y = radius * Math.sin(angle);
+    // A 140-degree arc from a bit above 'left' to 'down'. (160 to 300 degrees)
+    // This creates a nice fan in the top-left direction from the button's position.
+    const startAngle = 160 * (Math.PI / 180);
+    const totalAngle = 140 * (Math.PI / 180);
+    const finalAngle = startAngle + (totalItems > 1 ? (index / (totalItems - 1)) * totalAngle : 0);
+    const x = radius * Math.cos(finalAngle);
+    const y = radius * Math.sin(finalAngle);
 
-    const isActive = item.href ? location.pathname.startsWith(item.href) : false;
+    const isActive = item.href === '/' ? location.pathname === '/' : location.pathname.startsWith(item.href);
 
-    const content = (
+    return (
         <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1, x, y }}
             exit={{ opacity: 0, scale: 0.5, x: 0, y: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20, delay: index * 0.05 }}
-            className="absolute group"
+            transition={{ type: 'spring', stiffness: 400, damping: 20, delay: (index * 0.04) }}
+            className="absolute"
+            onHoverStart={() => setIsHovered(true)}
+            onHoverEnd={() => setIsHovered(false)}
         >
-            <div
+            <motion.button
                 onClick={() => {
-                    if (item.action) item.action();
-                    if (item.href) navigate(item.href);
+                    navigate(item.href);
+                    onNavigate();
                 }}
-                className={`relative w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg
+                whileHover={{ scale: 1.2, transition: { type: 'spring', stiffness: 500, damping: 15 } }}
+                whileTap={{ scale: 1.1 }}
+                className={`relative w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-colors duration-300 shadow-lg
                 ${isActive ? 'bg-accent text-white scale-110' : 'bg-white dark:bg-dark-card text-secondary-purple dark:text-dark-text hover:bg-accent hover:text-white'}`}
+                aria-label={item.label}
             >
                 <item.icon className="h-7 w-7" />
-            </div>
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max px-3 py-1 bg-dark-bg text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                {item.label}
-            </div>
+            </motion.button>
+            <AnimatePresence>
+                {isHovered && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max px-3 py-1 bg-dark-bg text-white text-xs rounded-md pointer-events-none z-10"
+                    >
+                        {item.label}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
-    return content;
 };
-
 
 const FloatingMenu: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [pageIndex, setPageIndex] = useState(0);
     const { user } = useAuth();
     const { menuButtonStyle } = useTheme();
     
@@ -76,56 +88,38 @@ const FloatingMenu: React.FC = () => {
         return null;
     }
 
-    const allMenuItems: MenuItem[][] = [
-        // Page 1: Content
-        [
-            { href: '/', icon: HomeIcon, label: 'Home' },
-            { href: '/shorts', icon: FilmIcon, label: 'Shorts' },
-            { href: '/anime', icon: TvIcon, label: 'Anime' },
-            { href: '/leaderboard', icon: TrophyIcon, label: 'Leaderboard' },
-            { action: () => setPageIndex(1), icon: ArrowRightCircleIcon, label: 'More...' }
-        ],
-        // Page 2: Social & Account
-        [
-            { href: '/upload', icon: CloudArrowUpIcon, label: 'Upload' },
-            { href: '/messages', icon: ChatBubbleLeftRightIcon, label: 'Messages' },
-            { href: `/profile/${user.id}`, icon: UserCircleIcon, label: 'Profile' },
-            { href: '/users', icon: UserGroupIcon, label: 'Users' },
-            { href: '/settings', icon: Cog6ToothIcon, label: 'Settings' },
-            { href: '/admin', icon: ShieldCheckIcon, label: 'Admin Panel', adminOnly: true },
-            { action: () => setPageIndex(0), icon: ArrowLeftCircleIcon, label: 'Back' }
-        ]
+    const allMenuItems: MenuItem[] = [
+        { href: '/', icon: HomeIcon, label: 'Home' },
+        { href: '/shorts', icon: FilmIcon, label: 'Shorts' },
+        { href: '/anime', icon: TvIcon, label: 'Anime' },
+        { href: '/leaderboard', icon: TrophyIcon, label: 'Leaderboard' },
+        { href: '/upload', icon: CloudArrowUpIcon, label: 'Upload' },
+        { href: '/messages', icon: ChatBubbleLeftRightIcon, label: 'Messages' },
+        { href: `/profile/${user.id}`, icon: UserCircleIcon, label: 'Profile' },
+        { href: '/users', icon: UserGroupIcon, label: 'Users' },
+        { href: '/settings', icon: Cog6ToothIcon, label: 'Settings' },
+        { href: '/admin', icon: ShieldCheckIcon, label: 'Admin Panel', adminOnly: true },
     ];
     
-    const menuPages = allMenuItems.map(page => 
-        page.filter(item => !item.adminOnly || (item.adminOnly && user.role === 'admin'))
-    );
-    
-    const toggleMenu = () => {
-      if(isOpen) {
-        // If closing, always reset to the first page for next time
-        setTimeout(() => setPageIndex(0), 200);
-      }
-      setIsOpen(!isOpen);
-    }
-
-    const currentItems = menuPages[pageIndex] || [];
+    const menuItems = allMenuItems.filter(item => !item.adminOnly || (item.adminOnly && user.role === 'admin'));
     
     const MenuButtonComponent = menuButtonComponents[menuButtonStyle] || menuButtonComponents.default;
+    
+    const toggleMenu = () => setIsOpen(!isOpen);
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex items-center justify-center">
             <AnimatePresence>
                 {isOpen && (
-                    // Use key to force re-render and re-animate when pageIndex changes
-                    <motion.div key={pageIndex} className="relative">
-                        {currentItems.map((item, index) => (
+                    <motion.div className="relative">
+                        {menuItems.map((item, index) => (
                             <FloatingMenuItem
                                 key={item.label}
                                 item={item}
                                 index={index}
-                                totalItems={currentItems.length}
-                                radius={120}
+                                totalItems={menuItems.length}
+                                radius={130}
+                                onNavigate={toggleMenu}
                             />
                         ))}
                     </motion.div>

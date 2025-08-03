@@ -263,7 +263,7 @@ export type Post = {
   profiles: SimpleProfile | null;
   likes: { count: number }[];
   comments: { count: number }[];
-  is_liked: boolean;
+  is_liked?: boolean;
 };
 
 export interface PostCardProps {
@@ -282,7 +282,7 @@ export type ChatPartner = Profile & {
 };
 
 export type MessageWithProfile = Message & {
-    sender?: SimpleProfile | null;
+    sender: SimpleProfile | null;
 };
 
 export type AnimeSeriesWithEpisodes = AnimeSeries & {

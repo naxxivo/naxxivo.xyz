@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -109,23 +110,35 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setLoading(true);
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        if (session?.user) {
-          const userProfile = await fetchUserProfile(session.user);
-          setUser(userProfile);
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
+    const initializeSession = async () => {
+      // Get the initial session
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      if (session?.user) {
+        const userProfile = await fetchUserProfile(session.user);
+        setUser(userProfile);
       }
-    );
+      setLoading(false);
 
-    return () => {
-      authListener.subscription.unsubscribe();
+      // Set up the listener for future auth changes
+      const { data: authListener } = supabase.auth.onAuthStateChange(
+        async (_event, session) => {
+          setSession(session);
+          if (session?.user) {
+            const userProfile = await fetchUserProfile(session.user);
+            setUser(userProfile);
+          } else {
+            setUser(null);
+          }
+        }
+      );
+
+      return () => {
+        authListener?.subscription?.unsubscribe();
+      };
     };
+
+    initializeSession();
   }, []);
 
 
@@ -170,69 +183,69 @@ const App: React.FC = () => {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="posts" element={<AdminPostsPage />} />
           </Route>
+          
+          {/* Full-screen routes that do NOT use the main Layout */}
+          <Route path="shorts" element={<ShortsPage />} />
 
           {/* User-facing Routes with main Layout */}
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/profile/:userId" element={
+            <Route path="auth" element={<AuthPage />} />
+            <Route path="profile/:userId" element={
               <ProtectedRoute>
                 <ProfilePage />
               </ProtectedRoute>
             } />
-            <Route path="/messages" element={
+            <Route path="messages" element={
               <ProtectedRoute>
                 <MessagesPage />
               </ProtectedRoute>
             } />
-            <Route path="/messages/:otherUserId" element={
+            <Route path="messages/:otherUserId" element={
               <ProtectedRoute>
                 <MessagesPage />
               </ProtectedRoute>
             } />
-            <Route path="/upload" element={
+            <Route path="upload" element={
               <ProtectedRoute>
                 <UploadPage />
               </ProtectedRoute>
             } />
-            <Route path="/users" element={
+            <Route path="users" element={
               <ProtectedRoute>
                 <UsersPage />
               </ProtectedRoute>
             } />
-            <Route path="/leaderboard" element={
+            <Route path="leaderboard" element={
               <ProtectedRoute>
                 <LeaderboardPage />
               </ProtectedRoute>
             } />
-            <Route path="/settings" element={
+            <Route path="settings" element={
               <ProtectedRoute>
                 <SettingsPage />
               </ProtectedRoute>
             } />
-            <Route path="/profile/:userId/follows" element={
+            <Route path="profile/:userId/follows" element={
               <ProtectedRoute>
                 <FollowsPage />
               </ProtectedRoute>
             } />
-            
-            {/* Shorts Route */}
-            <Route path="/shorts" element={<ShortsPage />} />
 
             {/* Anime Routes */}
-            <Route path="/anime" element={<AnimeListPage />} />
-            <Route path="/anime/new" element={
+            <Route path="anime" element={<AnimeListPage />} />
+            <Route path="anime/new" element={
               <ProtectedRoute>
                 <CreateSeriesPage />
               </ProtectedRoute>
             } />
-            <Route path="/anime/:seriesId" element={<SeriesDetailPage />} />
-            <Route path="/anime/:seriesId/add-episode" element={
+            <Route path="anime/:seriesId" element={<SeriesDetailPage />} />
+            <Route path="anime/:seriesId/add-episode" element={
               <ProtectedRoute>
                 <AddEpisodePage />
               </ProtectedRoute>
             } />
-            <Route path="/anime/:seriesId/episode/:episodeNumber" element={<WatchEpisodePage />} />
+            <Route path="anime/:seriesId/episode/:episodeNumber" element={<WatchEpisodePage />} />
             
             <Route path="*" element={<NotFoundPage />} />
           </Route>
