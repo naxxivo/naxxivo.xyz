@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../App';
-import { supabase } from '../../services/supabase';
-import { AnimeLoader } from '../ui/Loader';
+import { useAuth } from '@/App';
+import { supabase } from '@/locales/en/pages/services/supabase';
+import { AnimeLoader } from '@/components/ui/Loader';
 
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, loading: authLoading } = useAuth();

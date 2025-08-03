@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
@@ -46,6 +48,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, setOpen }) => {
                 <NavLink to="/admin/posts" className={navLinkClasses}>
                     <NewspaperIcon className="h-6 w-6 flex-shrink-0" />
                     <span className={`ml-3 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:invisible'}`}>Posts</span>
+                </NavLink>
+                <NavLink to="/admin/market" className={navLinkClasses}>
+                    <ShoppingBagIcon className="h-6 w-6 flex-shrink-0" />
+                    <span className={`ml-3 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:invisible'}`}>Marketplace</span>
                 </NavLink>
             </nav>
             <div className="px-4 py-4 mt-auto border-t border-gray-200 dark:border-gray-700">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChatPartner } from '../../types';
+import { ChatPartner } from '@/types';
 
 interface ChatListProps {
   chatPartners: ChatPartner[];

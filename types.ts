@@ -1,7 +1,5 @@
 
 
-import type { User } from '@supabase/supabase-js';
-
 // Manually define Row types to break circular dependencies and fix type instability.
 export type Profile = {
   id: string;
@@ -16,7 +14,6 @@ export type Profile = {
   website_url: string | null;
   youtube_url: string | null;
   facebook_url: string | null;
-  xp_balance: number;
 };
 export type PostRow = {
   id: number;
@@ -53,6 +50,15 @@ export type Follow = {
   following_id: string;
   created_at: string;
 };
+export type NotificationRow = {
+  id: number;
+  user_id: string;
+  sender_id: string;
+  type: 'like' | 'comment' | 'follow';
+  post_id: number | null;
+  is_read: boolean;
+  created_at: string;
+};
 export type AnimeSeries = {
   id: number;
   user_id: string;
@@ -70,77 +76,86 @@ export type AnimeEpisode = {
   video_url: string;
   created_at: string;
 };
-
-
-// Explicit Insert and Update types to fix 'never' and 'type instantiation' errors.
-export type ProfileInsert = {
-  id: string;
-  username: string;
-  name?: string | null;
-  bio?: string | null;
-  photo_url?: string | null;
-  cover_url?: string | null;
-  website_url?: string | null;
-  youtube_url?: string | null;
-  facebook_url?: string | null;
-  address?: string | null;
-  role?: string;
-  xp_balance?: number;
+export type MarketCategory = {
+  id: number;
+  name: string;
+  created_at: string;
 };
-export type ProfileUpdate = Partial<ProfileInsert>;
-
-export type PostRowInsert = {
+export type MarketProduct = {
+  id: number;
   user_id: string;
-  caption?: string | null;
-  content_url?: string | null;
-};
-export type PostRowUpdate = Partial<PostRowInsert>;
-
-export type CommentInsert = {
-  user_id: string;
-  post_id: number;
-  parent_comment_id?: number | null;
-  content: string;
-};
-export type CommentUpdate = Partial<CommentInsert>;
-
-export type LikeInsert = {
-  user_id: string;
-  post_id: number;
-};
-export type LikeUpdate = Partial<LikeInsert>;
-
-export type MessageInsert = {
-  sender_id: string;
-  recipient_id: string;
-  content: string;
-  is_read?: boolean;
-  status?: string;
-};
-export type MessageUpdate = Partial<MessageInsert>;
-
-export type FollowInsert = {
-  follower_id: string;
-  following_id: string;
-};
-export type FollowUpdate = Partial<FollowInsert>;
-
-export type AnimeSeriesInsert = {
-  user_id: string;
+  category_id: number;
   title: string;
-  description?: string | null;
-  thumbnail_url?: string | null;
-  banner_url?: string | null;
+  description: string | null;
+  price: number;
+  currency: string;
+  location: string | null;
+  condition: string | null;
+  status: string;
+  created_at: string;
 };
-export type AnimeSeriesUpdate = Partial<AnimeSeriesInsert>;
+export type MarketProductImage = {
+  id: number;
+  product_id: number;
+  image_path: string;
+  created_at: string;
+};
 
-export type AnimeEpisodeInsert = {
-  series_id: number;
-  episode_number: number;
-  title?: string | null;
-  video_url: string;
+// Health Hub Types
+export type Remedy = {
+  name: string;
+  description: string;
 };
-export type AnimeEpisodeUpdate = Partial<AnimeEpisodeInsert>;
+
+export type Ailment = {
+  id: string;
+  name: string;
+  icon: React.ElementType;
+  description: string;
+  pharmaceuticalRemedies: Remedy[];
+  homeRemedies: Remedy[];
+};
+
+// --- INSERT AND UPDATE TYPES ---
+// By explicitly defining these, we prevent TypeScript from entering an infinite
+// recursion loop when inferring them from the complex schema, which fixes the
+// "type instantiation is excessively deep" and "is not assignable to never" errors.
+
+export type ProfileInsert = Omit<Profile, 'created_at'>;
+export type ProfileUpdate = Partial<Profile>;
+
+export type PostRowInsert = Partial<Omit<PostRow, 'id' | 'created_at'>> & Pick<PostRow, 'user_id'>;
+export type PostRowUpdate = Partial<PostRow>;
+
+export type LikeInsert = Pick<Like, 'user_id' | 'post_id'>;
+export type LikeUpdate = Partial<Like>;
+
+export type CommentInsert = Partial<Omit<Comment, 'id'|'created_at'>> & Pick<Comment, 'user_id' | 'post_id' | 'content'>;
+export type CommentUpdate = Partial<Comment>;
+
+export type MessageInsert = Pick<Message, 'sender_id' | 'recipient_id' | 'content'>;
+export type MessageUpdate = Partial<Message>;
+
+export type FollowInsert = Pick<Follow, 'follower_id' | 'following_id'>;
+export type FollowUpdate = Partial<Follow>;
+
+export type NotificationRowInsert = Pick<NotificationRow, 'user_id' | 'sender_id' | 'type'> & { post_id?: number | null };
+export type NotificationRowUpdate = Partial<NotificationRow>;
+
+export type AnimeSeriesInsert = Partial<Omit<AnimeSeries, 'id'|'created_at'>> & Pick<AnimeSeries, 'user_id' | 'title'>;
+export type AnimeSeriesUpdate = Partial<AnimeSeries>;
+
+export type AnimeEpisodeInsert = Partial<Omit<AnimeEpisode, 'id'|'created_at'>> & Pick<AnimeEpisode, 'series_id' | 'episode_number' | 'video_url'>;
+export type AnimeEpisodeUpdate = Partial<AnimeEpisode>;
+
+export type MarketCategoryInsert = Pick<MarketCategory, 'name'>;
+export type MarketCategoryUpdate = Partial<MarketCategory>;
+
+export type MarketProductInsert = Partial<Omit<MarketProduct, 'id'|'created_at'>> & Pick<MarketProduct, 'user_id' | 'category_id' | 'title' | 'price'>;
+export type MarketProductUpdate = Partial<MarketProduct>;
+
+export type MarketProductImageInsert = Pick<MarketProductImage, 'product_id' | 'image_path'>;
+export type MarketProductImageUpdate = Partial<MarketProductImage>;
 
 
 // By defining the Database structure manually with our own types, we avoid the "Type instantiation is excessively deep"
@@ -179,6 +194,11 @@ export type Database = {
         Insert: FollowInsert;
         Update: FollowUpdate;
       };
+      notifications: {
+        Row: NotificationRow;
+        Insert: NotificationRowInsert;
+        Update: NotificationRowUpdate;
+      };
       anime_series: {
         Row: AnimeSeries;
         Insert: AnimeSeriesInsert;
@@ -189,39 +209,46 @@ export type Database = {
         Insert: AnimeEpisodeInsert;
         Update: AnimeEpisodeUpdate;
       };
+      market_categories: {
+        Row: MarketCategory;
+        Insert: MarketCategoryInsert;
+        Update: MarketCategoryUpdate;
+      };
+      market_products: {
+        Row: MarketProduct;
+        Insert: MarketProductInsert;
+        Update: MarketProductUpdate;
+      };
+      market_product_images: {
+        Row: MarketProductImage;
+        Insert: MarketProductImageInsert;
+        Update: MarketProductImageUpdate;
+      };
     };
     Functions: {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
       };
-      add_xp: {
-        Args: {
-          user_id_to_add: string,
-          xp_to_add: number
-        };
-        Returns: void;
-      };
     };
+    Enums: {};
+    CompositeTypes: {};
   };
 };
 
 
-// Simple, flat types for composition to avoid deep instantiation errors
-export type SimpleProfile = {
-  name: string | null;
-  photo_url: string | null;
-  username: string;
-  xp_balance: number;
-};
-
 // Composite types using the base types
-// This was causing "Type instantiation is excessively deep" errors.
-// By defining the properties directly, we break the complex type dependency.
+
+// The `AppUser` type previously referenced the base `User` type from Supabase,
+// which caused a "Type instantiation is excessively deep" error. This new definition
+// is fully self-contained, breaking the complex type dependency and allowing the
+// compiler to correctly infer types for all database operations. This fixes the
+// cascade of 'never' errors in `insert` and `update` calls.
 export type AppUser = {
+  // Fields from Supabase User
   id: string;
-  app_metadata: { provider?: string; [key: string]: any; };
-  user_metadata: { [key: string]: any; };
+  app_metadata: { [key: string]: any };
+  user_metadata: { [key: string]: any };
   aud: string;
   confirmation_sent_at?: string;
   recovery_sent_at?: string;
@@ -237,10 +264,11 @@ export type AppUser = {
   email_confirmed_at?: string;
   phone_confirmed_at?: string;
   last_sign_in_at?: string;
-  role?: string;
   updated_at?: string;
-  identities?: any[];
-  // Custom profile fields
+  identities?: { [key: string]: any }[];
+
+  // Fields from our Profile table
+  role: string;
   username: string;
   name: string | null;
   bio: string | null;
@@ -250,30 +278,24 @@ export type AppUser = {
   website_url: string | null;
   youtube_url: string | null;
   facebook_url: string | null;
-  xp_balance: number;
 };
 
-
-export type Post = {
-  id: number;
-  user_id: string;
-  caption: string | null;
-  content_url: string | null;
-  created_at: string;
-  profiles: SimpleProfile | null;
+export type Post = PostRow & {
+  profiles: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
   likes: { count: number }[];
   comments: { count: number }[];
-  is_liked?: boolean;
+  is_liked: boolean;
 };
 
 export interface PostCardProps {
   post: Post;
-  onPostUpdated: (updatedPost: Post) => void;
-  onPostDeleted: (postId: number) => void;
+  onPostUpdated?: (updatedPost: Post) => void;
+  onPostDeleted?: (postId: number) => void;
+  isSinglePostView?: boolean;
 }
 
 export type CommentWithProfile = Comment & {
-  profiles: SimpleProfile | null;
+  profiles: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
 };
 
 export type ChatPartner = Profile & {
@@ -282,7 +304,11 @@ export type ChatPartner = Profile & {
 };
 
 export type MessageWithProfile = Message & {
-    sender: SimpleProfile | null;
+    sender: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
+};
+
+export type NotificationWithSender = NotificationRow & {
+  sender: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
 };
 
 export type AnimeSeriesWithEpisodes = AnimeSeries & {
@@ -291,4 +317,24 @@ export type AnimeSeriesWithEpisodes = AnimeSeries & {
 
 export type AnimeEpisodeWithSeries = AnimeEpisode & {
     anime_series: AnimeSeries;
+};
+
+export type MarketProductWithDetails = MarketProduct & {
+    market_categories: Pick<MarketCategory, 'name'> | null;
+    profiles: Pick<Profile, 'id' | 'name' | 'photo_url' | 'username'> | null;
+    market_product_images: Pick<MarketProductImage, 'image_path'>[];
+};
+
+// Share Feature Types
+export type ShareData = {
+  title: string;
+  text: string;
+  url: string;
+};
+
+export type UseShareReturn = {
+  share: (shareData: ShareData) => void;
+  isModalOpen: boolean;
+  shareData: ShareData | null;
+  closeModal: () => void;
 };

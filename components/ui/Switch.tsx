@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, Transition } from 'framer-motion';
 
 interface SwitchProps {
   checked: boolean;
@@ -8,8 +8,8 @@ interface SwitchProps {
 }
 
 const Switch: React.FC<SwitchProps> = ({ checked, onChange }) => {
-  const spring = {
-    type: 'spring' as const,
+  const spring: Transition = {
+    type: 'spring',
     stiffness: 700,
     damping: 30,
   };

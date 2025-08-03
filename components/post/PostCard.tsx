@@ -1,24 +1,29 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Post, PostCardProps, PostRow, PostRowUpdate } from '../../types';
-import { useAuth } from '../../App';
-import { supabase } from '../../services/supabase';
-import { HeartIcon as HeartIconSolid, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { Post, PostCardProps, PostRow } from '@/types';
+import { useAuth } from '@/App';
+import { supabase } from '@/locales/en/pages/services/supabase';
+import { HeartIcon as HeartIconSolid, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon, ShareIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline, ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/outline';
-import CommentSection from './CommentSection';
+import CommentSection from '@/components/post/CommentSection';
 import { AnimatePresence, motion } from 'framer-motion';
-import Button from '../ui/Button';
-import VideoPlayer from '../anime/VideoPlayer';
-import { usePostActions } from '../ui/hooks/usePostActions';
+import Button from '@/components/ui/Button';
+import VideoPlayer from '@/components/anime/VideoPlayer';
+import { usePostActions } from '@/hooks/usePostActions';
+import { useShare } from '@/hooks/useShare';
+import ShareModal from '@/components/ui/ShareModal';
 
-const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted, isSinglePostView = false }) => {
   const { user } = useAuth();
   const { likeCount, isLiked, commentCount, handleLike, onCommentAdded } = usePostActions(post);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(isSinglePostView);
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedCaption, setEditedCaption] = useState(post.caption || '');
   const menuRef = useRef<HTMLDivElement>(null);
+  
+  const { share, isModalOpen, shareData, closeModal } = useShare();
 
   const isOwner = user?.id === post.user_id;
 
@@ -33,7 +38,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
   }, []);
   
   const handleDelete = async () => {
-    if (!isOwner) return;
+    if (!isOwner || !onPostDeleted) return;
     if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
       const { error } = await supabase.from('posts').delete().eq('id', post.id);
       if (error) {
@@ -45,12 +50,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
   };
 
   const handleUpdate = async () => {
-    if (!isOwner) return;
-    const updatePayload: PostRowUpdate = { caption: editedCaption };
-    // We only update the caption, other data will be preserved from the original post object
+    if (!isOwner || !onPostUpdated) return;
     const { data, error } = await supabase
       .from('posts')
-      .update(updatePayload)
+      .update({ caption: editedCaption })
       .eq('id', post.id)
       .select('id, user_id, caption, content_url, created_at')
       .single();
@@ -58,16 +61,23 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
     if (error) {
       alert('Failed to update post: ' + error.message);
     } else if (data) {
-       // Create a correctly shaped Post object for the callback
        const updatedPostForState: Post = {
-         ...post, // a copy of the old post data (profiles, counts, etc)
-         ...(data as PostRow), // the new raw post data (id, caption, etc)
-         caption: editedCaption, // ensure the optimistic caption is set
+         ...post,
+         ...(data as unknown as PostRow),
+         caption: editedCaption,
        };
       onPostUpdated(updatedPostForState);
       setIsEditing(false);
       setShowMenu(false);
     }
+  };
+  
+  const handleShare = () => {
+    share({
+      title: `Check out this post on NAXXIVO!`,
+      text: post.caption || `By ${post.profiles?.name || post.profiles?.username}`,
+      url: `${window.location.origin}/#/post/${post.id}`
+    });
   };
 
   const defaultAvatar = `https://api.dicebear.com/8.x/pixel-art/svg?seed=${post.profiles?.username || 'default'}`;
@@ -77,6 +87,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
 
 
   return (
+    <>
     <div className="bg-white/70 dark:bg-dark-card/70 backdrop-blur-sm rounded-2xl shadow-lg p-1 transition-all duration-300 ease-out transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent/30 dark:hover:shadow-accent/20 will-change-transform">
       <div className="relative transform-style-3d">
         <div className="p-4 flex items-center space-x-3 border-b border-primary-yellow/30 dark:border-primary-yellow/20">
@@ -87,7 +98,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
             <Link to={`/profile/${post.user_id}`} className="font-bold text-secondary-purple dark:text-dark-text hover:text-accent transition-colors">{post.profiles?.name || post.profiles?.username}</Link>
             <p className="text-xs text-secondary-purple/70 dark:text-dark-text/70">{new Date(post.created_at).toLocaleString()}</p>
           </div>
-          {isOwner && (
+          {isOwner && !isSinglePostView && (
             <div className="relative" ref={menuRef}>
               <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-bg transition-colors">
                 <EllipsisVerticalIcon className="h-6 w-6" />
@@ -148,17 +159,22 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
             <ChatBubbleOvalLeftEllipsisIcon className="h-7 w-7 transform-gpu group-hover:scale-110 transition-transform" />
             <span className="font-semibold">{commentCount}</span>
           </button>
+           <button onClick={handleShare} className="flex items-center space-x-2 text-secondary-purple/80 dark:text-dark-text/80 hover:text-green-500 transition-colors group">
+            <ShareIcon className="h-7 w-7 transform-gpu group-hover:scale-110 transition-transform" />
+          </button>
         </div>
 
         <AnimatePresence>
             {showComments && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }}>
-                    <CommentSection postId={post.id} postAuthorId={post.user_id} onCommentAdded={onCommentAdded} />
+                    <CommentSection postId={post.id} onCommentAdded={onCommentAdded} />
                 </motion.div>
             )}
         </AnimatePresence>
       </div>
     </div>
+    <ShareModal isOpen={isModalOpen} onClose={closeModal} shareData={shareData} />
+    </>
   );
 };
 

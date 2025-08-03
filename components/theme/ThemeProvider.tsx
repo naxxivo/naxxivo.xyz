@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { MenuButtonStyle } from '../ui/menu-buttons';
 
 type Theme = 'light' | 'dark';
 
@@ -11,8 +10,6 @@ interface ThemeContextType {
   setAccentColor: (color: string) => void;
   petalsEnabled: boolean;
   setPetalsEnabled: (enabled: boolean) => void;
-  menuButtonStyle: MenuButtonStyle;
-  setMenuButtonStyle: (style: MenuButtonStyle) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -32,12 +29,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return savedPetals ? JSON.parse(savedPetals) : true;
   });
 
-  const [menuButtonStyle, setMenuButtonStyleState] = useState<MenuButtonStyle>(() => {
-    const savedStyle = localStorage.getItem('menuButtonStyle') as MenuButtonStyle;
-    return savedStyle || 'default';
-  });
-
-
   useEffect(() => {
     const root = window.document.documentElement;
     
@@ -53,10 +44,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Handle petals setting
     localStorage.setItem('petalsEnabled', JSON.stringify(petalsEnabled));
 
-    // Handle menu button style setting
-    localStorage.setItem('menuButtonStyle', menuButtonStyle);
-
-  }, [theme, accentColor, petalsEnabled, menuButtonStyle]);
+  }, [theme, accentColor, petalsEnabled]);
 
   const value = useMemo(() => ({
     theme,
@@ -65,9 +53,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAccentColor: setAccentColorState,
     petalsEnabled,
     setPetalsEnabled,
-    menuButtonStyle,
-    setMenuButtonStyle: setMenuButtonStyleState,
-  }), [theme, accentColor, petalsEnabled, menuButtonStyle]);
+  }), [theme, accentColor, petalsEnabled]);
 
 
   return (

@@ -1,11 +1,10 @@
 
-
 import React, { useState } from 'react';
-import { Post } from '../../types';
+import { Post } from '@/types';
 import { Link } from 'react-router-dom';
 import { HeartIcon as HeartIconSolid, ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline } from '@heroicons/react/24/outline';
-import { usePostActions } from '../ui/hooks/usePostActions';
+import { usePostActions } from '@/hooks/usePostActions';
 import { motion } from 'framer-motion';
 
 interface ShortsUIProps {

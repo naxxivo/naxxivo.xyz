@@ -1,132 +1,121 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../App';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/App';
 import { 
     HomeIcon, CloudArrowUpIcon, UserGroupIcon, ChatBubbleLeftRightIcon, UserCircleIcon, 
-    Cog6ToothIcon, TvIcon, FilmIcon, TrophyIcon, ShieldCheckIcon
+    Cog6ToothIcon, TvIcon, ShoppingBagIcon, FilmIcon,
+    ShieldCheckIcon, HeartIcon, PlusIcon, XMarkIcon
 } from '@heroicons/react/24/solid';
-import { useTheme } from '../theme/ThemeProvider';
-import { menuButtonComponents } from '../ui/menu-buttons';
-
-interface MenuItem {
-    href: string;
-    icon: React.ElementType;
-    label: string;
-    adminOnly?: boolean;
-}
-
-interface FloatingMenuItemProps {
-    item: MenuItem;
-    index: number;
-    totalItems: number;
-    radius: number;
-    onNavigate: () => void;
-}
-
-const FloatingMenuItem: React.FC<FloatingMenuItemProps> = ({ item, index, totalItems, radius, onNavigate }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [isHovered, setIsHovered] = useState(false);
-
-    // A 140-degree arc from a bit above 'left' to 'down'. (160 to 300 degrees)
-    // This creates a nice fan in the top-left direction from the button's position.
-    const startAngle = 160 * (Math.PI / 180);
-    const totalAngle = 140 * (Math.PI / 180);
-    const finalAngle = startAngle + (totalItems > 1 ? (index / (totalItems - 1)) * totalAngle : 0);
-    const x = radius * Math.cos(finalAngle);
-    const y = radius * Math.sin(finalAngle);
-
-    const isActive = item.href === '/' ? location.pathname === '/' : location.pathname.startsWith(item.href);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1, x, y }}
-            exit={{ opacity: 0, scale: 0.5, x: 0, y: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20, delay: (index * 0.04) }}
-            className="absolute"
-            onHoverStart={() => setIsHovered(true)}
-            onHoverEnd={() => setIsHovered(false)}
-        >
-            <motion.button
-                onClick={() => {
-                    navigate(item.href);
-                    onNavigate();
-                }}
-                whileHover={{ scale: 1.2, transition: { type: 'spring', stiffness: 500, damping: 15 } }}
-                whileTap={{ scale: 1.1 }}
-                className={`relative w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-colors duration-300 shadow-lg
-                ${isActive ? 'bg-accent text-white scale-110' : 'bg-white dark:bg-dark-card text-secondary-purple dark:text-dark-text hover:bg-accent hover:text-white'}`}
-                aria-label={item.label}
-            >
-                <item.icon className="h-7 w-7" />
-            </motion.button>
-            <AnimatePresence>
-                {isHovered && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 5 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max px-3 py-1 bg-dark-bg text-white text-xs rounded-md pointer-events-none z-10"
-                    >
-                        {item.label}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
-    );
-};
 
 const FloatingMenu: React.FC = () => {
-    const [isOpen, setIsOpen] = useState(false);
     const { user } = useAuth();
-    const { menuButtonStyle } = useTheme();
-    
-    if (!user) {
-        return null;
-    }
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const location = useLocation();
 
-    const allMenuItems: MenuItem[] = [
+    const menuItems = user ? [
         { href: '/', icon: HomeIcon, label: 'Home' },
         { href: '/shorts', icon: FilmIcon, label: 'Shorts' },
-        { href: '/anime', icon: TvIcon, label: 'Anime' },
-        { href: '/leaderboard', icon: TrophyIcon, label: 'Leaderboard' },
         { href: '/upload', icon: CloudArrowUpIcon, label: 'Upload' },
         { href: '/messages', icon: ChatBubbleLeftRightIcon, label: 'Messages' },
         { href: `/profile/${user.id}`, icon: UserCircleIcon, label: 'Profile' },
+        { href: '/anime', icon: TvIcon, label: 'Anime' },
+        { href: '/market', icon: ShoppingBagIcon, label: 'Marketplace' },
+        { href: '/health', icon: HeartIcon, label: 'Health Hub' },
         { href: '/users', icon: UserGroupIcon, label: 'Users' },
         { href: '/settings', icon: Cog6ToothIcon, label: 'Settings' },
-        { href: '/admin', icon: ShieldCheckIcon, label: 'Admin Panel', adminOnly: true },
-    ];
+        ...(user.role === 'admin' ? [{ href: '/admin', icon: ShieldCheckIcon, label: 'Admin Panel' }] : [])
+    ] : [];
     
-    const menuItems = allMenuItems.filter(item => !item.adminOnly || (item.adminOnly && user.role === 'admin'));
-    
-    const MenuButtonComponent = menuButtonComponents[menuButtonStyle] || menuButtonComponents.default;
-    
-    const toggleMenu = () => setIsOpen(!isOpen);
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Close menu on route change
+    useEffect(() => {
+        setIsOpen(false);
+    }, [location.pathname]);
+
+    if (!user) return null;
+
+    const navLinkClasses = (isActive: boolean) => 
+        `flex items-center w-full p-3 pl-4 rounded-lg text-base font-semibold transition-all duration-200 
+        ${isActive 
+            ? 'bg-accent text-white shadow-md' 
+            : 'text-secondary-purple dark:text-dark-text hover:bg-accent/10 dark:hover:bg-accent/20 hover:text-accent'}`
+        ;
+
+    const menuContainerVariants = {
+        hidden: { opacity: 0, y: 20, scale: 0.95 },
+        visible: { 
+            opacity: 1, 
+            y: 0, 
+            scale: 1,
+            transition: { 
+                when: "beforeChildren",
+                staggerChildren: 0.05
+            }
+        }
+    };
+
+    const menuItemVariants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: { opacity: 1, x: 0 }
+    };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center justify-center">
+        <div ref={menuRef} className="fixed bottom-8 right-8 z-50">
             <AnimatePresence>
                 {isOpen && (
-                    <motion.div className="relative">
-                        {menuItems.map((item, index) => (
-                            <FloatingMenuItem
-                                key={item.label}
-                                item={item}
-                                index={index}
-                                totalItems={menuItems.length}
-                                radius={130}
-                                onNavigate={toggleMenu}
-                            />
-                        ))}
+                    <motion.div
+                        variants={menuContainerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                        className="absolute bottom-20 right-0 w-64 bg-white/80 dark:bg-dark-card/80 backdrop-blur-lg rounded-2xl shadow-2xl p-2"
+                    >
+                       <div className="max-h-96 overflow-y-auto custom-scrollbar pr-1">
+                            <ul className="space-y-1">
+                                {menuItems.map(item => (
+                                    <motion.li key={item.label} variants={menuItemVariants}>
+                                        <NavLink to={item.href} className={({isActive}) => navLinkClasses(isActive)} end>
+                                            <item.icon className="h-6 w-6 mr-4 flex-shrink-0" />
+                                            {item.label}
+                                        </NavLink>
+                                    </motion.li>
+                                ))}
+                            </ul>
+                       </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            <MenuButtonComponent isOpen={isOpen} onClick={toggleMenu} />
+            <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-white shadow-lg shadow-accent/50"
+            >
+                <AnimatePresence initial={false} mode="wait">
+                    <motion.div
+                        key={isOpen ? 'x' : 'plus'}
+                        initial={{ rotate: -90, scale: 0 }}
+                        animate={{ rotate: 0, scale: 1 }}
+                        exit={{ rotate: 90, scale: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {isOpen ? <XMarkIcon className="h-8 w-8" /> : <PlusIcon className="h-8 w-8" />}
+                    </motion.div>
+                </AnimatePresence>
+            </motion.button>
         </div>
     );
 };
