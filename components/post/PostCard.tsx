@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Post, PostCardProps, PostRow } from '@/types';
+import { Post, PostCardProps, PostRow, PostRowUpdate } from '@/types';
 import { useAuth } from '@/App';
 import { supabase } from '@/locales/en/pages/services/supabase';
 import { HeartIcon as HeartIconSolid, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon, ShareIcon } from '@heroicons/react/24/solid';
@@ -10,8 +9,8 @@ import CommentSection from '@/components/post/CommentSection';
 import { AnimatePresence, motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import VideoPlayer from '@/components/anime/VideoPlayer';
-import { usePostActions } from '@/hooks/usePostActions';
-import { useShare } from '@/hooks/useShare';
+import { usePostActions } from '@/components/ui/hooks/usePostActions';
+import { useShare } from '@/components/ui/hooks/useShare';
 import ShareModal from '@/components/ui/ShareModal';
 
 const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted, isSinglePostView = false }) => {
@@ -51,9 +50,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted,
 
   const handleUpdate = async () => {
     if (!isOwner || !onPostUpdated) return;
+    const payload: PostRowUpdate = { caption: editedCaption };
     const { data, error } = await supabase
       .from('posts')
-      .update({ caption: editedCaption })
+      .update(payload)
       .eq('id', post.id)
       .select('id, user_id, caption, content_url, created_at')
       .single();

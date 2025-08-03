@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/locales/en/pages/services/supabase';
@@ -62,9 +63,9 @@ const MarketplacePage: React.FC = () => {
           .from('market_products')
           .select(`
             id, user_id, category_id, title, description, price, currency, location, condition, status, created_at,
-            market_categories (name),
-            profiles (id, name, photo_url, username),
-            market_product_images (image_path)
+            market_categories:market_categories!category_id(name),
+            profiles:profiles!user_id(id, name, photo_url, username),
+            market_product_images(image_path)
           `)
           .eq('status', 'available');
 
@@ -167,17 +168,17 @@ const MarketplacePage: React.FC = () => {
       
       {!loading && !error && (
         <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {products.map((p) => (
-            <motion.div key={p.id} variants={itemVariants}>
-              <ProductCard product={p} />
+          {products.map((product) => (
+            <motion.div key={product.id} variants={itemVariants}>
+                <ProductCard product={product} />
             </motion.div>
           ))}
-          {products.length === 0 && <p className="text-center col-span-full py-10">No products found. Try adjusting your search or be the first to list something!</p>}
+          {products.length === 0 && <p className="col-span-full text-center py-10">No products found. Try adjusting your search or be the first to list something!</p>}
         </motion.div>
       )}
     </PageTransition>

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationWithSender } from '@/types';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotifications } from '@/components/ui/hooks/useNotifications';
 import { HeartIcon, ChatBubbleOvalLeftEllipsisIcon, UserPlusIcon } from '@heroicons/react/24/solid';
 
 interface NotificationItemProps {

@@ -1,8 +1,9 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, Variants } from 'framer-motion';
-import { Ailment } from '@/types';
+import type { Ailment } from '@/components/ui/data/healthData';
 
 interface AilmentCardProps {
   ailment: Ailment;
@@ -22,7 +23,7 @@ const itemVariants: Variants = {
 
 const AilmentCard: React.FC<AilmentCardProps> = ({ ailment }) => {
   return (
-    <motion.div variants={itemVariants}>
+    <motion.div initial="hidden" animate="visible" variants={itemVariants}>
       <Link to={`/health/${ailment.id}`}>
         <div className="bg-white/70 dark:bg-dark-card/70 backdrop-blur-sm rounded-2xl shadow-lg p-6 transition-all duration-300 ease-out transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary-blue/30 dark:hover:shadow-accent/20 will-change-transform text-center h-full flex flex-col items-center justify-center">
           <div className="mb-4 p-4 bg-accent/20 rounded-full">

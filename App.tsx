@@ -1,9 +1,9 @@
 
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Routes, Route, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { supabase } from '@/locales/en/pages/services/supabase';
-import { Session } from '@supabase/supabase-js';
 import Layout from '@/components/layout/Layout';
 import HomePage from '@/locales/en/pages/HomePage';
 import AuthPage from '@/locales/en/pages/AuthPage';
@@ -36,9 +36,10 @@ import HealthHubPage from '@/locales/en/pages/HealthHubPage';
 import AilmentDetailPage from '@/locales/en/pages/AilmentDetailPage';
 import SinglePostPage from '@/locales/en/pages/SinglePostPage';
 import NotificationsPage from '@/locales/en/pages/NotificationsPage';
+import ComponentShowcasePage from '@/locales/en/pages/ComponentShowcasePage';
 
 interface AuthContextType {
-  session: Session | null;
+  session: any | null;
   user: AppUser | null;
   loading: boolean;
   logout: () => Promise<void>;
@@ -48,7 +49,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const App: React.FC = () => {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<any | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
@@ -115,7 +116,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    (supabase.auth as any).getSession().then(async ({ data: { session } }: any) => {
         setSession(session);
         if (session?.user) {
             const userProfile = await fetchUserProfile(session.user);
@@ -126,8 +127,8 @@ const App: React.FC = () => {
         setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (_event, newSession) => {
+    const { data: { subscription } } = (supabase.auth as any).onAuthStateChange(
+        async (_event: any, newSession: any) => {
             setSession(newSession);
             if (newSession?.user) {
                 const userProfile = await fetchUserProfile(newSession.user);
@@ -145,7 +146,7 @@ const App: React.FC = () => {
 
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await (supabase.auth as any).signOut();
     if (error) {
       console.error('Error logging out:', error);
       alert('Could not log out. Please try again.');
@@ -222,6 +223,11 @@ const App: React.FC = () => {
               <Route path="settings" element={
                 <ProtectedRoute>
                   <SettingsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="showcase" element={
+                <ProtectedRoute>
+                  <ComponentShowcasePage />
                 </ProtectedRoute>
               } />
                <Route path="notifications" element={

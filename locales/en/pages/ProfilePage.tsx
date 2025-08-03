@@ -1,16 +1,18 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/App';
 import { supabase } from '@/locales/en/pages/services/supabase';
-import { Post, Profile } from '@/types';
+import { Post, Profile, ProfileInsert, FollowInsert } from '@/types';
 import PageTransition from '@/components/ui/PageTransition';
 import { AnimeLoader } from '@/components/ui/Loader';
 import PostCard from '@/components/post/PostCard';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useShare } from '@/hooks/useShare';
+import { useShare } from '@/components/ui/hooks/useShare';
 import ShareModal from '@/components/ui/ShareModal';
+import { Squares2X2Icon } from '@heroicons/react/24/solid';
 
 const SocialIcon: React.FC<{ href: string | null, children: React.ReactNode }> = ({ href, children }) => {
   if (!href) return null;
@@ -150,11 +152,18 @@ const ProfilePage: React.FC = () => {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!isOwnProfile || !currentUser) return;
-      const { created_at, ...upsertData } = profileData;
+      if (!isOwnProfile || !currentUser || !profileData.username) return;
+      
+      const { created_at, role, ...restData } = profileData;
+      const payload: ProfileInsert = {
+          ...restData,
+          id: currentUser.id,
+          username: profileData.username
+      };
+
       const { data: updatedProfile, error } = await supabase
         .from('profiles')
-        .upsert([{ ...upsertData, id: currentUser.id }])
+        .upsert(payload)
         .select()
         .single();
 
@@ -172,7 +181,8 @@ const ProfilePage: React.FC = () => {
     if (!currentUser || !userId || isFollowing) return;
     setIsFollowing(true);
     setFollowerCount(prev => prev + 1);
-    const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: userId }]);
+    const payload: FollowInsert = { follower_id: currentUser.id, following_id: userId };
+    const { error } = await supabase.from('follows').insert(payload);
     if (error) {
       setIsFollowing(false);
       setFollowerCount(prev => prev - 1);
@@ -276,16 +286,21 @@ const ProfilePage: React.FC = () => {
                         <p className="mt-2 text-base opacity-90 max-w-xl">{displayProfile.bio}</p>
                     </div>
                 </div>
-                <div className="absolute top-4 right-4 flex items-center gap-4">
+                <div className="absolute top-4 right-4 flex items-center gap-2 flex-wrap justify-end">
                     {isOwnProfile ? (
-                      <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+                        <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
                     ) : (
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button onClick={isFollowing ? handleUnfollow : handleFollow} variant={isFollowing ? 'secondary' : 'primary'}>{isFollowing ? "Unfollow" : "Follow"}</Button>
-                        <Button onClick={handleStartConversation} variant="secondary">Message</Button>
-                        <Button onClick={handleShareProfile}>Share</Button>
-                      </div>
+                        <>
+                            <Button onClick={isFollowing ? handleUnfollow : handleFollow} variant={isFollowing ? 'secondary' : 'primary'}>{isFollowing ? "Unfollow" : "Follow"}</Button>
+                            <Button onClick={handleStartConversation} variant="secondary">Message</Button>
+                        </>
                     )}
+                     <Button onClick={handleShareProfile}>Share</Button>
+                     <Link to="/showcase">
+                        <Button variant="secondary" className="!flex items-center gap-2">
+                           <Squares2X2Icon className="w-5 h-5"/> Showcase
+                        </Button>
+                    </Link>
                 </div>
                  <div className="absolute bottom-4 right-4 flex items-center gap-4">
                     <SocialIcon href={displayProfile.website_url}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg></SocialIcon>

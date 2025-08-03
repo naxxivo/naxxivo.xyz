@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/App';
@@ -6,7 +5,7 @@ import { supabase } from '@/locales/en/pages/services/supabase';
 import Button from '@/components/ui/Button';
 import PageTransition from '@/components/ui/PageTransition';
 import Input from '@/components/ui/Input';
-import { AnimeSeries } from '@/types';
+import { AnimeSeries, AnimeEpisodeInsert } from '@/types';
 import { AnimeLoader } from '@/components/ui/Loader';
 
 const AddEpisodePage: React.FC = () => {
@@ -59,7 +58,7 @@ const AddEpisodePage: React.FC = () => {
     setError(null);
 
     try {
-      const episodePayload = {
+      const episodePayload: AnimeEpisodeInsert = {
         series_id: Number(seriesId),
         episode_number: Number(formData.episode_number),
         title: formData.title || null,
@@ -68,7 +67,7 @@ const AddEpisodePage: React.FC = () => {
 
       const { error: insertError } = await supabase
         .from('anime_episodes')
-        .insert([episodePayload]);
+        .insert(episodePayload);
         
       if (insertError) throw insertError;
 

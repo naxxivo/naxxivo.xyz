@@ -1,4 +1,3 @@
-
 import React from 'react';
 import PageTransition from '@/components/ui/PageTransition';
 import { useTheme } from '@/components/theme/ThemeProvider';
@@ -6,6 +5,7 @@ import { SunIcon, MoonIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
 import Switch from '@/components/ui/Switch';
 import { useAuth } from '@/App';
 import { Link } from 'react-router-dom';
+import NavigationStyleSelector from '@/components/ui/NavigationStyleSelector';
 
 const colorPalettes = [
   { name: 'Sakura Pink', color: '#FF6584' },
@@ -29,6 +29,8 @@ const SettingsPage: React.FC = () => {
 
         <div className="bg-white/60 dark:bg-dark-card/70 backdrop-blur-lg p-8 rounded-2xl shadow-2xl shadow-primary-blue/20 space-y-8">
           
+          <NavigationStyleSelector />
+
           <div>
             <h2 className="text-2xl font-bold mb-4">Display Mode</h2>
             <div className="flex items-center space-x-4 bg-gray-200 dark:bg-dark-bg p-2 rounded-full">

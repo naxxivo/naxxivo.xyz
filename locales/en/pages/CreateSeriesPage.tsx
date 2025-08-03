@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/App';
@@ -6,7 +5,7 @@ import { supabase } from '@/locales/en/pages/services/supabase';
 import Button from '@/components/ui/Button';
 import PageTransition from '@/components/ui/PageTransition';
 import Input from '@/components/ui/Input';
-import { AnimeSeries } from '@/types';
+import { AnimeSeries, AnimeSeriesInsert } from '@/types';
 
 const CreateSeriesPage: React.FC = () => {
   const { user } = useAuth();
@@ -40,9 +39,10 @@ const CreateSeriesPage: React.FC = () => {
     setError(null);
 
     try {
+      const payload: AnimeSeriesInsert = { ...formData, user_id: user.id };
       const { data, error: insertError } = await supabase
         .from('anime_series')
-        .insert([{ ...formData, user_id: user.id }])
+        .insert(payload)
         .select()
         .single();
         

@@ -8,7 +8,7 @@ import PageTransition from '@/components/ui/PageTransition';
 import { AnimeLoader } from '@/components/ui/Loader';
 import Button from '@/components/ui/Button';
 import { PlayIcon, PlusCircleIcon, ShareIcon } from '@heroicons/react/24/solid';
-import { useShare } from '@/hooks/useShare';
+import { useShare } from '@/components/ui/hooks/useShare';
 import ShareModal from '@/components/ui/ShareModal';
 
 const SeriesDetailPage: React.FC = () => {

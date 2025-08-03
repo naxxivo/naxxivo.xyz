@@ -18,10 +18,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <Link to={`/market/product/${product.id}`}>
-      <motion.div
-        whileHover={{ y: -8 }}
-        transition={{ type: 'spring', stiffness: 300 }}
-        className="bg-white/70 dark:bg-dark-card/70 backdrop-blur-sm rounded-2xl shadow-lg group cursor-pointer overflow-hidden h-full flex flex-col"
+      <div
+        className="bg-white/70 dark:bg-dark-card/70 backdrop-blur-sm rounded-2xl shadow-lg group cursor-pointer overflow-hidden h-full flex flex-col transition-transform duration-200 ease-out hover:-translate-y-2"
       >
         <div className="relative aspect-square w-full overflow-hidden">
             <img
@@ -42,7 +40,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <p className="text-xs text-secondary-purple/70 dark:text-dark-text/70 truncate">{product.location || 'No location'}</p>
           </div>
         </div>
-      </motion.div>
+      </div>
     </Link>
   );
 };

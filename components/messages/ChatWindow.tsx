@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/locales/en/pages/services/supabase';
 import { useAuth } from '@/App';
-import { Message, Profile, Database, MessageWithProfile } from '@/types';
+import { Message, Profile, Database, MessageWithProfile, MessageInsert } from '@/types';
 import { AnimeLoader } from '@/components/ui/Loader';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 
@@ -28,7 +27,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
       
       const { data, error } = await supabase
         .from('messages')
-        .select(`id, sender_id, recipient_id, content, is_read, status, created_at, sender:profiles!messages_sender_id_fkey(name, username, photo_url)`)
+        .select(`id, sender_id, recipient_id, content, is_read, status, created_at, sender:profiles!sender_id(name, username, photo_url)`)
         .or(`and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
@@ -76,7 +75,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ otherUserId }) => {
     if (newMessage.trim() === '' || !user) return;
     const content = newMessage.trim();
     setNewMessage('');
-    const { data: insertedMessage, error } = await supabase.from('messages').insert([{ sender_id: user.id, recipient_id: otherUserId, content: content }]).select('*, sender:profiles!messages_sender_id_fkey(name, username, photo_url)').single();
+    
+    const payload: MessageInsert = { sender_id: user.id, recipient_id: otherUserId, content: content };
+    const { data: insertedMessage, error } = await supabase.from('messages').insert(payload).select('*, sender:profiles!sender_id(name, username, photo_url)').single();
+
     if (error) {
       console.error('Error sending message:', error);
       setNewMessage(content);

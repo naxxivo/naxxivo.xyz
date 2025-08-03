@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/locales/en/pages/services/supabase';
@@ -28,7 +29,7 @@ const SinglePostPage: React.FC = () => {
                 .from('posts')
                 .select(`
                     id, user_id, caption, content_url, created_at,
-                    profiles (username, name, photo_url),
+                    profiles(username, name, photo_url),
                     likes(count),
                     comments(count)
                 `)

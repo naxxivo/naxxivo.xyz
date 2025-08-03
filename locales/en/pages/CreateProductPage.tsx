@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/App';
@@ -6,7 +5,7 @@ import { supabase } from '@/locales/en/pages/services/supabase';
 import Button from '@/components/ui/Button';
 import PageTransition from '@/components/ui/PageTransition';
 import Input from '@/components/ui/Input';
-import { MarketCategory } from '@/types';
+import { MarketCategory, MarketProductInsert, MarketProductImageInsert } from '@/types';
 import { PhotoIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
 const CreateProductPage: React.FC = () => {
@@ -81,17 +80,19 @@ const CreateProductPage: React.FC = () => {
     setError(null);
 
     try {
+      const productPayload: MarketProductInsert = {
+          user_id: user.id,
+          title: formData.title,
+          description: formData.description,
+          price: Number(formData.price),
+          category_id: Number(formData.category_id),
+          condition: formData.condition,
+          location: formData.location
+      };
+
       const { data: productData, error: productError } = await supabase
         .from('market_products')
-        .insert([{
-            user_id: user.id,
-            title: formData.title,
-            description: formData.description,
-            price: Number(formData.price),
-            category_id: Number(formData.category_id),
-            condition: formData.condition,
-            location: formData.location
-        }])
+        .insert(productPayload)
         .select()
         .single();
         
@@ -113,7 +114,7 @@ const CreateProductPage: React.FC = () => {
       }
 
       if (uploadedImagePaths.length > 0) {
-        const imagePayload = uploadedImagePaths.map(image_path => ({
+        const imagePayload: MarketProductImageInsert[] = uploadedImagePaths.map(image_path => ({
             product_id: productData.id,
             image_path
         }));

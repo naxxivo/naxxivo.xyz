@@ -1,6 +1,22 @@
 
-import { Ailment } from '@/types';
+
+import React from 'react';
 import { BeakerIcon, SunIcon, UserIcon, FireIcon, FaceSmileIcon, LightBulbIcon } from '@heroicons/react/24/solid';
+
+// Health Hub Types
+export interface Remedy {
+  name: string;
+  description: string;
+};
+
+export interface Ailment {
+  id: string;
+  name: string;
+  icon: React.ElementType;
+  description: string;
+  pharmaceuticalRemedies: Remedy[];
+  homeRemedies: Remedy[];
+};
 
 export const ailments: Ailment[] = [
   {

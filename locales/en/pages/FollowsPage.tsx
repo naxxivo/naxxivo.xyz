@@ -1,9 +1,10 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/locales/en/pages/services/supabase';
 import { useAuth } from '@/App';
-import { Profile } from '@/types';
+import { Profile, FollowInsert } from '@/types';
 import PageTransition from '@/components/ui/PageTransition';
 import { AnimeLoader } from '@/components/ui/Loader';
 import Button from '@/components/ui/Button';
@@ -77,7 +78,7 @@ const FollowsPage: React.FC = () => {
             const isFollowersTab = activeTab === 'followers';
             const queryTable = 'follows';
             const matchColumn = isFollowersTab ? 'following_id' : 'follower_id';
-            const selectProfile = isFollowersTab ? `profiles:profiles!follows_follower_id_fkey(${profileColumns})` : `profiles:profiles!follows_following_id_fkey(${profileColumns})`;
+            const selectProfile = isFollowersTab ? `profiles!follower_id(${profileColumns})` : `profiles!following_id(${profileColumns})`;
 
             const { data: followData, error: followError } = await supabase
                 .from(queryTable)
@@ -129,7 +130,8 @@ const FollowsPage: React.FC = () => {
                 const { error } = await supabase.from('follows').delete().match({ follower_id: currentUser.id, following_id: targetUserId });
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }]);
+                const payload: FollowInsert = { follower_id: currentUser.id, following_id: targetUserId };
+                const { error } = await supabase.from('follows').insert(payload);
                 if (error) throw error;
             }
         } catch (err: any) {

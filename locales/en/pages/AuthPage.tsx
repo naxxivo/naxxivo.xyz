@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/locales/en/pages/services/supabase';
@@ -15,6 +16,7 @@ const AuthPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -29,7 +31,8 @@ const AuthPage: React.FC = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setGoogleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
+    setFacebookLoading(false);
+    const { error } = await (supabase.auth as any).signInWithOAuth({
       provider: 'google',
     });
     if (error) {
@@ -39,16 +42,31 @@ const AuthPage: React.FC = () => {
     }
     // On success, Supabase handles the redirect, so no need to setLoading(false) here.
   };
+  
+  const handleFacebookLogin = async () => {
+    setLoading(true);
+    setFacebookLoading(true);
+    setGoogleLoading(false);
+    const { error } = await (supabase.auth as any).signInWithOAuth({
+      provider: 'facebook',
+    });
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      setFacebookLoading(false);
+    }
+  }
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setGoogleLoading(false);
+    setFacebookLoading(false);
     setError(null);
     setMessage(null);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await (supabase.auth as any).signInWithPassword({ email, password });
       if (error) setError(error.message);
       // On success, the onAuthStateChange listener in App.tsx will handle navigation.
     } else {
@@ -59,7 +77,7 @@ const AuthPage: React.FC = () => {
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { error } = await (supabase.auth as any).signUp({
         email,
         password,
         options: {
@@ -123,6 +141,19 @@ const AuthPage: React.FC = () => {
                 </svg>
                 {googleLoading ? "Redirecting..." : (isLogin ? "Sign in with Google" : "Sign up with Google")}
             </button>
+            
+            <button
+                type="button"
+                onClick={handleFacebookLogin}
+                disabled={loading}
+                className="w-full bg-[#1877F2] text-white hover:bg-[#166fe5] flex items-center justify-center gap-3 py-2 px-4 rounded-lg shadow-md transition-colors font-semibold border border-[#1877F2] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z"/>
+                </svg>
+                {facebookLoading ? "Redirecting..." : (isLogin ? "Sign in with Facebook" : "Sign up with Facebook")}
+            </button>
+
 
             <div className="flex items-center">
                 <hr className="flex-grow border-gray-300 dark:border-gray-600"/>
@@ -146,7 +177,7 @@ const AuthPage: React.FC = () => {
           
           <div className="pt-2">
             <Button type="submit" disabled={loading} className="w-full">
-                {loading && !googleLoading ? "Loading..." : (isLogin ? "Login with Email" : "Create Account with Email")}
+                {loading && !googleLoading && !facebookLoading ? "Loading..." : (isLogin ? "Login with Email" : "Create Account with Email")}
             </Button>
           </div>
         </form>

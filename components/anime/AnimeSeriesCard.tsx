@@ -13,10 +13,8 @@ const AnimeSeriesCard: React.FC<AnimeSeriesCardProps> = ({ series }) => {
 
   return (
     <Link to={`/anime/${series.id}`}>
-      <motion.div
-        whileHover={{ y: -8, scale: 1.05 }}
-        transition={{ type: 'spring', stiffness: 300 }}
-        className="relative rounded-xl overflow-hidden shadow-lg group cursor-pointer"
+      <div
+        className="relative rounded-xl overflow-hidden shadow-lg group cursor-pointer transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-105"
       >
         <img
           src={series.thumbnail_url || fallbackThumbnail}
@@ -27,7 +25,7 @@ const AnimeSeriesCard: React.FC<AnimeSeriesCardProps> = ({ series }) => {
         <div className="absolute bottom-0 left-0 p-4">
           <h3 className="font-bold text-white text-lg drop-shadow-md">{series.title}</h3>
         </div>
-      </motion.div>
+      </div>
     </Link>
   );
 };

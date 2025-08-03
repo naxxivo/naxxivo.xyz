@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/locales/en/pages/services/supabase';
@@ -30,8 +31,8 @@ const MessagesPage: React.FC = () => {
         .from('messages')
         .select(`
           id, sender_id, recipient_id, content, is_read, status, created_at,
-          sender:profiles!messages_sender_id_fkey(${profileColumns}),
-          recipient:profiles!messages_recipient_id_fkey(${profileColumns})
+          sender:profiles!sender_id(${profileColumns}),
+          recipient:profiles!recipient_id(${profileColumns})
         `)
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false });

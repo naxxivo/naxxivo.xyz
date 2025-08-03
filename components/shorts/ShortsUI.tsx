@@ -4,7 +4,7 @@ import { Post } from '@/types';
 import { Link } from 'react-router-dom';
 import { HeartIcon as HeartIconSolid, ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline } from '@heroicons/react/24/outline';
-import { usePostActions } from '@/hooks/usePostActions';
+import { usePostActions } from '@/components/ui/hooks/usePostActions';
 import { motion } from 'framer-motion';
 
 interface ShortsUIProps {
@@ -38,7 +38,7 @@ const ShortsUI: React.FC<ShortsUIProps> = ({ post }) => {
 
             {/* Side Actions */}
             <div className="absolute bottom-24 right-2 flex flex-col items-center gap-6 text-white">
-                 <motion.button whileTap={{ scale: 0.9 }} onClick={handleLike} className="flex flex-col items-center gap-1">
+                 <button onClick={handleLike} className="flex flex-col items-center gap-1 transition-transform active:scale-90">
                     {isLiked ? (
                          <HeartIconSolid className="w-8 h-8 text-accent drop-shadow-lg" />
                     ) : (
@@ -46,7 +46,7 @@ const ShortsUI: React.FC<ShortsUIProps> = ({ post }) => {
                     )}
                    
                     <span className="text-sm font-semibold drop-shadow">{likeCount}</span>
-                </motion.button>
+                </button>
 
                 <button className="flex flex-col items-center gap-1">
                     <ChatBubbleOvalLeftEllipsisIcon className="w-8 h-8 drop-shadow-lg" />

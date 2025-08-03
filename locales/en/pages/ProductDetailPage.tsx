@@ -1,15 +1,16 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/locales/en/pages/services/supabase';
-import { MarketProductWithDetails } from '@/types';
+import { MarketProductWithDetails, MarketProductUpdate } from '@/types';
 import { useAuth } from '@/App';
 import PageTransition from '@/components/ui/PageTransition';
 import { AnimeLoader } from '@/components/ui/Loader';
 import Button from '@/components/ui/Button';
 import ImageCarousel from '@/components/market/ImageCarousel';
 import { MapPinIcon, SparklesIcon, EnvelopeIcon, ShareIcon } from '@heroicons/react/24/solid';
-import { useShare } from '@/hooks/useShare';
+import { useShare } from '@/components/ui/hooks/useShare';
 import ShareModal from '@/components/ui/ShareModal';
 
 const ProductDetailPage: React.FC = () => {
@@ -29,9 +30,9 @@ const ProductDetailPage: React.FC = () => {
       .from('market_products')
       .select(`
           id, user_id, category_id, title, description, price, currency, location, condition, status, created_at,
-          market_categories (name),
-          profiles (id, name, photo_url, username),
-          market_product_images (id, image_path)
+          market_categories:market_categories!category_id(name),
+          profiles:profiles!user_id(id, name, photo_url, username),
+          market_product_images(id, image_path)
       `)
       .eq('id', productId)
       .single();
@@ -58,9 +59,10 @@ const ProductDetailPage: React.FC = () => {
     if (!product || !user || user.id !== product.user_id) return;
     const confirmed = window.confirm("Are you sure you want to mark this item as sold? This cannot be undone.");
     if (confirmed) {
+        const payload: MarketProductUpdate = { status: 'sold' };
         const { error } = await supabase
             .from('market_products')
-            .update({ status: 'sold' })
+            .update(payload)
             .eq('id', product.id);
         if (error) {
             alert("Failed to update status: " + error.message);

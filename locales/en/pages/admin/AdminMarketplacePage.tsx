@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/locales/en/pages/services/supabase';
 import { MarketProductWithDetails } from '@/types';
@@ -17,9 +18,9 @@ const AdminMarketplacePage: React.FC = () => {
             setLoading(true);
             let query = supabase.from('market_products').select(`
                 id, user_id, category_id, title, description, price, currency, location, condition, status, created_at,
-                profiles (name, username),
-                market_categories (name),
-                market_product_images (image_path)
+                profiles:profiles!user_id(name, username),
+                market_categories:market_categories!category_id(name),
+                market_product_images(image_path)
             `);
 
             if (searchTerm) {

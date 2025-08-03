@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 type Theme = 'light' | 'dark';
+export type MenuStyle = 'floating-action' | 'sidebar' | 'circular' | 'bottom-tab' | 'mega-menu' | 'three-dot' | 'tv-optimized';
 
 interface ThemeContextType {
   theme: Theme;
@@ -10,6 +10,8 @@ interface ThemeContextType {
   setAccentColor: (color: string) => void;
   petalsEnabled: boolean;
   setPetalsEnabled: (enabled: boolean) => void;
+  menuStyle: MenuStyle;
+  setMenuStyle: (style: MenuStyle) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -29,6 +31,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return savedPetals ? JSON.parse(savedPetals) : true;
   });
 
+  const [menuStyle, setMenuStyleState] = useState<MenuStyle>(() => {
+    return (localStorage.getItem('menuStyle') as MenuStyle) || 'floating-action';
+  });
+
   useEffect(() => {
     const root = window.document.documentElement;
     
@@ -43,8 +49,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // Handle petals setting
     localStorage.setItem('petalsEnabled', JSON.stringify(petalsEnabled));
+    
+    // Handle menu style
+    localStorage.setItem('menuStyle', menuStyle);
 
-  }, [theme, accentColor, petalsEnabled]);
+  }, [theme, accentColor, petalsEnabled, menuStyle]);
 
   const value = useMemo(() => ({
     theme,
@@ -53,7 +62,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAccentColor: setAccentColorState,
     petalsEnabled,
     setPetalsEnabled,
-  }), [theme, accentColor, petalsEnabled]);
+    menuStyle,
+    setMenuStyle: setMenuStyleState,
+  }), [theme, accentColor, petalsEnabled, menuStyle]);
 
 
   return (
