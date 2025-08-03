@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
-import { supabase } from '@/locales/en/pages/services/supabase';
-import { useAuth } from '@/App';
-import { Post, Like } from '@/types';
+import { supabase } from '@/locales/en/pages/services/supabase.ts';
+import { useAuth } from '@/App.tsx';
+import { Post, Like, LikeInsert } from '@/types.ts';
 import { useNavigate } from 'react-router-dom';
 
 export const usePostActions = (
@@ -34,8 +34,9 @@ export const usePostActions = (
                     .match({ post_id: post.id, user_id: user.id });
                 if (error) throw error;
             } else {
+                const payload: LikeInsert = { post_id: post.id, user_id: user.id };
                 const { error } = await supabase.from('likes')
-                    .insert([{ post_id: post.id, user_id: user.id }]);
+                    .insert(payload);
                 if (error) throw error;
             }
         } catch (error: any) {

@@ -2,9 +2,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { SunIcon, MoonIcon, ArrowLeftOnRectangleIcon, Bars3Icon } from '@heroicons/react/24/solid';
-import { useTheme } from '@/components/theme/ThemeProvider';
-import { useAuth } from '@/App';
-import NotificationBell from '@/components/notifications/NotificationBell';
+import { useTheme } from '@/components/theme/ThemeProvider.tsx';
+import { useAuth } from '@/App.tsx';
+import NotificationBell from '@/components/notifications/NotificationBell.tsx';
 
 interface HeaderProps {
   onMenuButtonClick?: () => void;

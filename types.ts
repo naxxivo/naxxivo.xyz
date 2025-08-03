@@ -1,6 +1,4 @@
 
-
-
 // Manually define Row types to break circular dependencies and fix type instability.
 export interface Profile {
   id: string;
@@ -77,30 +75,46 @@ export interface AnimeEpisode {
   video_url: string;
   created_at: string;
 };
+export interface UserSite {
+    id: string; // uuid, matches user_id
+    user_id: string;
+    published: boolean;
+    created_at: string;
+    updated_at: string;
+}
+export interface SiteComponent {
+    id: number;
+    site_id: string; // uuid
+    component_type: 'text' | 'image' | 'video';
+    component_data: { [key: string]: any };
+    grid_position: { x: number, y: number, w: number, h: number, i: string };
+    created_at: string;
+}
 export interface MarketCategory {
-  id: number;
-  name: string;
-  created_at: string;
-};
+    id: number;
+    name: string;
+    created_at: string;
+}
 export interface MarketProduct {
-  id: number;
-  user_id: string;
-  category_id: number;
-  title: string;
-  description: string | null;
-  price: number;
-  currency: string;
-  location: string | null;
-  condition: string | null;
-  status: string;
-  created_at: string;
-};
+    id: number;
+    user_id: string;
+    category_id: number;
+    title: string;
+    description: string | null;
+    price: number;
+    currency: string;
+    location: string | null;
+    condition: string;
+    status: 'available' | 'sold';
+    created_at: string;
+}
 export interface MarketProductImage {
-  id: number;
-  product_id: number;
-  image_path: string;
-  created_at: string;
-};
+    id: number;
+    product_id: number;
+    image_path: string;
+    created_at: string;
+}
+
 
 // --- INSERT AND UPDATE TYPES ---
 // By explicitly defining these, we prevent TypeScript from entering an infinite
@@ -142,7 +156,6 @@ export interface PostRowUpdate {
   user_id?: string;
   caption?: string | null;
   content_url?: string | null;
-  created_at?: string;
 };
 
 export interface LikeInsert {
@@ -152,7 +165,6 @@ export interface LikeInsert {
 export interface LikeUpdate {
   user_id?: string;
   post_id?: number;
-  created_at?: string;
 };
 
 export interface CommentInsert {
@@ -166,7 +178,6 @@ export interface CommentUpdate {
   post_id?: number;
   parent_comment_id?: number | null;
   content?: string;
-  created_at?: string;
 };
 
 export interface MessageInsert {
@@ -182,7 +193,6 @@ export interface MessageUpdate {
   content?: string;
   is_read?: boolean;
   status?: string;
-  created_at?: string;
 };
 
 export interface FollowInsert {
@@ -192,7 +202,6 @@ export interface FollowInsert {
 export interface FollowUpdate {
   follower_id?: string;
   following_id?: string;
-  created_at?: string;
 };
 
 export interface NotificationRowInsert {
@@ -208,7 +217,6 @@ export interface NotificationRowUpdate {
   type?: 'like' | 'comment' | 'follow';
   post_id?: number | null;
   is_read?: boolean;
-  created_at?: string;
 };
 
 export interface AnimeSeriesInsert {
@@ -224,7 +232,6 @@ export interface AnimeSeriesUpdate {
   description?: string | null;
   thumbnail_url?: string | null;
   banner_url?: string | null;
-  created_at?: string;
 };
 
 export interface AnimeEpisodeInsert {
@@ -238,50 +245,65 @@ export interface AnimeEpisodeUpdate {
   episode_number?: number;
   title?: string | null;
   video_url?: string;
-  created_at?: string;
 };
+
+export interface UserSiteInsert {
+    id: string;
+    user_id: string;
+    published?: boolean;
+}
+export interface UserSiteUpdate {
+    published?: boolean;
+}
+
+export interface SiteComponentInsert {
+    site_id: string;
+    component_type: 'text' | 'image' | 'video';
+    component_data: { [key: string]: any };
+    grid_position: { x: number, y: number, w: number, h: number, i: string };
+}
+export interface SiteComponentUpdate {
+    component_type?: 'text' | 'image' | 'video';
+    component_data?: { [key: string]: any };
+    grid_position?: { x: number, y: number, w: number, h: number, i: string };
+}
 
 export interface MarketCategoryInsert {
-  name: string;
-};
+    name: string;
+}
 export interface MarketCategoryUpdate {
-  name?: string;
-  created_at?: string;
-};
+    name?: string;
+}
 
 export interface MarketProductInsert {
-  user_id: string;
-  category_id: number;
-  title: string;
-  price: number;
-  description?: string | null;
-  currency?: string;
-  location?: string | null;
-  condition?: string | null;
-  status?: string;
-};
+    user_id: string;
+    category_id: number;
+    title: string;
+    description?: string | null;
+    price: number;
+    currency?: string;
+    location?: string | null;
+    condition?: string;
+    status?: 'available' | 'sold';
+}
 export interface MarketProductUpdate {
-  user_id?: string;
-  category_id?: number;
-  title?: string;
-  description?: string | null;
-  price?: number;
-  currency?: string;
-  location?: string | null;
-  condition?: string | null;
-  status?: string;
-  created_at?: string;
-};
+    category_id?: number;
+    title?: string;
+    description?: string | null;
+    price?: number;
+    currency?: string;
+    location?: string | null;
+    condition?: string;
+    status?: 'available' | 'sold';
+}
 
 export interface MarketProductImageInsert {
-  product_id: number;
-  image_path: string;
-};
+    product_id: number;
+    image_path: string;
+}
 export interface MarketProductImageUpdate {
-  product_id?: number;
-  image_path?: string;
-  created_at?: string;
-};
+    image_path?: string;
+}
 
 
 // By defining the Database structure manually with our own types, we avoid the "Type instantiation is excessively deep"
@@ -342,6 +364,18 @@ export interface Database {
         Row: AnimeEpisode;
         Insert: AnimeEpisodeInsert;
         Update: AnimeEpisodeUpdate;
+        Relationships: [];
+      };
+      user_sites: {
+        Row: UserSite;
+        Insert: UserSiteInsert;
+        Update: UserSiteUpdate;
+        Relationships: [];
+      };
+      site_components: {
+        Row: SiteComponent;
+        Insert: SiteComponentInsert;
+        Update: SiteComponentUpdate;
         Relationships: [];
       };
       market_categories: {
@@ -493,48 +527,28 @@ export interface NotificationWithSender {
     sender: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
 };
 
-export interface AnimeSeriesWithEpisodes {
-    // From AnimeSeries
-    id: number;
-    user_id: string;
-    title: string;
-    description: string | null;
-    thumbnail_url: string | null;
-    banner_url: string | null;
-    created_at: string;
+export interface AnimeSeriesWithEpisodes extends AnimeSeries {
     // Joined data
     anime_episodes: AnimeEpisode[];
 };
 
-export interface AnimeEpisodeWithSeries {
-    // From AnimeEpisode
-    id: number;
-    series_id: number;
-    episode_number: number;
-    title: string | null;
-    video_url: string;
-    created_at: string;
+export interface AnimeEpisodeWithSeries extends AnimeEpisode {
     // Joined data
-    anime_series: AnimeSeries;
+    anime_series: {
+      id: number;
+      user_id: string;
+      title: string;
+      description: string | null;
+      thumbnail_url: string | null;
+      banner_url: string | null;
+      created_at: string;
+    };
 };
 
-export interface MarketProductWithDetails {
-    // From MarketProduct
-    id: number;
-    user_id: string;
-    category_id: number;
-    title: string;
-    description: string | null;
-    price: number;
-    currency: string;
-    location: string | null;
-    condition: string | null;
-    status: string;
-    created_at: string;
-    // Joined data
+export interface MarketProductWithDetails extends MarketProduct {
     market_categories: Pick<MarketCategory, 'name'> | null;
     profiles: Pick<Profile, 'id' | 'name' | 'photo_url' | 'username'> | null;
-    market_product_images: Pick<MarketProductImage, 'image_path'>[];
+    market_product_images: Pick<MarketProductImage, 'id' | 'image_path'>[];
 };
 
 // Share Feature Types

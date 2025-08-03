@@ -1,17 +1,18 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Post, PostCardProps, PostRow, PostRowUpdate } from '@/types';
-import { useAuth } from '@/App';
-import { supabase } from '@/locales/en/pages/services/supabase';
+import { Post, PostCardProps, PostRow, PostRowUpdate } from '@/types.ts';
+import { useAuth } from '@/App.tsx';
+import { supabase } from '@/locales/en/pages/services/supabase.ts';
 import { HeartIcon as HeartIconSolid, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon, ShareIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline, ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/outline';
-import CommentSection from '@/components/post/CommentSection';
+import CommentSection from '@/components/post/CommentSection.tsx';
 import { AnimatePresence, motion } from 'framer-motion';
-import Button from '@/components/ui/Button';
-import VideoPlayer from '@/components/anime/VideoPlayer';
-import { usePostActions } from '@/components/ui/hooks/usePostActions';
-import { useShare } from '@/components/ui/hooks/useShare';
-import ShareModal from '@/components/ui/ShareModal';
+import Button from '@/components/ui/Button.tsx';
+import VideoPlayer from '@/components/anime/VideoPlayer.tsx';
+import { usePostActions } from '@/components/ui/hooks/usePostActions.ts';
+import { useShare } from '@/components/ui/hooks/useShare.ts';
+import ShareModal from '@/components/ui/ShareModal.tsx';
 
 const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted, isSinglePostView = false }) => {
   const { user } = useAuth();

@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { ShareData, UseShareReturn } from '@/types';
+import { ShareData, UseShareReturn } from '@/types.ts';
 
 export const useShare = (): UseShareReturn => {
     const [isModalOpen, setIsModalOpen] = useState(false);

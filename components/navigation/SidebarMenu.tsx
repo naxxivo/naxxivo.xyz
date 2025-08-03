@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/App';
+import { useAuth } from '@/App.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeftOnRectangleIcon, XMarkIcon } from '@heroicons/react/24/solid';
-import useNavMenu from '@/components/ui/hooks/useNavMenu';
+import useNavMenu from '@/components/ui/hooks/useNavMenu.ts';
 
 interface SidebarMenuProps {
     isOpen: boolean;

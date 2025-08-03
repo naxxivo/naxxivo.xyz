@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/locales/en/pages/services/supabase';
-import { useAuth } from '@/App';
-import { Message, Profile, Database, MessageWithProfile, MessageInsert } from '@/types';
-import { AnimeLoader } from '@/components/ui/Loader';
+import { supabase } from '@/locales/en/pages/services/supabase.ts';
+import { useAuth } from '@/App.tsx';
+import { Message, Profile, Database, MessageWithProfile, MessageInsert } from '@/types.ts';
+import { AnimeLoader } from '@/components/ui/Loader.tsx';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 
 interface ChatWindowProps {

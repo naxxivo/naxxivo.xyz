@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import useNavMenu from '@/components/ui/hooks/useNavMenu';
+import useNavMenu from '@/components/ui/hooks/useNavMenu.ts';
 
 interface MegaMenuProps {
     isOpen: boolean;

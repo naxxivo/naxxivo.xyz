@@ -6,8 +6,8 @@ import {
     ChevronDoubleLeftIcon,
     ChevronDoubleRightIcon,
 } from '@heroicons/react/24/solid';
-import { useAuth } from '@/App';
-import useNavMenu from '@/components/ui/hooks/useNavMenu';
+import { useAuth } from '@/App.tsx';
+import useNavMenu from '@/components/ui/hooks/useNavMenu.ts';
 
 interface DesktopSidebarProps {
     isOpen: boolean;

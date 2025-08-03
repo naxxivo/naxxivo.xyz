@@ -3,7 +3,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, Variants } from 'framer-motion';
-import type { Ailment } from '@/components/ui/data/healthData';
+import type { Ailment } from '@/components/ui/data/healthData.ts';
 
 interface AilmentCardProps {
   ailment: Ailment;

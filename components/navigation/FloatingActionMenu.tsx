@@ -2,9 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/App';
+import { useAuth } from '@/App.tsx';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/solid';
-import useNavMenu from '@/components/ui/hooks/useNavMenu';
+import useNavMenu from '@/components/ui/hooks/useNavMenu.ts';
 
 const FloatingActionMenu: React.FC = () => {
     const { user } = useAuth();

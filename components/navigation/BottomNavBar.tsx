@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -7,8 +8,8 @@ import {
   BellIcon,
   UserCircleIcon
 } from '@heroicons/react/24/solid';
-import { useAuth } from '@/App';
-import { useNotifications } from '@/components/ui/hooks/useNotifications';
+import { useAuth } from '@/App.tsx';
+import { useNotifications } from '@/components/ui/hooks/useNotifications.ts';
 
 const BottomNavBar: React.FC = () => {
   const { user } = useAuth();

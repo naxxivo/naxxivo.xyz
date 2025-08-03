@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/App';
+import { useAuth } from '@/App.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     UserGroupIcon, Cog6ToothIcon, TvIcon, ShoppingBagIcon, 

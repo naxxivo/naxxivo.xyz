@@ -1,17 +1,17 @@
 
 import React, { useState } from 'react';
-import Header from '@/components/layout/Header';
-import { useTheme } from '@/components/theme/ThemeProvider';
-import { useAuth } from '@/App';
+import Header from '@/components/layout/Header.tsx';
+import { useTheme } from '@/components/theme/ThemeProvider.tsx';
+import { useAuth } from '@/App.tsx';
 
-import FloatingActionMenu from '@/components/navigation/FloatingActionMenu';
-import SidebarMenu from '@/components/navigation/SidebarMenu';
-import BottomNavBar from '@/components/navigation/BottomNavBar';
-import CircularMenu from '@/components/navigation/CircularMenu';
-import MegaMenu from '@/components/navigation/MegaMenu'; // On mobile, this will fallback to sidebar
-import ThreeDotMenu from '@/components/navigation/ThreeDotMenu';
-import TVMenu from '@/components/navigation/TVMenu';
-import useMediaQuery from '../ui/hooks/useMediaQuery';
+import FloatingActionMenu from '@/components/navigation/FloatingActionMenu.tsx';
+import SidebarMenu from '@/components/navigation/SidebarMenu.tsx';
+import BottomNavBar from '@/components/navigation/BottomNavBar.tsx';
+import CircularMenu from '@/components/navigation/CircularMenu.tsx';
+import MegaMenu from '@/components/navigation/MegaMenu.tsx'; // On mobile, this will fallback to sidebar
+import ThreeDotMenu from '@/components/navigation/ThreeDotMenu.tsx';
+import TVMenu from '@/components/navigation/TVMenu.tsx';
+import useMediaQuery from '../ui/hooks/useMediaQuery.ts';
 
 
 interface MobileLayoutProps {

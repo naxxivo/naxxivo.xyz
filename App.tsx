@@ -1,42 +1,43 @@
 
 
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Routes, Route, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { supabase } from '@/locales/en/pages/services/supabase';
-import Layout from '@/components/layout/Layout';
-import HomePage from '@/locales/en/pages/HomePage';
-import AuthPage from '@/locales/en/pages/AuthPage';
-import ProfilePage from '@/locales/en/pages/ProfilePage';
-import UploadPage from '@/locales/en/pages/UploadPage';
-import MessagesPage from '@/locales/en/pages/MessagesPage';
-import UsersPage from '@/locales/en/pages/UsersPage';
-import SettingsPage from '@/locales/en/pages/SettingsPage';
-import NotFoundPage from '@/locales/en/pages/NotFoundPage';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import AdminRoute from '@/components/auth/AdminRoute';
-import { AppUser, Profile } from '@/types';
-import { AnimeLoader } from '@/components/ui/Loader';
-import FollowsPage from '@/locales/en/pages/FollowsPage';
-import AnimeListPage from '@/locales/en/pages/AnimeListPage';
-import SeriesDetailPage from '@/locales/en/pages/SeriesDetailPage';
-import WatchEpisodePage from '@/locales/en/pages/WatchEpisodePage';
-import CreateSeriesPage from '@/locales/en/pages/CreateSeriesPage';
-import AddEpisodePage from '@/locales/en/pages/AddEpisodePage';
-import MarketplacePage from '@/locales/en/pages/MarketplacePage';
-import CreateProductPage from '@/locales/en/pages/CreateProductPage';
-import ProductDetailPage from '@/locales/en/pages/ProductDetailPage';
-import ShortsPage from '@/locales/en/pages/ShortsPage';
-import AdminLayout from '@/components/layout/AdminLayout';
-import AdminDashboardPage from '@/locales/en/pages/admin/AdminDashboardPage';
-import AdminUsersPage from '@/locales/en/pages/admin/AdminUsersPage';
-import AdminPostsPage from '@/locales/en/pages/admin/AdminPostsPage';
-import AdminMarketplacePage from '@/locales/en/pages/admin/AdminMarketplacePage';
-import HealthHubPage from '@/locales/en/pages/HealthHubPage';
-import AilmentDetailPage from '@/locales/en/pages/AilmentDetailPage';
-import SinglePostPage from '@/locales/en/pages/SinglePostPage';
-import NotificationsPage from '@/locales/en/pages/NotificationsPage';
-import ComponentShowcasePage from '@/locales/en/pages/ComponentShowcasePage';
+import { supabase } from '@/locales/en/pages/services/supabase.ts';
+import Layout from '@/components/layout/Layout.tsx';
+import HomePage from '@/locales/en/pages/HomePage.tsx';
+import AuthPage from '@/locales/en/pages/AuthPage.tsx';
+import { ProfilePage } from '@/locales/en/pages/ProfilePage.tsx';
+import UploadPage from '@/locales/en/pages/UploadPage.tsx';
+import MessagesPage from '@/locales/en/pages/MessagesPage.tsx';
+import UsersPage from '@/locales/en/pages/UsersPage.tsx';
+import SettingsPage from '@/locales/en/pages/SettingsPage.tsx';
+import NotFoundPage from '@/locales/en/pages/NotFoundPage.tsx';
+import ProtectedRoute from '@/components/auth/ProtectedRoute.tsx';
+import AdminRoute from '@/components/auth/AdminRoute.tsx';
+import { AppUser, Profile } from '@/types.ts';
+import { AnimeLoader } from '@/components/ui/Loader.tsx';
+import FollowsPage from '@/locales/en/pages/FollowsPage.tsx';
+import AnimeListPage from '@/locales/en/pages/AnimeListPage.tsx';
+import SeriesDetailPage from '@/locales/en/pages/SeriesDetailPage.tsx';
+import WatchEpisodePage from '@/locales/en/pages/WatchEpisodePage.tsx';
+import CreateSeriesPage from '@/locales/en/pages/CreateSeriesPage.tsx';
+import AddEpisodePage from '@/locales/en/pages/AddEpisodePage.tsx';
+import ShortsPage from '@/locales/en/pages/ShortsPage.tsx';
+import AdminLayout from '@/components/layout/AdminLayout.tsx';
+import AdminDashboardPage from '@/locales/en/pages/admin/AdminDashboardPage.tsx';
+import AdminUsersPage from '@/locales/en/pages/admin/AdminUsersPage.tsx';
+import AdminPostsPage from '@/locales/en/pages/admin/AdminPostsPage.tsx';
+import HealthHubPage from '@/locales/en/pages/HealthHubPage.tsx';
+import AilmentDetailPage from '@/locales/en/pages/AilmentDetailPage.tsx';
+import SinglePostPage from '@/locales/en/pages/SinglePostPage.tsx';
+import NotificationsPage from '@/locales/en/pages/NotificationsPage.tsx';
+import ComponentShowcasePage from '@/locales/en/pages/ComponentShowcasePage.tsx';
+import SiteBuilderPage from '@/locales/en/pages/SiteBuilderPage.tsx';
+import PublicSitePage from '@/locales/en/pages/PublicSitePage.tsx';
+import AIChatPage from '@/locales/en/pages/AIChatPage.tsx';
+
 
 interface AuthContextType {
   session: any | null;
@@ -116,7 +117,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    (supabase.auth as any).getSession().then(async ({ data: { session } }: any) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
         setSession(session);
         if (session?.user) {
             const userProfile = await fetchUserProfile(session.user);
@@ -127,8 +128,8 @@ const App: React.FC = () => {
         setLoading(false);
     });
 
-    const { data: { subscription } } = (supabase.auth as any).onAuthStateChange(
-        async (_event: any, newSession: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (_event, newSession) => {
             setSession(newSession);
             if (newSession?.user) {
                 const userProfile = await fetchUserProfile(newSession.user);
@@ -146,7 +147,7 @@ const App: React.FC = () => {
 
 
   const handleLogout = async () => {
-    const { error } = await (supabase.auth as any).signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error logging out:', error);
       alert('Could not log out. Please try again.');
@@ -185,11 +186,11 @@ const App: React.FC = () => {
             <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="posts" element={<AdminPostsPage />} />
-            <Route path="market" element={<AdminMarketplacePage />} />
           </Route>
           
           <Route path="/auth" element={<AuthPage />} />
           <Route path="*" element={<NotFoundPage />} />
+          <Route path="/site/:username" element={<PublicSitePage />} />
 
           {/* User-facing Routes with classic Layout */}
           <Route path="/" element={<Layout><Outlet /></Layout>}>
@@ -258,19 +259,16 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               } />
               <Route path="anime/:seriesId/episode/:episodeNumber" element={<WatchEpisodePage />} />
-
-              {/* Marketplace Routes */}
-              <Route path="market" element={<MarketplacePage />} />
-              <Route path="market/new" element={
-                <ProtectedRoute>
-                  <CreateProductPage />
-                </ProtectedRoute>
-              } />
-              <Route path="market/product/:productId" element={<ProductDetailPage />} />
               
               {/* Health Hub Routes */}
               <Route path="health" element={<HealthHubPage />} />
               <Route path="health/:ailmentId" element={<AilmentDetailPage />} />
+              
+              {/* AI Chat Route */}
+              <Route path="ai-chat" element={<ProtectedRoute><AIChatPage /></ProtectedRoute>} />
+
+              {/* Site Builder Route */}
+              <Route path="build-site" element={<ProtectedRoute><SiteBuilderPage /></ProtectedRoute>} />
           </Route>
         </Routes>
       </AnimatePresence>

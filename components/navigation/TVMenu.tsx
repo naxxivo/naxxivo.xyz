@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import useNavMenu from '@/components/ui/hooks/useNavMenu';
+import useNavMenu from '@/components/ui/hooks/useNavMenu.ts';
 
 interface TVMenuProps {
     isOpen: boolean;

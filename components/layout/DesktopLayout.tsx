@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import DesktopSidebar from './DesktopSidebar';
-import Header from './Header'; // We can reuse the header
+import DesktopSidebar from './DesktopSidebar.tsx';
+import Header from './Header.tsx'; // We can reuse the header
 
 interface DesktopLayoutProps {
     children: React.ReactNode;

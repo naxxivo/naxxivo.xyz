@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { usePetals } from '@/components/ui/hooks/usePetals';
-import { useTheme } from '@/components/theme/ThemeProvider';
-import useMediaQuery from '@/components/ui/hooks/useMediaQuery';
-import DesktopLayout from './DesktopLayout';
-import MobileLayout from './MobileLayout';
+import { usePetals } from '@/components/ui/hooks/usePetals.ts';
+import { useTheme } from '@/components/theme/ThemeProvider.tsx';
+import useMediaQuery from '@/components/ui/hooks/useMediaQuery.ts';
+import DesktopLayout from './DesktopLayout.tsx';
+import MobileLayout from './MobileLayout.tsx';
 
 interface LayoutProps {
   children: React.ReactNode;

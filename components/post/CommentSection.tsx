@@ -1,10 +1,11 @@
 
 
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/locales/en/pages/services/supabase';
-import { useAuth } from '@/App';
-import { CommentWithProfile, CommentInsert } from '@/types';
-import { AnimeLoader } from '@/components/ui/Loader';
+import { supabase } from '@/locales/en/pages/services/supabase.ts';
+import { useAuth } from '@/App.tsx';
+import { CommentWithProfile, CommentInsert } from '@/types.ts';
+import { AnimeLoader } from '@/components/ui/Loader.tsx';
 import { Link } from 'react-router-dom';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 

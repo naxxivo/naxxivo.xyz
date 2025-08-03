@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { XMarkIcon, LinkIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/solid';
-import { ShareData } from '@/types';
+import { ShareData } from '@/types.ts';
 
 interface ShareModalProps {
     isOpen: boolean;

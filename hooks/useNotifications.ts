@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/locales/en/pages/services/supabase';
-import { useAuth } from '@/App';
-import { NotificationWithSender, Profile } from '@/types';
+import { supabase } from '@/locales/en/pages/services/supabase.ts';
+import { useAuth } from '@/App.tsx';
+import { NotificationWithSender, Profile, NotificationRowUpdate } from '@/types.ts';
 import { PostgrestError } from '@supabase/supabase-js';
 
 export const useNotifications = () => {
@@ -23,7 +23,7 @@ export const useNotifications = () => {
             .from('notifications')
             .select(`
                 *,
-                sender:profiles!notifications_sender_id_fkey (name, username, photo_url)
+                sender:profiles!sender_id (name, username, photo_url)
             `)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
@@ -32,7 +32,7 @@ export const useNotifications = () => {
         if (error) {
             console.error("Error fetching notifications:", error);
             setError(error);
-        } else if (data) {
+        } else if (data && Array.isArray(data)) {
             setNotifications(data as unknown as NotificationWithSender[]);
             const unread = data.filter(n => !n.is_read).length;
             setUnreadCount(unread);
@@ -90,9 +90,10 @@ export const useNotifications = () => {
         );
         setUnreadCount(prev => prev > 0 ? prev - 1 : 0);
         
+        const payload: NotificationRowUpdate = { is_read: true };
         const { error } = await supabase
             .from('notifications')
-            .update({ is_read: true })
+            .update(payload)
             .eq('id', notificationId);
             
         if (error) {
@@ -113,9 +114,10 @@ export const useNotifications = () => {
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
         setUnreadCount(0);
 
+        const payload: NotificationRowUpdate = { is_read: true };
         const { error } = await supabase
             .from('notifications')
-            .update({ is_read: true })
+            .update(payload)
             .in('id', unreadIds);
             
         if (error) {
