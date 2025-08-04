@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
 import type { Tables } from '../integrations/supabase/types';
-import { formatXp, generateAvatar } from '../../utils/helpers';
+import { formatXp, generateAvatar } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
 
 // --- SVG Icons --- //
