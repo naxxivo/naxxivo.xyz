@@ -49,6 +49,7 @@ const App: React.FC = () => {
     const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
     const [chattingWith, setChattingWith] = useState<{ id: string; name: string; photo_url: string | null } | null>(null);
     const [viewingSeriesId, setViewingSeriesId] = useState<number | null>(null);
+    const [refreshFeedKey, setRefreshFeedKey] = useState(0);
 
     useEffect(() => {
         const getSession = async () => {
@@ -79,11 +80,8 @@ const App: React.FC = () => {
 
     const handlePostCreated = () => {
         setCreatePostOpen(false);
-        if (authView === 'home') {
-             // A bit of a hack to force re-render, ideally use a state management library
-             setAuthView('profile');
-             setTimeout(() => setAuthView('home'), 0);
-        }
+        // This key change will force HomePage to re-run its useEffect
+        setRefreshFeedKey(prevKey => prevKey + 1);
     };
     
     const handleSetAuthView = (view: AuthView) => {
@@ -100,7 +98,7 @@ const App: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center text-gray-200 space-y-4">
+            <div className="min-h-screen flex flex-col items-center justify-center text-gray-200 space-y-4 bg-[#100F1F]">
                 <LoadingSpinner />
                 <span>Loading Session...</span>
             </div>
@@ -154,7 +152,7 @@ const App: React.FC = () => {
                                 <main className="w-full max-w-2xl mx-auto px-4 pt-4 sm:pt-8 relative overflow-hidden">
                                     <AnimatePresence mode="wait">
                                         <motion.div key={authView} {...animationProps}>
-                                            {authView === 'home' && <HomePage session={session} onViewProfile={setViewingProfileId} />}
+                                            {authView === 'home' && <HomePage session={session} onViewProfile={setViewingProfileId} refreshKey={refreshFeedKey} />}
                                             {authView === 'anime' && <AnimePage session={session} onViewSeries={setViewingSeriesId} />}
                                             {authView === 'messages' && <MessagesPage session={session} onStartChat={setChattingWith} />}
                                             {authView === 'profile' && <Profile session={session} onMessage={(user) => setChattingWith(user)} onLogout={handleLogout} onNavigateToSettings={handleNavigateToSettings}/>}
@@ -192,7 +190,7 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden animated-gradient-bg">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={unauthView}

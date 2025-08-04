@@ -7,6 +7,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 interface HomePageProps {
     session: Session;
     onViewProfile: (userId: string) => void;
+    refreshKey: number; // Add refreshKey prop
 }
 
 export type PostWithDetails = {
@@ -25,7 +26,7 @@ export type PostWithDetails = {
 };
 
 
-const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile }) => {
+const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey }) => {
     const [posts, setPosts] = useState<PostWithDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -66,7 +67,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile }) => {
         };
 
         fetchPosts();
-    }, [session]); // Re-fetch if session changes, or after post creation (handled by view switch)
+    }, [session, refreshKey]); // Re-fetch on refreshKey change
 
     if (loading) {
         return (

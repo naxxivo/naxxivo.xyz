@@ -1,19 +1,13 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import Input from './common/Input';
 import Button from './common/Button';
 import { supabase } from '../integrations/supabase/client';
+import { GoogleIcon, FacebookIcon, AbstractShape } from './common/Icons';
 
 interface SignupProps {
     setView: (view: 'welcome' | 'login' | 'signup') => void;
 }
-
-const SignupIllustration = () => (
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 mx-auto animate-float drop-shadow-lg">
-      <path fill="#FFC700" d="M57.4,-57.4C71.3,-45.3,77.3,-26.8,76.5,-9.5C75.7,7.9,68,23.1,57.1,38.1C46.2,53.1,32.1,67.9,15.7,73.8C-0.7,79.7,-19.4,76.7,-35.8,68.6C-52.2,60.5,-66.3,47.3,-72.6,30.9C-78.9,14.5,-77.4,-5.2,-69.5,-20.5C-61.7,-35.9,-47.5,-46.9,-33.2,-55.8C-18.8,-64.7,-4.3,-71.5,10.6,-71.4C25.5,-71.3,43.5,-69.5,57.4,-57.4Z" transform="translate(100 100)" />
-      <text x="50%" y="50%" textAnchor="middle" dy=".3em" fontSize="60" fill="#100F1F" fontFamily="Arial" fontWeight="bold">!</text>
-    </svg>
-);
-
 
 const EyeIcon = ({open}: {open: boolean}) => (
     open ? (
@@ -28,6 +22,16 @@ const EyeIcon = ({open}: {open: boolean}) => (
     )
 )
 
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
+};
+
 const Signup: React.FC<SignupProps> = ({ setView }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -36,7 +40,6 @@ const Signup: React.FC<SignupProps> = ({ setView }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
-
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,109 +51,130 @@ const Signup: React.FC<SignupProps> = ({ setView }) => {
             email: email,
             password: password,
             options: {
-                data: {
-                    name: name,
-                }
-            }
+                data: { name: name },
+            },
         });
 
         if (error) {
             setError(error.message);
         } else if (data.user) {
             setMessage("Registration successful! Please check your email to confirm your account.");
-            setName('');
-            setEmail('');
-            setPassword('');
         }
         setIsLoading(false);
     };
 
+    const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
+        const { error } = await supabase.auth.signInWithOAuth({ provider });
+        if (error) setError(error.message);
+    };
+
     return (
-        <div className="w-full max-w-md mx-auto">
-             <div className="relative mb-6">
-                <button onClick={() => setView('welcome')} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors" aria-label="Go back">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <h2 className="text-center text-xl font-bold text-white">Register</h2>
-            </div>
+        <div className="relative w-full max-w-md mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 overflow-hidden">
+            <AbstractShape />
+            <div className="relative z-10">
+                 <div className="relative mb-6">
+                    <button onClick={() => setView('welcome')} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white transition-colors" aria-label="Go back">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h2 className="text-center text-xl font-bold text-white">Create Account</h2>
+                </div>
 
-            <div className="text-center">
-                <SignupIllustration />
-                <h1 className="mt-4 text-3xl font-bold text-white">
-                    Name Yourself!
-                </h1>
-                 <p className="mt-2 text-center text-sm text-gray-400 max-w-xs mx-auto">
-                    This will be the name that appears on the NAXXIVO platform.
-                </p>
-            </div>
-
-            <div className="mt-8">
-                <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+                <motion.div variants={containerVariants} initial="hidden" animate="visible">
                     {message ? (
-                        <p className="text-green-400 text-center bg-green-500/10 py-3 rounded-lg" role="status">{message}</p>
+                        <motion.div variants={itemVariants} className="text-center py-10">
+                            <h2 className="text-2xl font-bold text-white">Check your inbox!</h2>
+                            <p className="text-green-300 mt-4 bg-green-500/10 py-3 px-4 rounded-lg" role="status">{message}</p>
+                            <div className="mt-6">
+                                <Button onClick={() => setView('login')}>Back to Login</Button>
+                            </div>
+                        </motion.div>
                     ) : (
                         <>
-                            <Input
-                                id="name"
-                                label="Your Name"
-                                name="name"
-                                type="text"
-                                autoComplete="name"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                disabled={isLoading}
-                            />
-                            <Input
-                                id="email-signup"
-                                label="Email address"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={isLoading}
-                            />
-                            <Input
-                                id="password-signup"
-                                label="Password"
-                                name="password"
-                                type={showPassword ? 'text' : 'password'}
-                                autoComplete="new-password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={isLoading}
-                                rightElement={
-                                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-500 hover:text-gray-300 focus:outline-none" aria-label={showPassword ? "Hide password" : "Show password"}>
-                                        <EyeIcon open={!showPassword}/>
-                                    </button>
-                                }
-                            />
+                             <motion.div className="space-y-4" variants={itemVariants}>
+                                <Button onClick={() => handleOAuthLogin('google')} variant="secondary" className="flex items-center gap-3">
+                                    <GoogleIcon /> Sign up with Google
+                                </Button>
+                                <Button onClick={() => handleOAuthLogin('facebook')} variant="secondary" className="flex items-center gap-3 bg-[#1877F2] !text-white !border-[#1877F2] hover:bg-[#1877F2]/90">
+                                    <FacebookIcon /> Sign up with Facebook
+                                </Button>
+                            </motion.div>
+                            
+                            <motion.div className="relative py-4" variants={itemVariants}>
+                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20"></div></div>
+                                <div className="relative flex justify-center text-sm"><span className="px-2 bg-[#2a2942]/50 text-gray-400 rounded-full">OR</span></div>
+                            </motion.div>
 
-                            {error && <p className="text-red-500 text-sm text-center" role="alert">{error}</p>}
+                            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+                                 <motion.div variants={itemVariants}>
+                                    <Input
+                                        id="name"
+                                        label="Your Name"
+                                        name="name"
+                                        type="text"
+                                        autoComplete="name"
+                                        required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        disabled={isLoading}
+                                        className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                    />
+                                </motion.div>
+                                <motion.div variants={itemVariants}>
+                                    <Input
+                                        id="email-signup"
+                                        label="Email address"
+                                        name="email"
+                                        type="email"
+                                        autoComplete="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        disabled={isLoading}
+                                        className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                    />
+                                </motion.div>
+                                <motion.div variants={itemVariants}>
+                                    <Input
+                                        id="password-signup"
+                                        label="Password"
+                                        name="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        autoComplete="new-password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        disabled={isLoading}
+                                        className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                        rightElement={
+                                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-200 focus:outline-none" aria-label={showPassword ? "Hide password" : "Show password"}>
+                                                <EyeIcon open={!showPassword}/>
+                                            </button>
+                                        }
+                                    />
+                                </motion.div>
+
+                                {error && <p className="text-red-400 text-sm text-center" role="alert">{error}</p>}
+
+                                <motion.div className="pt-2" variants={itemVariants}>
+                                    <Button type="submit" disabled={isLoading || !!message}>
+                                        {isLoading ? 'Creating Account...' : 'Create Account'}
+                                    </Button>
+                                </motion.div>
+                            </form>
                         </>
                     )}
 
-
-                    <div className="pt-2">
-                        <Button type="submit" disabled={isLoading || !!message}>
-                            {isLoading ? 'Creating Account...' : 'Complete Registration'}
-                        </Button>
-                    </div>
-                </form>
-
-                 <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-400">
-                        Already a member?{' '}
-                        <button onClick={() => setView('login')} disabled={isLoading} className="font-medium text-yellow-400 hover:text-yellow-300 focus:outline-none disabled:opacity-50">
-                            Login
-                        </button>
-                    </p>
-                </div>
+                     <motion.div className="mt-6 text-center" variants={itemVariants}>
+                        <p className="text-sm text-gray-300">
+                            Already a member?{' '}
+                            <button onClick={() => setView('login')} disabled={isLoading} className="font-medium text-yellow-400 hover:text-yellow-300 focus:outline-none disabled:opacity-50">
+                                Login
+                            </button>
+                        </p>
+                    </motion.div>
+                </motion.div>
             </div>
         </div>
     );

@@ -34,7 +34,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
                 .single();
             if (seriesError) throw seriesError;
             if (!seriesData) throw new Error("Series not found.");
-            setSeries(seriesData);
+            setSeries(seriesData as Series);
             
             const { data: episodesData, error: episodesError } = await supabase
                 .from('anime_episodes')
@@ -44,9 +44,10 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
             if (episodesError) throw episodesError;
 
             if (episodesData) {
-                setEpisodes(episodesData);
-                if (episodesData.length > 0) {
-                    setCurrentEpisode(episodesData[0]);
+                const typedEpisodes = episodesData as Episode[];
+                setEpisodes(typedEpisodes);
+                if (typedEpisodes.length > 0) {
+                    setCurrentEpisode(typedEpisodes[0]);
                 }
             }
 

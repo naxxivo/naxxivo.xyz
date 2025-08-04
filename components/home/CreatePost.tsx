@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
-import type { TablesInsert } from '../../integrations/supabase/types';
 
 interface CreatePostProps {
     isOpen: boolean;
@@ -24,7 +23,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("You must be logged in to post.");
             
-            const newPost: TablesInsert<'posts'> = {
+            const newPost = {
                 caption,
                 content_url: contentUrl || null,
                 user_id: user.id
@@ -32,7 +31,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
 
             const { error: insertError } = await supabase
                 .from('posts')
-                .insert(newPost as any);
+                .insert([newPost]);
             
             if (insertError) throw insertError;
 

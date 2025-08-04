@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
 import Input from '../common/Input';
-import type { Tables, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
+import type { Tables } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 interface SettingsPageProps {
@@ -43,14 +43,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                 if (profileError) throw profileError;
                 if (!profileData) throw new Error("Profile not found");
 
-                setProfile(profileData);
-                setName(profileData.name || '');
-                setBio(profileData.bio || '');
-                setWebsiteUrl(profileData.website_url || '');
-                setYoutubeUrl(profileData.youtube_url || '');
-                setFacebookUrl(profileData.facebook_url || '');
+                const typedProfile = profileData as ProfileData;
+                setProfile(typedProfile);
+                setName(typedProfile.name || '');
+                setBio(typedProfile.bio || '');
+                setWebsiteUrl(typedProfile.website_url || '');
+                setYoutubeUrl(typedProfile.youtube_url || '');
+                setFacebookUrl(typedProfile.facebook_url || '');
 
-                if (profileData.xp_balance >= 10000) {
+                if (typedProfile.xp_balance >= 10000) {
                     const { data: premiumData, error: premiumError } = await supabase
                         .from('premium_features')
                         .select('music_url')
@@ -58,7 +59,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                         .single();
                     if(premiumError) console.warn("Could not load premium features", premiumError);
                     if (premiumData) {
-                        setMusicUrl(premiumData.music_url || '');
+                        const typedPremiumData = premiumData as PremiumFeaturesData;
+                        setMusicUrl(typedPremiumData.music_url || '');
                     }
                 }
             } catch (err: any) {
@@ -115,17 +117,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
             }
 
             // 2. Update profile details
-            const profileUpdates: TablesUpdate<'profiles'> = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
-            await supabase.from('profiles').update(profileUpdates as any).eq('id', session.user.id);
+            const profileUpdates = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
+            await supabase.from('profiles').update(profileUpdates).eq('id', session.user.id);
 
 
             // 3. Update premium features, including the final music URL
             if (profile && profile.xp_balance >= 10000) {
-                const premiumFeaturesUpdate: TablesInsert<'premium_features'> = {
+                const premiumFeaturesUpdate = {
                     profile_id: session.user.id,
                     music_url: finalMusicUrl,
                 };
-                await supabase.from('premium_features').upsert(premiumFeaturesUpdate as any);
+                await supabase.from('premium_features').upsert([premiumFeaturesUpdate]);
 
                 setMusicUrl(finalMusicUrl); // Update local state to reflect change
             }

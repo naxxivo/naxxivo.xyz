@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import Input from './common/Input';
 import Button from './common/Button';
 import { supabase } from '../integrations/supabase/client';
+import { GoogleIcon, FacebookIcon, AbstractShape } from './common/Icons';
 
 interface LoginProps {
     setView: (view: 'welcome' | 'login' | 'signup') => void;
 }
-
-const LoginIllustration = () => (
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 mx-auto animate-float drop-shadow-lg">
-        <path fill="#FFC700" d="M47.7,-64.1C61.7,-53.4,73,-38.8,76.5,-22.9C80,-7,75.7,10.1,68.4,24.9C61.1,39.7,50.7,52.2,37.8,61.9C24.9,71.5,9.5,78.3,-6.2,79.5C-21.9,80.7,-38,76.4,-51.2,67.3C-64.4,58.2,-74.7,44.4,-78.9,28.9C-83.1,13.4,-81.2,-3.8,-75,-19.1C-68.8,-34.4,-58.2,-47.8,-45.3,-58.2C-32.3,-68.6,-16.2,-76,1.2,-77.3C18.5,-78.5,37.1,-72.7,47.7,-64.1Z" transform="translate(100 100)" />
-        <text x="50%" y="50%" textAnchor="middle" dy=".3em" fontSize="60" fill="#100F1F" fontFamily="Arial" fontWeight="bold">?</text>
-    </svg>
-);
 
 const EyeIcon = ({ open }: { open: boolean }) => (
      open ? (
@@ -26,6 +21,16 @@ const EyeIcon = ({ open }: { open: boolean }) => (
         </svg>
     )
 );
+
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
+};
 
 const Login: React.FC<LoginProps> = ({ setView }) => {
     const [email, setEmail] = useState('');
@@ -49,76 +54,100 @@ const Login: React.FC<LoginProps> = ({ setView }) => {
         }
         setIsLoading(false);
     };
+    
+    const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
+        const { error } = await supabase.auth.signInWithOAuth({ provider });
+        if (error) setError(error.message);
+    };
 
     return (
-        <div className="w-full max-w-md mx-auto">
-             <div className="relative mb-6">
-                <button onClick={() => setView('welcome')} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors" aria-label="Go back">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <h2 className="text-center text-xl font-bold text-white">Login</h2>
-            </div>
-            
-            <div className="text-center">
-                <LoginIllustration />
-                <h1 className="text-3xl font-bold text-white mt-4">Welcome back!</h1>
-                <p className="text-gray-400 mt-2">Glad to see you again!</p>
-            </div>
-            
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                <Input
-                    id="email"
-                    label="Email Address"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                />
-
-                <Input
-                    id="password"
-                    label="Password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    rightElement={
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-500 hover:text-gray-300 focus:outline-none" aria-label={showPassword ? "Hide password" : "Show password"}>
-                            <EyeIcon open={!showPassword}/>
-                        </button>
-                    }
-                />
-                
-                {error && <p className="text-red-500 text-sm text-center" role="alert">{error}</p>}
-                
-                <div className="text-right">
-                    <a href="#" className="text-sm font-medium text-yellow-400 hover:text-yellow-300">
-                        Forgot Password?
-                    </a>
-                </div>
-
-                <div>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? 'Logging In...' : 'Login'}
-                    </Button>
-                </div>
-            </form>
-
-            <div className="mt-6 text-center">
-                <p className="text-sm text-gray-400">
-                    Don't have an account?{' '}
-                    <button onClick={() => setView('signup')} disabled={isLoading} className="font-medium text-yellow-400 hover:text-yellow-300 focus:outline-none disabled:opacity-50">
-                        Register
+        <div className="relative w-full max-w-md mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 overflow-hidden">
+            <AbstractShape />
+             <div className="relative z-10">
+                <div className="relative mb-6">
+                    <button onClick={() => setView('welcome')} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white transition-colors" aria-label="Go back">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
                     </button>
-                </p>
+                    <h2 className="text-center text-xl font-bold text-white">Login</h2>
+                </div>
+                
+                <motion.div variants={containerVariants} initial="hidden" animate="visible">
+                    <motion.div className="space-y-4" variants={itemVariants}>
+                        <Button onClick={() => handleOAuthLogin('google')} variant="secondary" className="flex items-center gap-3">
+                            <GoogleIcon /> Continue with Google
+                        </Button>
+                        <Button onClick={() => handleOAuthLogin('facebook')} variant="secondary" className="flex items-center gap-3 bg-[#1877F2] !text-white !border-[#1877F2] hover:bg-[#1877F2]/90">
+                            <FacebookIcon /> Continue with Facebook
+                        </Button>
+                    </motion.div>
+                    
+                    <motion.div className="relative py-4" variants={itemVariants}>
+                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20"></div></div>
+                        <div className="relative flex justify-center text-sm"><span className="px-2 bg-[#2a2942]/50 text-gray-400 rounded-full">OR</span></div>
+                    </motion.div>
+
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        <motion.div variants={itemVariants}>
+                            <Input
+                                id="email"
+                                label="Email Address"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
+                                className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                            />
+                        </motion.div>
+
+                        <motion.div variants={itemVariants}>
+                            <Input
+                                id="password"
+                                label="Password"
+                                name="password"
+                                type={showPassword ? 'text' : 'password'}
+                                autoComplete="current-password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={isLoading}
+                                className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                rightElement={
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-200 focus:outline-none" aria-label={showPassword ? "Hide password" : "Show password"}>
+                                        <EyeIcon open={!showPassword}/>
+                                    </button>
+                                }
+                            />
+                        </motion.div>
+                        
+                        {error && <p className="text-red-400 text-sm text-center" role="alert">{error}</p>}
+                        
+                        <motion.div className="text-right" variants={itemVariants}>
+                            <a href="#" className="text-sm font-medium text-yellow-400 hover:text-yellow-300">
+                                Forgot Password?
+                            </a>
+                        </motion.div>
+
+                        <motion.div variants={itemVariants}>
+                            <Button type="submit" disabled={isLoading}>
+                                {isLoading ? 'Logging In...' : 'Login'}
+                            </Button>
+                        </motion.div>
+                    </form>
+
+                    <motion.div className="mt-6 text-center" variants={itemVariants}>
+                        <p className="text-sm text-gray-300">
+                            Don't have an account?{' '}
+                            <button onClick={() => setView('signup')} disabled={isLoading} className="font-medium text-yellow-400 hover:text-yellow-300 focus:outline-none disabled:opacity-50">
+                                Register
+                            </button>
+                        </p>
+                    </motion.div>
+                </motion.div>
             </div>
         </div>
     );
