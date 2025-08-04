@@ -1,0 +1,73 @@
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/locales/en/pages/services/supabase.ts';
+import StatCard from '@/components/admin/StatCard.tsx';
+import { AnimeLoader } from '@/components/ui/Loader.tsx';
+import { UsersIcon, NewspaperIcon, TvIcon } from '@heroicons/react/24/solid';
+
+interface Stats {
+    users: number;
+    posts: number;
+    series: number;
+}
+
+const AdminDashboardPage: React.FC = () => {
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            setLoading(true);
+            try {
+                const [
+                    { count: users, error: usersError },
+                    { count: posts, error: postsError },
+                    { count: series, error: seriesError },
+                ] = await Promise.all([
+                    supabase.from('profiles').select('id', { count: 'exact', head: true }),
+                    supabase.from('posts').select('id', { count: 'exact', head: true }),
+                    supabase.from('anime_series').select('id', { count: 'exact', head: true }),
+                ]);
+                
+                if (usersError || postsError || seriesError) {
+                    throw new Error('Failed to fetch one or more statistics.');
+                }
+
+                setStats({
+                    users: users || 0,
+                    posts: posts || 0,
+                    series: series || 0,
+                });
+
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (loading) return <AnimeLoader />;
+    if (error) return <p className="text-center text-red-500">{error}</p>;
+
+    return (
+        <div>
+            <h1 className="text-4xl font-display font-bold mb-8">Dashboard</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard title="Total Users" value={stats?.users ?? 0} icon={UsersIcon} />
+                <StatCard title="Total Posts" value={stats?.posts ?? 0} icon={NewspaperIcon} />
+                <StatCard title="Anime Series" value={stats?.series ?? 0} icon={TvIcon} />
+            </div>
+            
+            {/* Future charts or activity feeds can go here */}
+        </div>
+    );
+};
+
+export default AdminDashboardPage;
