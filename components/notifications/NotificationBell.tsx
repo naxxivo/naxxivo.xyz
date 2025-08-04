@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { BellIcon } from '@heroicons/react/24/solid';
-import { useNotifications } from '@/hooks/useNotifications';
-import NotificationList from '@/components/notifications/NotificationList';
+import { useNotifications } from '../../hooks/useNotifications';
+import NotificationList from './NotificationList';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const NotificationBell: React.FC = () => {

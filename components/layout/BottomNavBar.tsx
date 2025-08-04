@@ -8,8 +8,8 @@ import {
   BellIcon,
   UserCircleIcon
 } from '@heroicons/react/24/solid';
-import { useAuth } from '@/App';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useAuth } from '../../App';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const BottomNavBar: React.FC = () => {
   const { user } = useAuth();

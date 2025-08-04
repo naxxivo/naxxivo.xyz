@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/App';
-import { AnimeLoader } from '@/components/ui/Loader';
+import { useAuth } from '../../App';
+import { AnimeLoader } from '../ui/Loader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

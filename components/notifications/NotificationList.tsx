@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { useNotifications } from '@/hooks/useNotifications';
-import NotificationItem from '@/components/notifications/NotificationItem';
-import { AnimeLoader } from '@/components/ui/Loader';
+import { useNotifications } from '../../hooks/useNotifications';
+import NotificationItem from './NotificationItem';
+import { AnimeLoader } from '../ui/Loader';
 import { InboxIcon } from '@heroicons/react/24/outline';
 
 interface NotificationListProps {

@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Post } from '@/types';
-import VideoPlayer from '@/components/anime/VideoPlayer';
-import ShortsUI from '@/components/shorts/ShortsUI';
+import { Post } from '../../types';
+import VideoPlayer from '../anime/VideoPlayer';
+import ShortsUI from './ShortsUI';
 
 interface ShortsPlayerProps {
     post: Post;

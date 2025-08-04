@@ -1,5 +1,4 @@
 
-
 // Manually define Row types to break circular dependencies and fix type instability.
 export type Profile = {
   id: string;
@@ -116,48 +115,6 @@ export type Ailment = {
   homeRemedies: Remedy[];
 };
 
-// --- INSERT AND UPDATE TYPES ---
-// By explicitly defining these, we prevent TypeScript from entering an infinite
-// recursion loop when inferring them from the complex schema, which fixes the
-// "type instantiation is excessively deep" and "is not assignable to never" errors.
-
-export type ProfileInsert = Omit<Profile, 'created_at'>;
-export type ProfileUpdate = Partial<Profile>;
-
-export type PostRowInsert = Partial<Omit<PostRow, 'id' | 'created_at'>> & Pick<PostRow, 'user_id'>;
-export type PostRowUpdate = Partial<PostRow>;
-
-export type LikeInsert = Pick<Like, 'user_id' | 'post_id'>;
-export type LikeUpdate = Partial<Like>;
-
-export type CommentInsert = Partial<Omit<Comment, 'id'|'created_at'>> & Pick<Comment, 'user_id' | 'post_id' | 'content'>;
-export type CommentUpdate = Partial<Comment>;
-
-export type MessageInsert = Pick<Message, 'sender_id' | 'recipient_id' | 'content'>;
-export type MessageUpdate = Partial<Message>;
-
-export type FollowInsert = Pick<Follow, 'follower_id' | 'following_id'>;
-export type FollowUpdate = Partial<Follow>;
-
-export type NotificationRowInsert = Pick<NotificationRow, 'user_id' | 'sender_id' | 'type'> & { post_id?: number | null };
-export type NotificationRowUpdate = Partial<NotificationRow>;
-
-export type AnimeSeriesInsert = Partial<Omit<AnimeSeries, 'id'|'created_at'>> & Pick<AnimeSeries, 'user_id' | 'title'>;
-export type AnimeSeriesUpdate = Partial<AnimeSeries>;
-
-export type AnimeEpisodeInsert = Partial<Omit<AnimeEpisode, 'id'|'created_at'>> & Pick<AnimeEpisode, 'series_id' | 'episode_number' | 'video_url'>;
-export type AnimeEpisodeUpdate = Partial<AnimeEpisode>;
-
-export type MarketCategoryInsert = Pick<MarketCategory, 'name'>;
-export type MarketCategoryUpdate = Partial<MarketCategory>;
-
-export type MarketProductInsert = Partial<Omit<MarketProduct, 'id'|'created_at'>> & Pick<MarketProduct, 'user_id' | 'category_id' | 'title' | 'price'>;
-export type MarketProductUpdate = Partial<MarketProduct>;
-
-export type MarketProductImageInsert = Pick<MarketProductImage, 'product_id' | 'image_path'>;
-export type MarketProductImageUpdate = Partial<MarketProductImage>;
-
-
 // By defining the Database structure manually with our own types, we avoid the "Type instantiation is excessively deep"
 // error that can come from Supabase's automatic type generation on complex schemas. This also fixes the `... is not assignable to never`
 // error in `insert` and `update` calls by providing a concrete type instead of `any`.
@@ -166,63 +123,165 @@ export type Database = {
     Tables: {
       profiles: {
         Row: Profile;
-        Insert: ProfileInsert;
-        Update: ProfileUpdate;
+        Insert: {
+          id: string;
+          username: string;
+          name?: string | null;
+          bio?: string | null;
+          photo_url?: string | null;
+          cover_url?: string | null;
+          address?: string | null;
+          website_url?: string | null;
+          youtube_url?: string | null;
+          facebook_url?: string | null;
+          role?: string;
+        };
+        Update: {
+          username?: string;
+          name?: string | null;
+          bio?: string | null;
+          photo_url?: string | null;
+          cover_url?: string | null;
+          address?: string | null;
+          website_url?: string | null;
+          youtube_url?: string | null;
+          facebook_url?: string | null;
+          role?: string;
+        };
       };
       posts: {
         Row: PostRow;
-        Insert: PostRowInsert;
-        Update: PostRowUpdate;
+        Insert: {
+          user_id: string;
+          caption?: string | null;
+          content_url?: string | null;
+        };
+        Update: {
+          caption?: string | null;
+          content_url?: string | null;
+        };
       };
       comments: {
         Row: Comment;
-        Insert: CommentInsert;
-        Update: CommentUpdate;
+        Insert: {
+          user_id: string;
+          post_id: number;
+          parent_comment_id?: number | null;
+          content: string;
+        };
+        Update: {
+          content?: string;
+        };
       };
       likes: {
         Row: Like;
-        Insert: LikeInsert;
-        Update: LikeUpdate;
+        Insert: {
+          user_id: string;
+          post_id: number;
+        };
+        Update: never;
       };
       messages: {
         Row: Message;
-        Insert: MessageInsert;
-        Update: MessageUpdate;
+        Insert: {
+          sender_id: string;
+          recipient_id: string;
+          content: string;
+          is_read?: boolean;
+          status?: string;
+        };
+        Update: {
+          is_read?: boolean;
+          status?: string;
+        };
       };
       follows: {
         Row: Follow;
-        Insert: FollowInsert;
-        Update: FollowUpdate;
+        Insert: {
+          follower_id: string;
+          following_id: string;
+        };
+        Update: never;
       };
       notifications: {
         Row: NotificationRow;
-        Insert: NotificationRowInsert;
-        Update: NotificationRowUpdate;
+        Insert: {
+          user_id: string;
+          sender_id: string;
+          type: 'like' | 'comment' | 'follow';
+          post_id?: number | null;
+          is_read?: boolean;
+        };
+        Update: {
+          is_read?: boolean;
+        };
       };
       anime_series: {
         Row: AnimeSeries;
-        Insert: AnimeSeriesInsert;
-        Update: AnimeSeriesUpdate;
+        Insert: {
+          user_id: string;
+          title: string;
+          description?: string | null;
+          thumbnail_url?: string | null;
+          banner_url?: string | null;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          thumbnail_url?: string | null;
+          banner_url?: string | null;
+        };
       };
       anime_episodes: {
         Row: AnimeEpisode;
-        Insert: AnimeEpisodeInsert;
-        Update: AnimeEpisodeUpdate;
+        Insert: {
+          series_id: number;
+          episode_number: number;
+          title?: string | null;
+          video_url: string;
+        };
+        Update: {
+          episode_number?: number;
+          title?: string | null;
+          video_url?: string;
+        };
       };
       market_categories: {
         Row: MarketCategory;
-        Insert: MarketCategoryInsert;
-        Update: MarketCategoryUpdate;
+        Insert: { name: string };
+        Update: { name?: string };
       };
       market_products: {
         Row: MarketProduct;
-        Insert: MarketProductInsert;
-        Update: MarketProductUpdate;
+        Insert: {
+          user_id: string;
+          category_id: number;
+          title: string;
+          description?: string | null;
+          price: number;
+          currency?: string;
+          location?: string | null;
+          condition?: string | null;
+          status?: string;
+        };
+        Update: {
+          category_id?: number;
+          title?: string;
+          description?: string | null;
+          price?: number;
+          currency?: string;
+          location?: string | null;
+          condition?: string | null;
+          status?: string;
+        };
       };
       market_product_images: {
         Row: MarketProductImage;
-        Insert: MarketProductImageInsert;
-        Update: MarketProductImageUpdate;
+        Insert: {
+          product_id: number;
+          image_path: string;
+        };
+        Update: never;
       };
     };
     Functions: {
