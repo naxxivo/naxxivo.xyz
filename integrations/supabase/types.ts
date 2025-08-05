@@ -19,17 +19,13 @@ export type Database = {
           video_url: string
         }
         Insert: {
-          created_at?: string
           episode_number: number
-          id?: never
           series_id: number
           title?: string | null
           video_url: string
         }
         Update: {
-          created_at?: string
           episode_number?: number
-          id?: never
           series_id?: number
           title?: string | null
           video_url?: string
@@ -56,18 +52,14 @@ export type Database = {
         }
         Insert: {
           banner_url?: string | null
-          created_at?: string
           description?: string | null
-          id?: never
           thumbnail_url?: string | null
           title: string
           user_id: string
         }
         Update: {
           banner_url?: string | null
-          created_at?: string
           description?: string | null
-          id?: never
           thumbnail_url?: string | null
           title?: string
           user_id?: string
@@ -93,16 +85,12 @@ export type Database = {
         }
         Insert: {
           content: string
-          created_at?: string
-          id?: never
           parent_comment_id?: number | null
           post_id: number
           user_id: string
         }
         Update: {
           content?: string
-          created_at?: string
-          id?: never
           parent_comment_id?: number | null
           post_id?: number
           user_id?: string
@@ -138,12 +126,10 @@ export type Database = {
           following_id: string
         }
         Insert: {
-          created_at?: string
           follower_id: string
           following_id: string
         }
         Update: {
-          created_at?: string
           follower_id?: string
           following_id?: string
         }
@@ -174,17 +160,13 @@ export type Database = {
           player_id: string
         }
         Insert: {
-          created_at?: string
           game_id: string
-          id?: string
           move_data: Json
           move_number: number
           player_id: string
         }
         Update: {
-          created_at?: string
           game_id?: string
-          id?: string
           move_data?: Json
           move_number?: number
           player_id?: string
@@ -215,14 +197,12 @@ export type Database = {
           player_symbol: string
         }
         Insert: {
-          created_at?: string
           game_id: string
           is_host?: boolean
           player_id: string
           player_symbol: string
         }
         Update: {
-          created_at?: string
           game_id?: string
           is_host?: boolean
           player_id?: string
@@ -255,19 +235,13 @@ export type Database = {
           winner_id: string | null
         }
         Insert: {
-          created_at?: string
           game_type: string
-          id?: string
           status: string
-          updated_at?: string
           winner_id?: string | null
         }
         Update: {
-          created_at?: string
           game_type?: string
-          id?: string
           status?: string
-          updated_at?: string
           winner_id?: string | null
         }
         Relationships: [
@@ -288,14 +262,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          created_at?: string
-          id?: never
           post_id: number
           user_id: string
         }
         Update: {
-          created_at?: string
-          id?: never
           post_id?: number
           user_id?: string
         }
@@ -328,8 +298,6 @@ export type Database = {
         }
         Insert: {
           content: string
-          created_at?: string
-          id?: never
           is_read?: boolean
           recipient_id: string
           sender_id: string
@@ -337,8 +305,6 @@ export type Database = {
         }
         Update: {
           content?: string
-          created_at?: string
-          id?: never
           is_read?: boolean
           recipient_id?: string
           sender_id?: string
@@ -372,8 +338,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          created_at?: string
-          id?: never
           is_read?: boolean
           post_id?: number | null
           sender_id: string
@@ -381,8 +345,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          created_at?: string
-          id?: never
           is_read?: boolean
           post_id?: number | null
           sender_id?: string
@@ -425,17 +387,13 @@ export type Database = {
         Insert: {
           component_data: Json
           component_type: string
-          created_at?: string | null
           grid_position?: Json | null
-          id?: string
           page_id?: string | null
         }
         Update: {
           component_data?: Json
           component_type?: string
-          created_at?: string | null
           grid_position?: Json | null
-          id?: string
           page_id?: string | null
         }
         Relationships: [
@@ -459,15 +417,11 @@ export type Database = {
         Insert: {
           caption?: string | null
           content_url?: string | null
-          created_at?: string
-          id?: never
           user_id: string
         }
         Update: {
           caption?: string | null
           content_url?: string | null
-          created_at?: string
-          id?: never
           user_id?: string
         }
         Relationships: [
@@ -488,14 +442,10 @@ export type Database = {
           profile_id: string
         }
         Insert: {
-          created_at?: string
-          id?: never
           music_url?: string | null
           profile_id: string
         }
         Update: {
-          created_at?: string
-          id?: never
           music_url?: string | null
           profile_id?: string
         }
@@ -518,16 +468,12 @@ export type Database = {
           profile_id: string
         }
         Insert: {
-          created_at?: string
           file_name?: string | null
-          id?: never
           music_url: string
           profile_id: string
         }
         Update: {
-          created_at?: string
           file_name?: string | null
-          id?: never
           music_url?: string
           profile_id?: string
         }
@@ -563,7 +509,6 @@ export type Database = {
           admin?: boolean | null
           bio?: string | null
           cover_url?: string | null
-          created_at?: string
           facebook_url?: string | null
           id: string
           name?: string | null
@@ -579,7 +524,6 @@ export type Database = {
           admin?: boolean | null
           bio?: string | null
           cover_url?: string | null
-          created_at?: string
           facebook_url?: string | null
           id?: string
           name?: string | null
@@ -602,7 +546,6 @@ export type Database = {
           site_id: string | null
         }
         Insert: {
-          id?: string
           metadata?: Json | null
           page_order?: number | null
           page_slug: string
@@ -610,7 +553,6 @@ export type Database = {
           site_id?: string | null
         }
         Update: {
-          id?: string
           metadata?: Json | null
           page_order?: number | null
           page_slug?: string
@@ -635,14 +577,10 @@ export type Database = {
           snapshot: Json
         }
         Insert: {
-          created_at?: string | null
-          id?: string
           site_id?: string | null
           snapshot: Json
         }
         Update: {
-          created_at?: string | null
-          id?: string
           site_id?: string | null
           snapshot?: Json
         }
@@ -666,19 +604,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          created_at?: string | null
-          id?: string
           site_name?: string | null
           subdomain_path: string
-          updated_at?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string | null
-          id?: string
           site_name?: string | null
           subdomain_path?: string
-          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -710,8 +642,8 @@ export type Database = {
 type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  T extends keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-> = (PublicSchema["Tables"] & PublicSchema["Views"])[T]["Row"]
+  T extends keyof PublicSchema["Tables"]
+> = PublicSchema["Tables"][T]["Row"]
 
 export type TablesInsert<
   T extends keyof PublicSchema["Tables"]
