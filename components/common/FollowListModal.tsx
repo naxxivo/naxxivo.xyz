@@ -2,7 +2,7 @@ import React from 'react';
 import type { Tables } from '../../integrations/supabase/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
-import { generateAvatar } from '../../utils/helpers';
+import { generateAvatar } from '@/utils/helpers';
 
 type ProfileStub = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'>;
 

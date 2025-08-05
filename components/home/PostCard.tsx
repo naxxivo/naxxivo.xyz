@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { PostWithDetails } from './HomePage';
-import { generateAvatar } from '../../utils/helpers';
+import { generateAvatar } from '@/utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 import { motion } from 'framer-motion';
 import Button from '../common/Button';
@@ -209,7 +209,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, isIni
 
                 if (error) throw error;
                 if (data) {
-                    setComments(data);
+                    setComments(data as unknown as CommentWithProfile[]);
                 }
 
             } catch (error) {

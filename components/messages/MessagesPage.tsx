@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar } from '../../utils/helpers';
+import { generateAvatar } from '@/utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 // --- Local Types --- //

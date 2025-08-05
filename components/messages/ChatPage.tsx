@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar } from '../../utils/helpers';
+import { generateAvatar } from '@/utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
 import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
 import Button from '../common/Button';

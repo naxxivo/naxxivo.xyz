@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar, formatXp } from '../../utils/helpers';
+import { generateAvatar, formatXp } from '@/utils/helpers';
 import type { Tables } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import { motion } from 'framer-motion';
