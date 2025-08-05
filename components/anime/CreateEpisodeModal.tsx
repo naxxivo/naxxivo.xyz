@@ -29,7 +29,7 @@ const CreateEpisodeModal: React.FC<CreateEpisodeModalProps> = ({ isOpen, onClose
                 title,
                 video_url: videoUrl
             };
-            const { error: insertError } = await supabase.from('anime_episodes').insert([newEpisode]);
+            const { error: insertError } = await supabase.from('anime_episodes').insert([newEpisode] as any);
             if (insertError) throw insertError;
             
             onEpisodeCreated();

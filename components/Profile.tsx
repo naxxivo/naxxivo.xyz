@@ -70,7 +70,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     return;
                 }
                 
-                setProfile(profileData);
+                setProfile(profileData as ProfileData);
 
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profileIdToFetch);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profileIdToFetch);
@@ -83,9 +83,9 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 }
                 
                 const { data: postData } = await supabase.from('posts').select('id, content_url').eq('user_id', profileIdToFetch).order('created_at', { ascending: false });
-                if (postData) setPosts(postData);
+                if (postData) setPosts(postData as PostData[]);
 
-                if (profileData.xp_balance >= 10000) {
+                if ((profileData as ProfileData).xp_balance >= 10000) {
                     const { data: premiumData, error: premiumError } = await supabase
                         .from('premium_features')
                         .select('id, profile_id, music_url, created_at')
@@ -94,7 +94,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     if(premiumError && premiumError.code !== 'PGRST116') { // Ignore "no rows" error
                         console.warn("Could not fetch premium features, but continuing.", premiumError);
                     }
-                    if (premiumData) setPremiumFeatures(premiumData);
+                    if (premiumData) setPremiumFeatures(premiumData as PremiumFeatures);
                 }
             } catch (error: any) {
                 setError(error.message || "An error occurred while fetching profile details.");
@@ -115,7 +115,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 setFollowerCount(c => c - 1);
                 setIsFollowing(false);
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profileIdToFetch }]);
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profileIdToFetch }] as any);
                 setFollowerCount(c => c + 1);
                 setIsFollowing(true);
             }
@@ -130,16 +130,16 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (type === 'followers') {
                 const { data, error } = await supabase.from('follows').select('follower_id').eq('following_id', profileIdToFetch);
                 if (error) throw error;
-                if (data) userIds = data.map(d => d.follower_id);
+                if (data) userIds = (data as { follower_id: string }[]).map(d => d.follower_id);
             } else {
                 const { data, error } = await supabase.from('follows').select('following_id').eq('follower_id', profileIdToFetch);
                 if (error) throw error;
-                if (data) userIds = data.map(d => d.following_id);
+                if (data) userIds = (data as { following_id: string }[]).map(d => d.following_id);
             }
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: profiles || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, loading: false }));
             }

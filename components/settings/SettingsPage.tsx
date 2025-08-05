@@ -49,21 +49,21 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
             if (profileError) throw profileError;
             
             if (profileData) {
-                setProfile(profileData);
-                setName(profileData.name || '');
-                setBio(profileData.bio || '');
-                setWebsiteUrl(profileData.website_url || '');
-                setYoutubeUrl(profileData.youtube_url || '');
-                setFacebookUrl(profileData.facebook_url || '');
+                setProfile(profileData as ProfileData);
+                setName((profileData as ProfileData).name || '');
+                setBio((profileData as ProfileData).bio || '');
+                setWebsiteUrl((profileData as ProfileData).website_url || '');
+                setYoutubeUrl((profileData as ProfileData).youtube_url || '');
+                setFacebookUrl((profileData as ProfileData).facebook_url || '');
 
-                if (profileData.xp_balance >= 10000) {
+                if ((profileData as ProfileData).xp_balance >= 10000) {
                     const { data: premiumData } = await supabase
                         .from('premium_features')
                         .select('id, profile_id, music_url, created_at')
                         .eq('profile_id', session.user.id)
                         .single();
                     if (premiumData) {
-                        setActiveMusicUrl(premiumData.music_url || '');
+                        setActiveMusicUrl((premiumData as PremiumFeaturesData).music_url || '');
                     }
 
                     const { data: libraryData } = await supabase
@@ -72,7 +72,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                         .eq('profile_id', session.user.id)
                         .order('created_at', { ascending: false });
                     if (libraryData) {
-                        setMusicLibrary(libraryData);
+                        setMusicLibrary(libraryData as ProfileMusic[]);
                     }
                 }
             } else {
@@ -115,14 +115,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
             
             const { data: insertedTrack, error: insertError } = await supabase
                 .from('profile_music')
-                .insert([newMusicTrack])
+                .insert([newMusicTrack] as any)
                 .select()
                 .single();
             
             if (insertError) throw insertError;
 
             if (insertedTrack) {
-                 setMusicLibrary(prev => [insertedTrack, ...prev]);
+                 setMusicLibrary(prev => [insertedTrack as ProfileMusic, ...prev]);
                  // If this is the first song, set it as active
                  if (!activeMusicUrl) {
                     await handleSetActiveMusic(publicUrl);
@@ -141,7 +141,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
         try {
             await supabase
                 .from('premium_features')
-                .upsert({ profile_id: session.user.id, music_url: url }, { onConflict: 'profile_id' });
+                .upsert({ profile_id: session.user.id, music_url: url } as any, { onConflict: 'profile_id' });
         } catch (err: any) {
             setError(err.message || "Failed to set active music.");
         }
@@ -171,7 +171,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
             if (activeMusicUrl === trackUrl) {
                 await supabase
                     .from('premium_features')
-                    .upsert({ profile_id: session.user.id, music_url: null }, { onConflict: 'profile_id' });
+                    .upsert({ profile_id: session.user.id, music_url: null } as any, { onConflict: 'profile_id' });
             }
         } catch(err: any) {
             setError(err.message || "Failed to delete track.");
@@ -197,7 +197,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
         setIsSaving(true);
         try {
             const profileUpdates = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
-            await supabase.from('profiles').update(profileUpdates).eq('id', session.user.id);
+            await supabase.from('profiles').update(profileUpdates as any).eq('id', session.user.id);
             
             setSuccessMessage("Profile details saved successfully!");
             setTimeout(() => setSuccessMessage(null), 3000);

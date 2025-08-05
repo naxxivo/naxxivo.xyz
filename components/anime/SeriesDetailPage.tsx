@@ -34,7 +34,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
                 .single();
             if (seriesError) throw seriesError;
             if (seriesData) {
-                setSeries(seriesData);
+                setSeries(seriesData as Series);
             } else {
                 throw new Error("Series not found.");
             }
@@ -47,7 +47,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
             if (episodesError) throw episodesError;
 
             if (episodesData) {
-                setEpisodes(episodesData);
+                setEpisodes(episodesData as Episode[]);
                 if (episodesData.length > 0) {
                     setCurrentEpisode(episodesData[0]);
                 }

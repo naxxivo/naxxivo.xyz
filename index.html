@@ -8,6 +8,13 @@
     <meta name="description" content="NAXXIVO is an all-in-one platform with an anime-inspired aesthetic for users to share posts, images, and videos. Join the community, connect with friends, and share your moments." />
     <meta name="keywords" content="NAXXIVO, anime, social media, community, posts, images, videos, connect, share" />
 
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Favicon and Apple Touch Icon -->
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="NAXXIVO - Share Your World" />
@@ -20,71 +27,20 @@
     <meta property="twitter:title" content="NAXXIVO - Share Your World" />
     <meta property="twitter:description" content="Join the community, connect with friends, and share your moments on NAXXIVO." />
     <meta property="twitter:image" content="https://raw.githubusercontent.com/ai-sidekick/example-apps/main/naxxivo-og-image.png" />
-
-
-    <script src="https://cdn.tailwindcss.com"></script>
-<style>
-    /* Styles for the animated background */
-    @keyframes gradient-animation {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    .animated-gradient-bg {
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-        background-size: 400% 400%;
-        animation: gradient-animation 15s ease infinite;
-    }
-    
-    @keyframes floatAnimation {
-        0%, 100% {
-            transform: translateY(0px) rotate(-10deg);
-        }
-        50% {
-            transform: translateY(-20px) rotate(10deg);
-        }
-    }
-    .animate-float {
-        animation: floatAnimation 12s ease-in-out infinite;
-    }
-
-    /* Styles for the spinner */
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-    @keyframes pulse {
-        50% { transform: scale(0.95); }
-    }
-    .animate-spin-pulse {
-        animation: spin 1.5s linear infinite, pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-
-    /* Styles for the audio visualizer */
-    @keyframes music-pulse {
-        0% { transform: scaleY(0.1); }
-        50% { transform: scaleY(1); }
-        100% { transform: scaleY(0.1); }
-    }
-    .visualizer-bar {
-        transform-origin: bottom;
-        animation: music-pulse 1.2s ease-in-out infinite;
-    }
-</style>
-<link rel="stylesheet" href="/index.css">
 <script type="importmap">
 {
   "imports": {
-    "path": "https://esm.sh/path@^0.12.7",
-    "vite": "https://esm.sh/vite@^7.0.6",
+    "react": "https://esm.sh/react@^19.1.1",
     "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
     "react/": "https://esm.sh/react@^19.1.1/",
-    "react": "https://esm.sh/react@^19.1.1",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.53.0",
-    "framer-motion": "https://esm.sh/framer-motion@^12.23.12"
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.12",
+    "path": "https://esm.sh/path@^0.12.7",
+    "vite": "https://esm.sh/vite@^7.0.6"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="antialiased bg-[#100F1F] text-gray-200">
     <div id="root"></div>

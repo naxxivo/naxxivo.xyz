@@ -138,7 +138,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, isIni
                 if (error) throw error;
             } else {
                 // Like
-                const { error } = await supabase.from('likes').insert([{ user_id: session.user.id, post_id: postId }]);
+                const { error } = await supabase.from('likes').insert([{ user_id: session.user.id, post_id: postId }] as any);
                 if (error) throw error;
             }
         } catch (error) {
@@ -164,7 +164,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, isIni
             if (originalFollowStatus) {
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: user_id });
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: user_id }]);
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: user_id }] as any);
             }
         } catch (error) {
             console.error("Follow toggle failed", error);
@@ -209,7 +209,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, isIni
 
                 if (error) throw error;
                 if (data) {
-                    setComments(data as unknown as CommentWithProfile[]);
+                    setComments(data as CommentWithProfile[]);
                 }
 
             } catch (error) {
@@ -229,7 +229,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, isIni
         try {
             const { data, error } = await supabase
                 .from('comments')
-                .insert([{ content: newComment, post_id: postId, user_id: session.user.id }])
+                .insert([{ content: newComment, post_id: postId, user_id: session.user.id }] as any)
                 .select('*, profiles(username, name, photo_url)')
                 .single();
             

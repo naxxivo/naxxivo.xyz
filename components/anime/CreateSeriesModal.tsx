@@ -30,7 +30,7 @@ const CreateSeriesModal: React.FC<CreateSeriesModalProps> = ({ isOpen, onClose, 
                 thumbnail_url: thumbnailUrl || null,
                 banner_url: bannerUrl || null,
                 user_id: user.id
-            }]);
+            }] as any);
             if (insertError) throw insertError;
             
             onSeriesCreated();

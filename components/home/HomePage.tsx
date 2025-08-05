@@ -59,12 +59,12 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey 
 
                 const { data: postData, error: postsError } = postsPromise;
                 if (postsError) throw postsError;
-                if (postData) setPosts(postData);
+                if (postData) setPosts(postData as PostWithDetails[]);
 
                 const { data: followsData, error: followsError } = followsPromise;
                 if (followsError) throw followsError;
                 if (followsData) {
-                    const followingIds = new Set(followsData.map(f => f.following_id));
+                    const followingIds = new Set((followsData as { following_id: string }[]).map(f => f.following_id));
                     setFollowingSet(followingIds);
                 }
 

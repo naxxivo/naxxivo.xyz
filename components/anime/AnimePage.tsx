@@ -28,7 +28,7 @@ const AnimePage: React.FC<AnimePageProps> = ({ session, onViewSeries }) => {
                 .select('id, created_at, title, thumbnail_url, description, banner_url, user_id')
                 .order('created_at', { ascending: false });
             if (error) throw error;
-            if (data) setSeries(data);
+            if (data) setSeries(data as Series[]);
         } catch (err: any) {
             setError(err.message || 'Failed to load anime series.');
         } finally {
