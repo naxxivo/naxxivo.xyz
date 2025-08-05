@@ -1,436 +1,13 @@
 
-import { User } from '@supabase/supabase-js';
 
-export type Database = {
-  public: {
-    Tables: {
-      profiles: {
-        Row: {
-          id: string
-          username: string
-          created_at: string
-          name: string | null
-          bio: string | null
-          photo_url: string | null
-          cover_url: string | null
-          address: string | null
-          website_url: string | null
-          youtube_url: string | null
-          facebook_url: string | null
-        }
-        Insert: {
-          id: string
-          username: string
-          created_at?: string
-          name?: string | null
-          bio?: string | null
-          photo_url?: string | null
-          cover_url?: string | null
-          address?: string | null
-          website_url?: string | null
-          youtube_url?: string | null
-          facebook_url?: string | null
-        }
-        Update: {
-          id?: string
-          username?: string
-          created_at?: string
-          name?: string | null
-          bio?: string | null
-          photo_url?: string | null
-          cover_url?: string | null
-          address?: string | null
-          website_url?: string | null
-          youtube_url?: string | null
-          facebook_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      posts: {
-        Row: {
-          id: number
-          user_id: string
-          caption: string | null
-          content_url: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          user_id: string
-          caption?: string | null
-          content_url?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          user_id?: string
-          caption?: string | null
-          content_url?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "posts_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      comments: {
-        Row: {
-          id: number
-          user_id: string
-          post_id: number
-          parent_comment_id: number | null
-          content: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          user_id: string
-          post_id: number
-          parent_comment_id?: number | null
-          content: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          user_id?: string
-          post_id?: number
-          parent_comment_id?: number | null
-          content?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_parent_comment_id_fkey"
-            columns: ["parent_comment_id"]
-            referencedRelation: "comments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      likes: {
-        Row: {
-          id: number
-          user_id: string
-          post_id: number
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          user_id: string
-          post_id: number
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          user_id?: string
-          post_id?: number
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "likes_post_id_fkey"
-            columns: ["post_id"]
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "likes_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      messages: {
-        Row: {
-          id: number
-          sender_id: string
-          recipient_id: string
-          content: string
-          is_read: boolean
-          status: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          sender_id: string
-          recipient_id: string
-          content: string
-          is_read?: boolean
-          status?: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          sender_id?: string
-          recipient_id?: string
-          content?: string
-          is_read?: boolean
-          status?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_recipient_id_fkey"
-            columns: ["recipient_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      follows: {
-        Row: {
-          follower_id: string
-          following_id: string
-          created_at: string
-        }
-        Insert: {
-          follower_id: string
-          following_id: string
-          created_at?: string
-        }
-        Update: {
-          follower_id?: string
-          following_id?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "follows_follower_id_fkey"
-            columns: ["follower_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "follows_following_id_fkey"
-            columns: ["following_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      anime_series: {
-        Row: {
-          id: number
-          user_id: string
-          title: string
-          description: string | null
-          thumbnail_url: string | null
-          banner_url: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          user_id: string
-          title: string
-          description?: string | null
-          thumbnail_url?: string | null
-          banner_url?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          user_id?: string
-          title?: string
-          description?: string | null
-          thumbnail_url?: string | null
-          banner_url?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "anime_series_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      anime_episodes: {
-        Row: {
-          id: number
-          series_id: number
-          episode_number: number
-          title: string | null
-          video_url: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          series_id: number
-          episode_number: number
-          title?: string | null
-          video_url: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          series_id?: number
-          episode_number?: number
-          title?: string | null
-          video_url?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "anime_episodes_series_id_fkey"
-            columns: ["series_id"]
-            referencedRelation: "anime_series"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      market_categories: {
-        Row: {
-          id: number
-          name: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          name: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          name?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      market_products: {
-        Row: {
-          id: number
-          user_id: string
-          category_id: number
-          title: string
-          description: string | null
-          price: number
-          currency: string
-          location: string | null
-          condition: string | null
-          status: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          user_id: string
-          category_id: number
-          title: string
-          description?: string | null
-          price: number
-          currency?: string
-          location?: string | null
-          condition?: string | null
-          status?: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          user_id?: string
-          category_id?: number
-          title?: string
-          description?: string | null
-          price?: number
-          currency?: string
-          location?: string | null
-          condition?: string | null
-          status?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "market_products_category_id_fkey"
-            columns: ["category_id"]
-            referencedRelation: "market_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "market_products_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      market_product_images: {
-        Row: {
-          id: number
-          product_id: number
-          image_url: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          product_id: number
-          image_url: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          product_id?: number
-          image_url?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "market_product_images_product_id_fkey"
-            columns: ["product_id"]
-            referencedRelation: "market_products"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+import type { User } from '@supabase/supabase-js';
 
 // Manually define Row types to break circular dependencies and fix type instability.
 export type Profile = {
   id: string;
   username: string;
   created_at: string;
+  role: string;
   name: string | null;
   bio: string | null;
   photo_url: string | null;
@@ -468,6 +45,11 @@ export type Message = {
   content: string;
   is_read: boolean;
   status: string;
+  created_at: string;
+};
+export type Follow = {
+  follower_id: string;
+  following_id: string;
   created_at: string;
 };
 export type AnimeSeries = {
@@ -508,10 +90,198 @@ export type MarketProduct = {
 export type MarketProductImage = {
   id: number;
   product_id: number;
-  image_url: string;
+  image_path: string;
   created_at: string;
 };
 
+
+// Explicit Insert and Update types to fix 'never' and 'type instantiation' errors.
+type ProfileInsert = {
+  id: string;
+  username: string;
+  name?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+  cover_url?: string | null;
+  website_url?: string | null;
+  youtube_url?: string | null;
+  facebook_url?: string | null;
+  address?: string | null;
+  role?: string;
+};
+type ProfileUpdate = Partial<ProfileInsert>;
+
+type PostRowInsert = {
+  user_id: string;
+  caption?: string | null;
+  content_url?: string | null;
+};
+type PostRowUpdate = Partial<PostRowInsert>;
+
+type CommentInsert = {
+  user_id: string;
+  post_id: number;
+  parent_comment_id?: number | null;
+  content: string;
+};
+type CommentUpdate = Partial<CommentInsert>;
+
+type LikeInsert = {
+  user_id: string;
+  post_id: number;
+};
+type LikeUpdate = Partial<LikeInsert>;
+
+type MessageInsert = {
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  is_read?: boolean;
+  status?: string;
+};
+type MessageUpdate = Partial<MessageInsert>;
+
+type FollowInsert = {
+  follower_id: string;
+  following_id: string;
+};
+type FollowUpdate = Partial<FollowInsert>;
+
+type AnimeSeriesInsert = {
+  user_id: string;
+  title: string;
+  description?: string | null;
+  thumbnail_url?: string | null;
+  banner_url?: string | null;
+};
+type AnimeSeriesUpdate = Partial<AnimeSeriesInsert>;
+
+type AnimeEpisodeInsert = {
+  series_id: number;
+  episode_number: number;
+  title?: string | null;
+  video_url: string;
+};
+type AnimeEpisodeUpdate = Partial<AnimeEpisodeInsert>;
+
+type MarketCategoryInsert = {
+  name: string;
+};
+type MarketCategoryUpdate = Partial<MarketCategoryInsert>;
+
+type MarketProductInsert = {
+  user_id: string;
+  category_id: number;
+  title: string;
+  description?: string | null;
+  price: number;
+  currency?: string;
+  location?: string | null;
+  condition?: string | null;
+  status?: string;
+};
+type MarketProductUpdate = Partial<MarketProductInsert>;
+
+type MarketProductImageInsert = {
+  product_id: number;
+  image_path: string;
+};
+type MarketProductImageUpdate = Partial<MarketProductImageInsert>;
+
+
+// By defining the Database structure manually with our own types, we avoid the "Type instantiation is excessively deep"
+// error that can come from Supabase's automatic type generation on complex schemas. This also fixes the `... is not assignable to never`
+// error in `insert` and `update` calls by providing a concrete type instead of `any`.
+export type Database = {
+  public: {
+    Tables: {
+      profiles: {
+        Row: Profile;
+        Insert: ProfileInsert;
+        Update: ProfileUpdate;
+      };
+      posts: {
+        Row: PostRow;
+        Insert: PostRowInsert;
+        Update: PostRowUpdate;
+      };
+      comments: {
+        Row: Comment;
+        Insert: CommentInsert;
+        Update: CommentUpdate;
+      };
+      likes: {
+        Row: Like;
+        Insert: LikeInsert;
+        Update: LikeUpdate;
+      };
+      messages: {
+        Row: Message;
+        Insert: MessageInsert;
+        Update: MessageUpdate;
+      };
+      follows: {
+        Row: Follow;
+        Insert: FollowInsert;
+        Update: FollowUpdate;
+      };
+      anime_series: {
+        Row: AnimeSeries;
+        Insert: AnimeSeriesInsert;
+        Update: AnimeSeriesUpdate;
+      };
+      anime_episodes: {
+        Row: AnimeEpisode;
+        Insert: AnimeEpisodeInsert;
+        Update: AnimeEpisodeUpdate;
+      };
+      market_categories: {
+        Row: MarketCategory;
+        Insert: MarketCategoryInsert;
+        Update: MarketCategoryUpdate;
+      };
+      market_products: {
+        Row: MarketProduct;
+        Insert: MarketProductInsert;
+        Update: MarketProductUpdate;
+      };
+      market_product_images: {
+        Row: MarketProductImage;
+        Insert: MarketProductImageInsert;
+        Update: MarketProductImageUpdate;
+      };
+    };
+    Functions: {
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+    };
+  };
+};
+
+
+// Simple, flat types for composition to avoid deep instantiation errors
+type SimpleProfile = {
+  name: string | null;
+  photo_url: string | null;
+  username: string;
+};
+
+type SimpleSellerProfile = {
+  id: string;
+  name: string | null;
+  photo_url: string | null;
+  username: string;
+};
+
+type SimpleMarketCategory = {
+  name: string;
+};
+
+type SimpleProductImage = {
+  image_path: string;
+};
 
 // Composite types using the base types
 // This was causing "Type instantiation is excessively deep" errors.
@@ -551,8 +321,13 @@ export type AppUser = {
 };
 
 
-export type Post = PostRow & {
-  profiles: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
+export type Post = {
+  id: number;
+  user_id: string;
+  caption: string | null;
+  content_url: string | null;
+  created_at: string;
+  profiles: SimpleProfile | null;
   likes: { count: number }[];
   comments: { count: number }[];
   is_liked: boolean;
@@ -564,29 +339,77 @@ export interface PostCardProps {
   onPostDeleted: (postId: number) => void;
 }
 
-export type CommentWithProfile = Comment & {
-  profiles: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
+export type CommentWithProfile = {
+  id: number;
+  user_id: string;
+  post_id: number;
+  parent_comment_id: number | null;
+  content: string;
+  created_at: string;
+  profiles: SimpleProfile | null;
 };
 
-export type ChatPartner = Profile & {
+export type ChatPartner = {
+    id: string;
+    username: string;
+    created_at: string;
+    name: string | null;
+    bio: string | null;
+    photo_url: string | null;
+    cover_url: string | null;
+    address: string | null;
+    website_url: string | null;
+    youtube_url: string | null;
+    facebook_url: string | null;
     last_message: string | null;
     last_message_at: string | null;
 };
 
-export type MessageWithProfile = Message & {
-    sender: Pick<Profile, 'name' | 'photo_url' | 'username'> | null;
+export type MessageWithProfile = {
+    id: number;
+    sender_id: string;
+    recipient_id: string;
+    content: string;
+    is_read: boolean;
+    status: string;
+    created_at: string;
+    sender: SimpleProfile | null;
 };
 
-export type AnimeSeriesWithEpisodes = AnimeSeries & {
+export type AnimeSeriesWithEpisodes = {
+    id: number;
+    user_id: string;
+    title: string;
+    description: string | null;
+    thumbnail_url: string | null;
+    banner_url: string | null;
+    created_at: string;
     anime_episodes: AnimeEpisode[];
 };
 
-export type AnimeEpisodeWithSeries = AnimeEpisode & { 
-    anime_series: AnimeSeries 
+export type AnimeEpisodeWithSeries = {
+    id: number;
+    series_id: number;
+    episode_number: number;
+    title: string | null;
+    video_url: string;
+    created_at: string;
+    anime_series: AnimeSeries;
 };
 
-export type MarketProductWithDetails = MarketProduct & {
-  market_categories: Pick<MarketCategory, 'name'> | null;
-  profiles: Pick<Profile, 'id' | 'name' | 'photo_url' | 'username'> | null;
-  market_product_images: Pick<MarketProductImage, 'image_url'>[];
+export type MarketProductWithDetails = {
+    id: number;
+    user_id: string;
+    category_id: number;
+    title: string;
+    description: string | null;
+    price: number;
+    currency: string;
+    location: string | null;
+    condition: string | null;
+    status: string;
+    created_at: string;
+    market_categories: SimpleMarketCategory | null;
+    profiles: SimpleSellerProfile | null;
+    market_product_images: SimpleProductImage[];
 };
