@@ -1,6 +1,5 @@
 {
-  "name": "NAXXIVO",
-  "description": "NAXXIVO is an all-in-one platform with an anime-inspired aesthetic for users to share posts, images, and videos. It features a vibrant user interface with animations and interactive elements, powered by a Supabase backend.",
-  "requestFramePermissions": [],
-  "prompt": ""
+  "name": "Naxxivo",
+  "description": "A modern, visually appealing login and signup page built with React, TypeScript, and Tailwind CSS. It allows users to switch between signing in and creating a new account.",
+  "requestFramePermissions": []
 }
