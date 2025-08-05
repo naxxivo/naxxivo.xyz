@@ -8,11 +8,11 @@ interface ButtonProps extends HTMLMotionProps<"button"> {
 }
 
 const Button: React.FC<ButtonProps> = ({ children, className, variant = 'primary', size = 'large', ...props }) => {
-    const baseClasses = "w-full flex justify-center items-center font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#100F1F] transition-colors duration-200";
+    const baseClasses = "w-full flex justify-center items-center font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-300";
     
     const variantClasses = {
-        primary: "text-white bg-blue-500 hover:bg-blue-600 focus:ring-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed",
-        secondary: "text-gray-300 bg-transparent border border-gray-600 hover:bg-blue-500/10 hover:border-blue-500 hover:text-white focus:ring-blue-500 disabled:border-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
+        primary: "text-white bg-violet-500 hover:bg-violet-600 shadow-md hover:shadow-lg disabled:bg-violet-300 disabled:shadow-none disabled:cursor-not-allowed",
+        secondary: "text-violet-600 bg-white border-2 border-violet-200 hover:bg-violet-50 hover:border-violet-400 focus:ring-violet-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
     };
     
     const sizeClasses = {
@@ -21,8 +21,8 @@ const Button: React.FC<ButtonProps> = ({ children, className, variant = 'primary
     };
 
     const motionProps = props.disabled ? {} : {
-        whileHover: { scale: 1.05 },
-        whileTap: { scale: 0.9 },
+        whileHover: { scale: 1.03, y: -2 },
+        whileTap: { scale: 0.98, y: 0 },
         transition: { type: 'spring', stiffness: 400, damping: 17 } as const,
     };
 
