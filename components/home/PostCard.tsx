@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { PostWithDetails } from './HomePage';
 import { generateAvatar } from '../../utils/helpers';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
 // --- Types --- //
 interface ProfileStub {
@@ -109,8 +109,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile }) => 
                 if (error) throw error;
             } else {
                 // Like
-                const likeData = { user_id: session.user.id, post_id: postId };
-                const { error } = await supabase.from('likes').insert([likeData]);
+                const likeData: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
+                const { error } = await supabase.from('likes').insert(likeData as any);
                 if (error) throw error;
             }
         } catch (error) {
@@ -136,7 +136,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile }) => 
 
                 if (error) throw error;
                 if (data) {
-                    setComments(data as CommentWithProfile[]);
+                    setComments(data as unknown as CommentWithProfile[]);
                 }
 
             } catch (error) {
@@ -154,17 +154,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile }) => 
 
         setIsSubmittingComment(true);
         try {
-            const newCommentData = { content: newComment, post_id: postId, user_id: session.user.id };
+            const newCommentData: TablesInsert<'comments'> = { content: newComment, post_id: postId, user_id: session.user.id };
             const { data, error } = await supabase
                 .from('comments')
-                .insert([newCommentData])
+                .insert(newCommentData as any)
                 .select('*, profiles(username, name, photo_url)')
                 .single();
             
             if (error) throw error;
 
             if (data) {
-                setComments(prev => [...prev, data as CommentWithProfile]);
+                setComments(prev => [...prev, data as unknown as CommentWithProfile]);
                 setCommentCount(prev => prev + 1);
                 setNewComment('');
             }

@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 
 
@@ -14,14 +14,8 @@ interface ChatPageProps {
     onBack: () => void;
 }
 
-interface Message {
-    id: number;
-    created_at: string;
-    content: string;
-    sender_id: string;
-    recipient_id: string;
-    is_read: boolean;
-}
+type Message = Tables<'messages'>;
+
 
 // --- Icons --- //
 const SendIcon = () => (
@@ -153,10 +147,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 .map(m => m.id);
 
             if (unreadMessageIds.length > 0) {
-                const updatePayload = { is_read: true };
+                const updatePayload: TablesUpdate<'messages'> = { is_read: true };
                 await supabase
                     .from('messages')
-                    .update(updatePayload)
+                    .update(updatePayload as any)
                     .in('id', unreadMessageIds);
             }
         };
@@ -169,8 +163,8 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 const newMessage = payload.new as Message;
                 if (newMessage.sender_id === otherUser.id && newMessage.recipient_id === myId) {
                     setMessages(current => [...current, newMessage]);
-                    const updatePayload = { is_read: true };
-                    await supabase.from('messages').update(updatePayload).eq('id', newMessage.id);
+                    const updatePayload: TablesUpdate<'messages'> = { is_read: true };
+                    await supabase.from('messages').update(updatePayload as any).eq('id', newMessage.id);
                 }
             }),
             update: channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => {
@@ -204,6 +198,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
             sender_id: myId,
             recipient_id: otherUser.id,
             is_read: false,
+            status: 'sent', // Added from schema
         };
         setMessages(current => [...current, optimisticMessage]);
 
@@ -215,10 +210,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
             status: "sent",
         };
 
-        const { data, error } = await supabase.from('messages').insert([messageData]).select().single();
+        const { data, error } = await supabase.from('messages').insert([messageData] as any).select().single();
         
         if (data) {
-             const realMsg = data as Message;
+             const realMsg = data as unknown as Message;
              setMessages(current => current.map(m => 
                 m.id === tempId 
                 ? { ...m, id: realMsg.id, created_at: realMsg.created_at } // Update optimistic msg with real data

@@ -1,5 +1,5 @@
 {
-  "name": "Login & Signup Page",
+  "name": "Naxxivo",
   "description": "A modern, visually appealing login and signup page built with React, TypeScript, and Tailwind CSS. It allows users to switch between signing in and creating a new account.",
   "requestFramePermissions": []
 }
