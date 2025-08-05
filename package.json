@@ -1,5 +1,24 @@
 {
   "name": "naxxivo",
   "version": "1.0.0",
-  "description": "NAXXIVO Application"
+  "private": true,
+  "description": "NAXXIVO Application",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.53.0",
+    "framer-motion": "^11.3.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1"
+  }
 }

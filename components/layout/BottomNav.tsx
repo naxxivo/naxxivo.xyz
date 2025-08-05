@@ -2,31 +2,26 @@ import React from 'react';
 
 // --- SVG Icons --- //
 const HomeIcon = ({ isActive }: { isActive: boolean }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isActive ? 0 : 2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        {isActive && <circle cx="12" cy="20" r="2" fill="currentColor" />}
     </svg>
 );
 
 const AnimeIcon = ({ isActive }: { isActive: boolean }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isActive ? 0 : 2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4" />
-        {isActive && <circle cx="12" cy="20" r="2" fill="currentColor" />}
     </svg>
 );
 
-
-const MessagesIcon = ({ isActive }: { isActive: boolean }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-       {isActive && <circle cx="12" cy="20" r="2" fill="currentColor" />}
+const UsersIcon = ({ isActive }: { isActive: boolean }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isActive ? 0 : 2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
 );
 
 const ProfileIcon = ({ isActive }: { isActive: boolean }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isActive ? 0 : 2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        {isActive && <circle cx="12" cy="20" r="2" fill="currentColor" />}
     </svg>
 );
 
@@ -37,8 +32,8 @@ const AddIcon = () => (
 );
 
 interface BottomNavProps {
-    activeView: 'home' | 'anime' | 'messages' | 'profile' | 'settings';
-    setAuthView: (view: 'home' | 'anime' | 'messages' | 'profile') => void;
+    activeView: 'home' | 'anime' | 'leaderboard' | 'profile' | 'settings' | 'messages';
+    setAuthView: (view: 'home' | 'anime' | 'leaderboard' | 'profile') => void;
     onAddPost: () => void;
 }
 
@@ -47,7 +42,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
         { view: 'home', label: 'Home', icon: HomeIcon },
         { view: 'anime', label: 'Anime', icon: AnimeIcon },
         { view: 'add', label: 'Create Post', icon: AddIcon },
-        { view: 'messages', label: 'Messages', icon: MessagesIcon },
+        { view: 'leaderboard', label: 'Leaderboard', icon: UsersIcon },
         { view: 'profile', label: 'Profile', icon: ProfileIcon },
     ];
 
@@ -60,7 +55,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
                              <button
                                 key={item.view}
                                 onClick={onAddPost}
-                                className="p-2 bg-yellow-400 text-gray-900 rounded-full shadow-lg hover:bg-yellow-500 transition-transform duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-[#1C1B33]"
+                                className="p-2 bg-blue-500 text-gray-900 rounded-full shadow-lg hover:bg-blue-600 transition-transform duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:ring-offset-[#1C1B33]"
                                 aria-label={item.label}
                             >
                                <AddIcon />
@@ -72,8 +67,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
                     return (
                         <button
                             key={item.view}
-                            onClick={() => setAuthView(item.view as 'home' | 'anime' | 'messages' | 'profile')}
-                            className={`transition-colors duration-200 ${isActive ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-300'}`}
+                            onClick={() => setAuthView(item.view as 'home' | 'anime' | 'leaderboard' | 'profile')}
+                            className={`transition-colors duration-200 ${isActive ? 'text-blue-500' : 'text-gray-400 hover:text-blue-400'}`}
                             aria-label={item.label}
                         >
                             <Icon isActive={isActive} />

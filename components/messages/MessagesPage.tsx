@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Session } from '@supabase/supabase-js';
 
 // --- Local Types --- //
 interface ProfileStub {
@@ -143,7 +143,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                     placeholder="Search messages..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[#1C1B33] border-transparent rounded-full text-white placeholder-gray-500 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                    className="w-full bg-[#1C1B33] border-transparent rounded-full text-white placeholder-gray-500 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
             
@@ -185,7 +185,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                                     />
                                 </div>
                                 {isUnread && (
-                                     <span className="absolute bottom-0 right-0 block h-4 w-4 rounded-full bg-yellow-400 ring-2 ring-[#1C1B33]" />
+                                     <span className="absolute bottom-0 right-0 block h-4 w-4 rounded-full bg-blue-500 ring-2 ring-[#1C1B33]" />
                                 )}
                             </div>
                             <div className="ml-4 flex-grow overflow-hidden">

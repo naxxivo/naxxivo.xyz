@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
-import type { TablesInsert } from '../../integrations/supabase/types';
 
 interface CreatePostProps {
     isOpen: boolean;
@@ -24,7 +23,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("You must be logged in to post.");
             
-            const newPost: TablesInsert<'posts'> = {
+            const newPost = {
                 caption,
                 content_url: contentUrl || null,
                 user_id: user.id
@@ -74,7 +73,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
                             onChange={e => setCaption(e.target.value)}
                             placeholder="What's on your mind?"
                             rows={4}
-                            className="appearance-none block w-full px-4 py-3 bg-[#100F1F] border-transparent rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent sm:text-sm"
+                            className="appearance-none block w-full px-4 py-3 bg-[#100F1F] border-transparent rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                             disabled={loading}
                         />
                     </div>
@@ -86,7 +85,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
                             value={contentUrl}
                             onChange={e => setContentUrl(e.target.value)}
                             placeholder="https://... (e.g., my-image.png or youtube.com/...)"
-                            className="appearance-none block w-full px-4 py-3 bg-[#100F1F] border-transparent rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent sm:text-sm"
+                            className="appearance-none block w-full px-4 py-3 bg-[#100F1F] border-transparent rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                             disabled={loading}
                         />
                     </div>

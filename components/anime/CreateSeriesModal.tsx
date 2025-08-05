@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
-import type { TablesInsert } from '../../integrations/supabase/types';
 
 interface CreateSeriesModalProps {
     isOpen: boolean;
@@ -25,15 +24,13 @@ const CreateSeriesModal: React.FC<CreateSeriesModalProps> = ({ isOpen, onClose, 
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("You must be logged in to create a series.");
 
-            const newSeries: TablesInsert<'anime_series'> = {
+            const { error: insertError } = await supabase.from('anime_series').insert([{
                 title,
                 description,
                 thumbnail_url: thumbnailUrl || null,
                 banner_url: bannerUrl || null,
                 user_id: user.id
-            };
-
-            const { error: insertError } = await supabase.from('anime_series').insert([newSeries]);
+            }]);
             if (insertError) throw insertError;
             
             onSeriesCreated();
@@ -62,19 +59,19 @@ const CreateSeriesModal: React.FC<CreateSeriesModalProps> = ({ isOpen, onClose, 
                 <form onSubmit={handleSubmit} className="space-y-4">
                      <div>
                         <label htmlFor="title" className="block text-sm font-medium text-gray-400 mb-2">Title</label>
-                        <input id="title" type="text" value={title} onChange={e => setTitle(e.target.value)} required disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"/>
+                        <input id="title" type="text" value={title} onChange={e => setTitle(e.target.value)} required disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                     </div>
                      <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-2">Description</label>
-                        <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={4} disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"/>
+                        <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={4} disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                     </div>
                      <div>
                         <label htmlFor="thumbnailUrl" className="block text-sm font-medium text-gray-400 mb-2">Thumbnail URL</label>
-                        <input id="thumbnailUrl" type="url" value={thumbnailUrl} onChange={e => setThumbnailUrl(e.target.value)} placeholder="https://..." disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"/>
+                        <input id="thumbnailUrl" type="url" value={thumbnailUrl} onChange={e => setThumbnailUrl(e.target.value)} placeholder="https://..." disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                     </div>
                      <div>
                         <label htmlFor="bannerUrl" className="block text-sm font-medium text-gray-400 mb-2">Banner URL</label>
-                        <input id="bannerUrl" type="url" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} placeholder="https://..." disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"/>
+                        <input id="bannerUrl" type="url" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} placeholder="https://..." disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                     </div>
                     {error && <p className="text-red-400 text-sm" role="alert">{error}</p>}
                     <div className="pt-4"><Button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Create Series'}</Button></div>

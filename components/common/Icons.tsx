@@ -23,7 +23,7 @@ export const AbstractShape = () => (
       animate={{ scale: 1, rotate: 360 }}
       transition={{ type: 'spring', stiffness: 50, duration: 20, repeat: Infinity, repeatType: 'reverse' }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-purple-600 rounded-full opacity-30 blur-2xl animate-float"></div>
-      <div className="absolute inset-8 bg-gradient-to-tl from-yellow-200 to-purple-400 rounded-full opacity-40 blur-xl animate-float" style={{animationDelay: '-2s'}}></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full opacity-30 blur-2xl animate-float"></div>
+      <div className="absolute inset-8 bg-gradient-to-tl from-blue-300 to-cyan-200 rounded-full opacity-40 blur-xl animate-float" style={{animationDelay: '-2s'}}></div>
     </motion.div>
 );

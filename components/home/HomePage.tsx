@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import PostCard from './PostCard';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Session } from '@supabase/supabase-js';
 
 interface HomePageProps {
     session: Session;
@@ -30,33 +30,42 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey 
     const [posts, setPosts] = useState<PostWithDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
+    const myId = session.user.id;
 
     useEffect(() => {
-        const fetchPosts = async () => {
+        const fetchPostsAndFollows = async () => {
             setLoading(true);
             setError(null);
 
             try {
-                const { data, error } = await supabase
-                    .from('posts')
-                    .select(`
-                        *,
-                        profiles (
-                            username,
-                            name,
-                            photo_url
-                        ),
-                        likes ( user_id ),
-                        comments ( count )
-                    `)
-                    .order('created_at', { ascending: false });
+                const [postsPromise, followsPromise] = await Promise.all([
+                    supabase
+                        .from('posts')
+                        .select(`
+                            *,
+                            profiles (
+                                username,
+                                name,
+                                photo_url
+                            ),
+                            likes ( user_id ),
+                            comments ( count )
+                        `)
+                        .order('created_at', { ascending: false }),
+                     supabase.from('follows').select('following_id').eq('follower_id', myId)
+                ]);
 
-                if (error) {
-                    throw error;
-                }
-                
-                if (data) {
-                    setPosts(data as unknown as PostWithDetails[]);
+
+                const { data: postData, error: postsError } = postsPromise;
+                if (postsError) throw postsError;
+                if (postData) setPosts(postData);
+
+                const { data: followsData, error: followsError } = followsPromise;
+                if (followsError) throw followsError;
+                if (followsData) {
+                    const followingIds = new Set(followsData.map(f => f.following_id));
+                    setFollowingSet(followingIds);
                 }
 
             } catch (error: any) {
@@ -66,8 +75,20 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey 
             }
         };
 
-        fetchPosts();
-    }, [session, refreshKey]); // Re-fetch on refreshKey change
+        fetchPostsAndFollows();
+    }, [session, refreshKey, myId]);
+
+    const handleFollowChange = (targetUserId: string, isFollowing: boolean) => {
+        setFollowingSet(prev => {
+            const newSet = new Set(prev);
+            if (isFollowing) {
+                newSet.add(targetUserId);
+            } else {
+                newSet.delete(targetUserId);
+            }
+            return newSet;
+        });
+    };
 
     if (loading) {
         return (
@@ -89,7 +110,15 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey 
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-white">Home Feed</h1>
             {posts.length > 0 ? (
-                posts.map(post => <PostCard key={post.id} post={post} session={session} onViewProfile={onViewProfile} />)
+                posts.map(post => 
+                    <PostCard
+                        key={post.id}
+                        post={post}
+                        session={session}
+                        onViewProfile={onViewProfile}
+                        isInitiallyFollowing={followingSet.has(post.user_id)}
+                        onFollowChange={handleFollowChange}
+                    />)
             ) : (
                 <div className="text-center py-16 px-4 bg-[#1C1B33] rounded-2xl">
                     <h2 className="text-xl font-semibold text-white">The feed is empty!</h2>

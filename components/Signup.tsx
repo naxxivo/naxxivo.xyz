@@ -9,7 +9,7 @@ interface SignupProps {
     setView: (view: 'welcome' | 'login' | 'signup') => void;
 }
 
-const EyeIcon = ({ open }: { open: boolean }) => (
+const EyeIcon = ({open}: {open: boolean}) => (
     open ? (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -17,11 +17,10 @@ const EyeIcon = ({ open }: { open: boolean }) => (
         </svg>
     ) : (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274 4.057 5.064 7 9.542 7 .847 0 1.673-.102 2.468-.292M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 2l20 20" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274 4.057 5.064 7 9.542 7 .847 0 1.673-.102 2.468-.292m-1.928 4.052a10.025 10.025 0 01-11.234-6.458m-6.458 11.234a10.025 10.025 0 016.458-11.234M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
     )
-);
+)
 
 const containerVariants = {
   hidden: {},
@@ -52,10 +51,8 @@ const Signup: React.FC<SignupProps> = ({ setView }) => {
             email: email,
             password: password,
             options: {
-                data: {
-                    name: name,
-                }
-            }
+                data: { name: name },
+            },
         });
 
         if (error) {
@@ -121,7 +118,7 @@ const Signup: React.FC<SignupProps> = ({ setView }) => {
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         disabled={isLoading}
-                                        className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                        className="!bg-black/20 focus:!ring-blue-500 border !border-white/20"
                                     />
                                 </motion.div>
                                 <motion.div variants={itemVariants}>
@@ -135,7 +132,7 @@ const Signup: React.FC<SignupProps> = ({ setView }) => {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         disabled={isLoading}
-                                        className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                        className="!bg-black/20 focus:!ring-blue-500 border !border-white/20"
                                     />
                                 </motion.div>
                                 <motion.div variants={itemVariants}>
@@ -149,10 +146,10 @@ const Signup: React.FC<SignupProps> = ({ setView }) => {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         disabled={isLoading}
-                                        className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                        className="!bg-black/20 focus:!ring-blue-500 border !border-white/20"
                                         rightElement={
                                              <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-200 focus:outline-none" aria-label={showPassword ? "Hide password" : "Show password"}>
-                                                <EyeIcon open={showPassword}/>
+                                                <EyeIcon open={!showPassword}/>
                                             </button>
                                         }
                                     />
@@ -172,7 +169,7 @@ const Signup: React.FC<SignupProps> = ({ setView }) => {
                      <motion.div className="mt-6 text-center" variants={itemVariants}>
                         <p className="text-sm text-gray-300">
                             Already a member?{' '}
-                            <button onClick={() => setView('login')} disabled={isLoading} className="font-medium text-yellow-400 hover:text-yellow-300 focus:outline-none disabled:opacity-50">
+                            <button onClick={() => setView('login')} disabled={isLoading} className="font-medium text-blue-500 hover:text-blue-400 focus:outline-none disabled:opacity-50">
                                 Login
                             </button>
                         </p>

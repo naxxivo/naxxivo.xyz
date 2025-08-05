@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from './integrations/supabase/client';
 import Login from './components/Login';
 import Signup from './components/Signup';
@@ -12,11 +13,11 @@ import ChatPage from './components/messages/ChatPage';
 import AnimePage from './components/anime/AnimePage';
 import SeriesDetailPage from './components/anime/SeriesDetailPage';
 import SettingsPage from './components/settings/SettingsPage';
+import UsersPage from './components/users/UsersPage';
 import { motion, AnimatePresence, Transition } from 'framer-motion';
 import LoadingSpinner from './components/common/LoadingSpinner';
-import type { Session } from '@supabase/supabase-js';
 
-type AuthView = 'home' | 'anime' | 'messages' | 'profile' | 'settings';
+type AuthView = 'home' | 'anime' | 'leaderboard' | 'profile' | 'settings' | 'messages';
 type UnauthView = 'welcome' | 'login' | 'signup';
 
 const slideVariants = {
@@ -26,9 +27,9 @@ const slideVariants = {
 };
 
 const slideTransition: Transition = {
-    type: 'tween',
-    ease: 'anticipate',
-    duration: 0.4,
+    type: 'spring',
+    stiffness: 300,
+    damping: 30,
 };
 
 const animationProps = {
@@ -52,12 +53,13 @@ const App: React.FC = () => {
     const [refreshFeedKey, setRefreshFeedKey] = useState(0);
 
     useEffect(() => {
-        const fetchInitialSession = async () => {
+        const getSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
             setLoading(false);
         };
-        fetchInitialSession();
+        
+        getSession();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
@@ -70,7 +72,7 @@ const App: React.FC = () => {
             }
         });
 
-        return () => subscription?.unsubscribe();
+        return () => subscription.unsubscribe();
     }, []);
 
     const handleLogout = async () => {
@@ -83,7 +85,7 @@ const App: React.FC = () => {
         setRefreshFeedKey(prevKey => prevKey + 1);
     };
     
-    const handleSetAuthView = (view: AuthView) => {
+    const handleSetAuthView = (view: 'home' | 'anime' | 'leaderboard' | 'profile') => {
         setViewingProfileId(null); // Always reset when using bottom nav
         setChattingWith(null);
         setViewingSeriesId(null);
@@ -94,6 +96,16 @@ const App: React.FC = () => {
         setViewingProfileId(null);
         setAuthView('settings');
     }
+    
+    const handleNavigateToMessages = () => {
+        setViewingProfileId(null);
+        setAuthView('messages');
+    }
+
+    const handleViewProfile = (userId: string) => {
+        setAuthView('profile'); // Ensure the view is correct
+        setViewingProfileId(userId);
+    };
 
     if (loading) {
         return (
@@ -105,72 +117,69 @@ const App: React.FC = () => {
     }
     
     if (session) {
+        let pageContent;
+        if (chattingWith) {
+             pageContent = (
+                <motion.div key="chat" {...animationProps}>
+                    <ChatPage session={session} otherUser={chattingWith} onBack={() => setChattingWith(null)}/>
+                </motion.div>
+            );
+        } else if (viewingSeriesId) {
+            pageContent = (
+                <motion.div key="series" {...animationProps}>
+                    <SeriesDetailPage session={session} seriesId={viewingSeriesId} onBack={() => setViewingSeriesId(null)}/>
+                </motion.div>
+            );
+        } else if (viewingProfileId) {
+             pageContent = (
+                <motion.div key="profile-detail" {...animationProps}>
+                     <main className="w-full max-w-2xl mx-auto px-4 pt-4 sm:pt-8 pb-8">
+                        <Profile 
+                            session={session} 
+                            userId={viewingProfileId} 
+                            onBack={() => setViewingProfileId(null)}
+                            onMessage={(user) => setChattingWith(user)}
+                            onViewProfile={handleViewProfile}
+                        />
+                    </main>
+                </motion.div>
+             );
+        } else {
+            // Main content with bottom nav
+             pageContent = (
+                <motion.div key="main-view" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} transition={{duration: 0.2}}>
+                    <div className="min-h-screen bg-[#100F1F] pb-20">
+                        <main className="w-full max-w-2xl mx-auto px-4 pt-4 sm:pt-8 relative overflow-hidden">
+                            <AnimatePresence mode="wait">
+                                <motion.div key={authView} {...animationProps}>
+                                    {authView === 'home' && <HomePage session={session} onViewProfile={handleViewProfile} refreshKey={refreshFeedKey} />}
+                                    {authView === 'anime' && <AnimePage session={session} onViewSeries={setViewingSeriesId} />}
+                                    {authView === 'leaderboard' && <UsersPage session={session} onViewProfile={handleViewProfile} />}
+                                    {authView === 'messages' && <MessagesPage session={session} onStartChat={setChattingWith} />}
+                                    {authView === 'profile' && <Profile session={session} onMessage={(user) => setChattingWith(user)} onLogout={handleLogout} onNavigateToSettings={handleNavigateToSettings} onNavigateToMessages={handleNavigateToMessages} onViewProfile={handleViewProfile} />}
+                                    {authView === 'settings' && <SettingsPage session={session} onBack={() => setAuthView('profile')} />}
+                                </motion.div>
+                            </AnimatePresence>
+                        </main>
+                        <BottomNav
+                            activeView={authView}
+                            setAuthView={handleSetAuthView}
+                            onAddPost={() => setCreatePostOpen(true)}
+                        />
+                        <CreatePost
+                            isOpen={isCreatePostOpen}
+                            onClose={() => setCreatePostOpen(false)}
+                            onPostCreated={handlePostCreated}
+                        />
+                    </div>
+                </motion.div>
+             );
+        }
+
         return (
              <div className="min-h-screen bg-[#100F1F] overflow-hidden">
                 <AnimatePresence mode="wait">
-                    {chattingWith ? (
-                        <motion.div key="chat" {...animationProps}>
-                            <ChatPage 
-                                session={session} 
-                                otherUser={chattingWith}
-                                onBack={() => setChattingWith(null)}
-                            />
-                        </motion.div>
-                    ) : viewingSeriesId ? (
-                        <motion.div key="series" {...animationProps}>
-                            <SeriesDetailPage
-                                session={session}
-                                seriesId={viewingSeriesId}
-                                onBack={() => setViewingSeriesId(null)}
-                            />
-                        </motion.div>
-                    ) : viewingProfileId ? (
-                         <motion.div key="profile-detail" {...animationProps}>
-                             <div className="min-h-screen bg-[#100F1F]">
-                                <main className="w-full max-w-2xl mx-auto px-4 pt-4 sm:pt-8">
-                                    <Profile 
-                                        session={session} 
-                                        userId={viewingProfileId} 
-                                        onBack={() => setViewingProfileId(null)}
-                                        onMessage={(user) => setChattingWith(user)}
-                                    />
-                                </main>
-                             </div>
-                         </motion.div>
-                     ) : authView === 'settings' ? (
-                        <motion.div key="settings" {...animationProps}>
-                             <div className="min-h-screen bg-[#100F1F]">
-                                 <main className="w-full max-w-2xl mx-auto px-4 pt-4 sm:pt-8">
-                                    <SettingsPage session={session} onBack={() => setAuthView('profile')} />
-                                 </main>
-                             </div>
-                        </motion.div>
-                    ) : (
-                        <motion.div key="main-view" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} transition={{duration: 0.2}}>
-                            <div className="min-h-screen bg-[#100F1F] pb-20">
-                                <main className="w-full max-w-2xl mx-auto px-4 pt-4 sm:pt-8 relative overflow-hidden">
-                                    <AnimatePresence mode="wait">
-                                        <motion.div key={authView} {...animationProps}>
-                                            {authView === 'home' && <HomePage session={session} onViewProfile={setViewingProfileId} refreshKey={refreshFeedKey} />}
-                                            {authView === 'anime' && <AnimePage session={session} onViewSeries={setViewingSeriesId} />}
-                                            {authView === 'messages' && <MessagesPage session={session} onStartChat={setChattingWith} />}
-                                            {authView === 'profile' && <Profile session={session} onMessage={(user) => setChattingWith(user)} onLogout={handleLogout} onNavigateToSettings={handleNavigateToSettings}/>}
-                                        </motion.div>
-                                    </AnimatePresence>
-                                </main>
-                                <BottomNav
-                                    activeView={authView}
-                                    setAuthView={handleSetAuthView}
-                                    onAddPost={() => setCreatePostOpen(true)}
-                                />
-                                <CreatePost
-                                    isOpen={isCreatePostOpen}
-                                    onClose={() => setCreatePostOpen(false)}
-                                    onPostCreated={handlePostCreated}
-                                />
-                            </div>
-                        </motion.div>
-                    )}
+                    {pageContent}
                 </AnimatePresence>
              </div>
        );

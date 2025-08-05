@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import CreateEpisodeModal from './CreateEpisodeModal';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Session } from '@supabase/supabase-js';
 
 interface SeriesDetailPageProps {
     session: Session;
@@ -29,27 +29,27 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
         try {
             const { data: seriesData, error: seriesError } = await supabase
                 .from('anime_series')
-                .select('id, created_at, banner_url, description, thumbnail_url, title, user_id')
+                .select('id, created_at, title, thumbnail_url, description, banner_url, user_id')
                 .eq('id', seriesId)
                 .single();
             if (seriesError) throw seriesError;
             if (seriesData) {
-                setSeries(seriesData as Series);
+                setSeries(seriesData);
             } else {
                 throw new Error("Series not found.");
             }
             
             const { data: episodesData, error: episodesError } = await supabase
                 .from('anime_episodes')
-                .select('id, created_at, episode_number, series_id, title, video_url')
+                .select('id, created_at, episode_number, title, video_url, series_id')
                 .eq('series_id', seriesId)
                 .order('episode_number', { ascending: true });
             if (episodesError) throw episodesError;
 
             if (episodesData) {
-                setEpisodes(episodesData as Episode[]);
+                setEpisodes(episodesData);
                 if (episodesData.length > 0) {
-                    setCurrentEpisode(episodesData[0] as Episode);
+                    setCurrentEpisode(episodesData[0]);
                 }
             }
 
@@ -73,7 +73,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
     }
     
     const canManage = series.user_id === session.user.id;
-    const bannerUrl = series.banner_url || "https://via.placeholder.com/800x200/1C1B33/FFC700?text=No+Banner";
+    const bannerUrl = series.banner_url || "https://via.placeholder.com/800x200/1C1B33/3B82F6?text=No+Banner";
 
     return (
         <div className="min-h-screen bg-[#100F1F]">
@@ -112,7 +112,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
                         <div className="flex-grow">
                              <h1 className="text-3xl font-bold text-white">{series.title}</h1>
                              {currentEpisode && (
-                                <h2 className="text-xl font-semibold text-yellow-400 mt-1">
+                                <h2 className="text-xl font-semibold text-blue-400 mt-1">
                                     Now Playing: Ep {currentEpisode.episode_number} - {currentEpisode.title}
                                 </h2>
                             )}
@@ -134,7 +134,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
                             <li key={ep.id}>
                                 <button 
                                     onClick={() => setCurrentEpisode(ep)}
-                                    className={`w-full text-left p-3 rounded-lg transition-colors ${currentEpisode?.id === ep.id ? 'bg-yellow-400 text-gray-900' : 'bg-[#100F1F] hover:bg-[#2a2942]'}`}
+                                    className={`w-full text-left p-3 rounded-lg transition-colors ${currentEpisode?.id === ep.id ? 'bg-blue-500 text-white' : 'bg-[#100F1F] hover:bg-[#2a2942]'}`}
                                 >
                                     <span className="font-bold">Ep {ep.episode_number}:</span> {ep.title}
                                 </button>

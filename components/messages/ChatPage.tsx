@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Tables, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
+import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
 import Button from '../common/Button';
-import type { Session } from '@supabase/supabase-js';
 
 
 // --- Types --- //
@@ -20,7 +20,7 @@ type Message = Tables<'messages'>;
 // --- Icons --- //
 const SendIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
     </svg>
 )
 
@@ -71,7 +71,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
 
         const { data, error } = await supabase
             .from('messages')
-            .select('*')
+            .select('id, created_at, content, sender_id, recipient_id, is_read, status')
             .or(filter)
             .order('created_at', { ascending: false })
             .range(from, to)
@@ -202,15 +202,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         };
         setMessages(current => [...current, optimisticMessage]);
 
-        const newMessageData: TablesInsert<'messages'> = {
+        const { data, error } = await supabase.from('messages').insert([{
             sender_id: myId,
             recipient_id: otherUser.id,
             content,
             is_read: false,
             status: "sent",
-        };
-
-        const { data, error } = await supabase.from('messages').insert([newMessageData]).select().single();
+        }]).select().single();
         
         if (data) {
              const realMsg = data as unknown as Message;
@@ -308,9 +306,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                         }}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Type a message..."
-                        className="flex-grow bg-[#100F1F] border-transparent rounded-2xl text-white placeholder-gray-500 px-4 py-3 resize-none overflow-hidden max-h-32 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                        className="flex-grow bg-[#100F1F] border-transparent rounded-2xl text-white placeholder-gray-500 px-4 py-3 resize-none overflow-hidden max-h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <button type="submit" className="p-3 bg-yellow-400 text-gray-900 rounded-full hover:bg-yellow-500 disabled:bg-yellow-300 disabled:cursor-not-allowed transition-colors" disabled={!newMessage.trim()}>
+                    <button type="submit" className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors" disabled={!newMessage.trim()}>
                         <SendIcon />
                     </button>
                 </form>

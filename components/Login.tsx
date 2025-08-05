@@ -17,8 +17,7 @@ const EyeIcon = ({ open }: { open: boolean }) => (
         </svg>
     ) : (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274 4.057 5.064 7 9.542 7 .847 0 1.673-.102 2.468-.292M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 2l20 20" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274 4.057 5.064 7 9.542 7 .847 0 1.673-.102 2.468-.292m-1.928 4.052a10.025 10.025 0 01-11.234-6.458m-6.458 11.234a10.025 10.025 0 016.458-11.234M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
     )
 );
@@ -33,7 +32,6 @@ const itemVariants = {
   visible: { y: 0, opacity: 1 },
 };
 
-
 const Login: React.FC<LoginProps> = ({ setView }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -43,12 +41,12 @@ const Login: React.FC<LoginProps> = ({ setView }) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
         setIsLoading(true);
+        setError(null);
 
         const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
+            email: email,
+            password: password,
         });
 
         if (error) {
@@ -58,22 +56,21 @@ const Login: React.FC<LoginProps> = ({ setView }) => {
     };
     
     const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
-      const { error } = await supabase.auth.signInWithOAuth({ provider });
-      if (error) setError(error.message);
+        const { error } = await supabase.auth.signInWithOAuth({ provider });
+        if (error) setError(error.message);
     };
-
 
     return (
         <div className="relative w-full max-w-md mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 overflow-hidden">
             <AbstractShape />
-            <div className="relative z-10">
+             <div className="relative z-10">
                 <div className="relative mb-6">
                     <button onClick={() => setView('welcome')} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white transition-colors" aria-label="Go back">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <h2 className="text-center text-xl font-bold text-white">Log in to NAXXIVO</h2>
+                    <h2 className="text-center text-xl font-bold text-white">Login</h2>
                 </div>
                 
                 <motion.div variants={containerVariants} initial="hidden" animate="visible">
@@ -91,11 +88,11 @@ const Login: React.FC<LoginProps> = ({ setView }) => {
                         <div className="relative flex justify-center text-sm"><span className="px-2 bg-[#2a2942]/50 text-gray-400 rounded-full">OR</span></div>
                     </motion.div>
 
-                    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+                    <form className="space-y-6" onSubmit={handleSubmit}>
                         <motion.div variants={itemVariants}>
                             <Input
                                 id="email"
-                                label="Email address"
+                                label="Email Address"
                                 name="email"
                                 type="email"
                                 autoComplete="email"
@@ -103,9 +100,10 @@ const Login: React.FC<LoginProps> = ({ setView }) => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={isLoading}
-                                className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                className="!bg-black/20 focus:!ring-blue-500 border !border-white/20"
                             />
                         </motion.div>
+
                         <motion.div variants={itemVariants}>
                             <Input
                                 id="password"
@@ -117,29 +115,35 @@ const Login: React.FC<LoginProps> = ({ setView }) => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={isLoading}
-                                className="!bg-black/20 focus:!ring-yellow-400 border !border-white/20"
+                                className="!bg-black/20 focus:!ring-blue-500 border !border-white/20"
                                 rightElement={
                                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-200 focus:outline-none" aria-label={showPassword ? "Hide password" : "Show password"}>
-                                        <EyeIcon open={showPassword}/>
+                                        <EyeIcon open={!showPassword}/>
                                     </button>
                                 }
                             />
                         </motion.div>
-
+                        
                         {error && <p className="text-red-400 text-sm text-center" role="alert">{error}</p>}
+                        
+                        <motion.div className="text-right" variants={itemVariants}>
+                            <a href="#" className="text-sm font-medium text-blue-500 hover:text-blue-400">
+                                Forgot Password?
+                            </a>
+                        </motion.div>
 
-                        <motion.div className="pt-2" variants={itemVariants}>
+                        <motion.div variants={itemVariants}>
                             <Button type="submit" disabled={isLoading}>
-                                {isLoading ? 'Signing In...' : 'Sign In'}
+                                {isLoading ? 'Logging In...' : 'Login'}
                             </Button>
                         </motion.div>
                     </form>
-                    
+
                     <motion.div className="mt-6 text-center" variants={itemVariants}>
                         <p className="text-sm text-gray-300">
                             Don't have an account?{' '}
-                            <button onClick={() => setView('signup')} disabled={isLoading} className="font-medium text-yellow-400 hover:text-yellow-300 focus:outline-none disabled:opacity-50">
-                                Sign up
+                            <button onClick={() => setView('signup')} disabled={isLoading} className="font-medium text-blue-500 hover:text-blue-400 focus:outline-none disabled:opacity-50">
+                                Register
                             </button>
                         </p>
                     </motion.div>

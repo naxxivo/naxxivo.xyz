@@ -2,16 +2,22 @@
 
 /**
  * Formats a number into a compact string representation.
- * e.g., 1500 -> "1.5k", 10000 -> "10k", 1000000 -> "1m"
+ * e.g., 1500 -> "1.5K", 1000000 -> "1M", 1500000000 -> "1.5B"
  * @param xp The number to format.
  * @returns A formatted string.
  */
 export const formatXp = (xp: number): string => {
-    if (xp >= 1000000) {
-        return `${(xp / 1000000).toFixed(1).replace(/\.0$/, '')}m`;
+    if (xp >= 1_000_000_000_000) {
+        return `${(xp / 1_000_000_000_000).toFixed(1).replace(/\.0$/, '')}T`;
     }
-    if (xp >= 1000) {
-        return `${(xp / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+    if (xp >= 1_000_000_000) {
+        return `${(xp / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
+    }
+    if (xp >= 1_000_000) {
+        return `${(xp / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    }
+    if (xp >= 1_000) {
+        return `${(xp / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
     }
     return xp.toString();
 };

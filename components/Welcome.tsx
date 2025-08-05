@@ -2,6 +2,7 @@ import React from 'react';
 import Button from './common/Button';
 import { supabase } from '../integrations/supabase/client';
 import { GoogleIcon, FacebookIcon, AbstractShape } from './common/Icons';
+import Logo from './common/Logo';
 
 interface WelcomeProps {
     setView: (view: 'welcome' | 'login' | 'signup') => void;
@@ -19,12 +20,12 @@ const Welcome: React.FC<WelcomeProps> = ({ setView }) => {
     return (
         <div className="relative w-full max-w-md mx-auto text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 overflow-hidden">
             <AbstractShape />
-            <div className="relative z-10">
-                <h1 className="text-4xl font-bold text-white">Welcome to NAXXIVO</h1>
+            <div className="relative z-10 flex flex-col items-center">
+                <Logo />
                 <p className="text-gray-300 mt-4 max-w-xs mx-auto">
                     Join the community, connect with friends, and share your moments.
                 </p>
-                <div className="mt-12 space-y-4">
+                <div className="mt-12 space-y-4 w-full">
                     <Button onClick={() => handleOAuthLogin('google')} variant="secondary" className="flex items-center gap-3">
                         <GoogleIcon /> Continue with Google
                     </Button>
@@ -44,7 +45,7 @@ const Welcome: React.FC<WelcomeProps> = ({ setView }) => {
                 <div className="mt-6">
                      <p className="text-sm text-gray-400">
                         Already have an account?{' '}
-                        <button onClick={() => setView('login')} className="font-medium text-yellow-400 hover:text-yellow-300 focus:outline-none">
+                        <button onClick={() => setView('login')} className="font-medium text-blue-500 hover:text-blue-400 focus:outline-none">
                             Log In
                         </button>
                     </p>

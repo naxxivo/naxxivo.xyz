@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
 import Input from '../common/Input';
-import type { Tables, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
+import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Session } from '@supabase/supabase-js';
+import { useAnimationControls } from 'framer-motion';
 
 interface SettingsPageProps {
     session: Session;
@@ -35,43 +36,43 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const saveButtonControls = useAnimationControls();
 
     const fetchSettingsData = async () => {
         setLoading(true);
         try {
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
-                .select('id, name, bio, website_url, youtube_url, facebook_url, xp_balance, cover_url, created_at, photo_url, role, username, admin, address')
+                .select('id, name, bio, website_url, youtube_url, facebook_url, xp_balance, cover_url, photo_url, username, created_at, role, admin, address')
                 .eq('id', session.user.id)
                 .single();
             if (profileError) throw profileError;
             
             if (profileData) {
-                const typedProfileData = profileData as ProfileData;
-                setProfile(typedProfileData);
-                setName(typedProfileData.name || '');
-                setBio(typedProfileData.bio || '');
-                setWebsiteUrl(typedProfileData.website_url || '');
-                setYoutubeUrl(typedProfileData.youtube_url || '');
-                setFacebookUrl(typedProfileData.facebook_url || '');
+                setProfile(profileData);
+                setName(profileData.name || '');
+                setBio(profileData.bio || '');
+                setWebsiteUrl(profileData.website_url || '');
+                setYoutubeUrl(profileData.youtube_url || '');
+                setFacebookUrl(profileData.facebook_url || '');
 
-                if (typedProfileData.xp_balance >= 10000) {
+                if (profileData.xp_balance >= 10000) {
                     const { data: premiumData } = await supabase
                         .from('premium_features')
-                        .select('id, created_at, music_url, profile_id')
+                        .select('id, profile_id, music_url, created_at')
                         .eq('profile_id', session.user.id)
                         .single();
                     if (premiumData) {
-                        setActiveMusicUrl((premiumData as PremiumFeaturesData).music_url || '');
+                        setActiveMusicUrl(premiumData.music_url || '');
                     }
 
                     const { data: libraryData } = await supabase
                         .from('profile_music')
-                        .select('id, created_at, file_name, music_url, profile_id')
+                        .select('id, profile_id, music_url, file_name, created_at')
                         .eq('profile_id', session.user.id)
                         .order('created_at', { ascending: false });
                     if (libraryData) {
-                        setMusicLibrary(libraryData as ProfileMusic[]);
+                        setMusicLibrary(libraryData);
                     }
                 }
             } else {
@@ -106,7 +107,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                 .from('premium')
                 .getPublicUrl(fileName);
 
-            const newMusicTrack: TablesInsert<'profile_music'> = {
+            const newMusicTrack = {
                 profile_id: session.user.id,
                 music_url: publicUrl,
                 file_name: file.name,
@@ -121,7 +122,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
             if (insertError) throw insertError;
 
             if (insertedTrack) {
-                 setMusicLibrary(prev => [insertedTrack as ProfileMusic, ...prev]);
+                 setMusicLibrary(prev => [insertedTrack, ...prev]);
                  // If this is the first song, set it as active
                  if (!activeMusicUrl) {
                     await handleSetActiveMusic(publicUrl);
@@ -138,10 +139,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
     const handleSetActiveMusic = async (url: string) => {
         setActiveMusicUrl(url); // Optimistic update
         try {
-            const payload: TablesInsert<'premium_features'> = { profile_id: session.user.id, music_url: url };
             await supabase
                 .from('premium_features')
-                .upsert(payload, { onConflict: 'profile_id' });
+                .upsert({ profile_id: session.user.id, music_url: url }, { onConflict: 'profile_id' });
         } catch (err: any) {
             setError(err.message || "Failed to set active music.");
         }
@@ -152,8 +152,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
         if (!confirmed) return;
 
         // Optimistic UI update
-        const originalLibrary = musicLibrary;
-        const originalActiveUrl = activeMusicUrl;
         setMusicLibrary(prev => prev.filter(t => t.id !== trackId));
         if (activeMusicUrl === trackUrl) {
             setActiveMusicUrl('');
@@ -170,28 +168,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
             }
 
             // If it was the active track, remove it from premium_features
-            if (originalActiveUrl === trackUrl) {
-                const payload: TablesInsert<'premium_features'> = { profile_id: session.user.id, music_url: null };
+            if (activeMusicUrl === trackUrl) {
                 await supabase
                     .from('premium_features')
-                    .upsert(payload, { onConflict: 'profile_id' });
+                    .upsert({ profile_id: session.user.id, music_url: null }, { onConflict: 'profile_id' });
             }
         } catch(err: any) {
             setError(err.message || "Failed to delete track.");
-            // Revert on error if needed
-            setMusicLibrary(originalLibrary);
-            setActiveMusicUrl(originalActiveUrl);
+            // Revert on error if needed (by re-fetching)
+            fetchSettingsData();
         }
     };
 
     const handleSaveChanges = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSaving(true);
         setError(null);
         setSuccessMessage(null);
+        
+        if (!name.trim()) {
+            setError("Name cannot be empty.");
+            saveButtonControls.start({
+                x: [0, -10, 10, -10, 10, 0],
+                transition: { duration: 0.5, ease: 'easeInOut' }
+            });
+            return;
+        }
 
+        setIsSaving(true);
         try {
-            const profileUpdates: TablesUpdate<'profiles'> = { name, bio, website_url: websiteUrl || null, youtube_url: youtubeUrl || null, facebook_url: facebookUrl || null };
+            const profileUpdates = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
             await supabase.from('profiles').update(profileUpdates).eq('id', session.user.id);
             
             setSuccessMessage("Profile details saved successfully!");
@@ -229,6 +234,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={isSaving}
+                    required
                 />
                  <div>
                     <label htmlFor="bio" className="block text-sm font-medium text-gray-400 mb-2">Bio</label>
@@ -237,7 +243,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         rows={4}
-                        className="appearance-none block w-full px-4 py-3 bg-[#100F1F] border-transparent rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent sm:text-sm"
+                        className="appearance-none block w-full px-4 py-3 bg-[#100F1F] border-transparent rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                         disabled={isSaving}
                     />
                 </div>
@@ -248,7 +254,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                  <Input id="facebook" label="Facebook URL" value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} disabled={isSaving} />
 
                  <div className="pt-4">
-                    <Button type="submit" disabled={isSaving}>
+                    <Button type="submit" disabled={isSaving} animate={saveButtonControls}>
                         {isSaving ? 'Saving Profile...' : 'Save Profile Changes'}
                     </Button>
                 </div>
@@ -260,10 +266,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                     <div>
                          <label className="block text-sm font-medium text-gray-400 mb-2">Profile Music</label>
                         <div className="flex items-center space-x-4 p-3 bg-[#100F1F] rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
                             <div className="flex-grow">
                                 <p className="text-white text-sm">Upload a new track to your library.</p>
-                                {isUploading && <p className="text-xs text-yellow-400">Uploading...</p>}
+                                {isUploading && <p className="text-xs text-blue-400">Uploading...</p>}
                             </div>
                             <div className="flex-shrink-0">
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="audio/*" disabled={isUploading} />
@@ -284,7 +290,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                                         <p className="flex-grow text-white truncate text-sm">{track.file_name || decodeURIComponent(track.music_url.split('/').pop() || '')}</p>
                                         <div className="flex-shrink-0 flex items-center space-x-2">
                                             {activeMusicUrl === track.music_url ? (
-                                                <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full">ACTIVE</span>
+                                                <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-full">ACTIVE</span>
                                             ) : (
                                                 <Button type="button" size="small" variant="secondary" onClick={() => handleSetActiveMusic(track.music_url)}>Set as Active</Button>
                                             )}

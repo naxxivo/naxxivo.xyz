@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import CreateSeriesModal from './CreateSeriesModal';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Session } from '@supabase/supabase-js';
 
 interface AnimePageProps {
     session: Session;
@@ -25,10 +25,10 @@ const AnimePage: React.FC<AnimePageProps> = ({ session, onViewSeries }) => {
         try {
             const { data, error } = await supabase
                 .from('anime_series')
-                .select('*')
+                .select('id, created_at, title, thumbnail_url, description, banner_url, user_id')
                 .order('created_at', { ascending: false });
             if (error) throw error;
-            if (data) setSeries(data as unknown as Series[]);
+            if (data) setSeries(data);
         } catch (err: any) {
             setError(err.message || 'Failed to load anime series.');
         } finally {
@@ -68,11 +68,11 @@ const AnimePage: React.FC<AnimePageProps> = ({ session, onViewSeries }) => {
             {series.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {series.map(s => (
-                        <button key={s.id} onClick={() => onViewSeries(s.id)} className="group text-left focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded-lg">
+                        <button key={s.id} onClick={() => onViewSeries(s.id)} className="group text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg">
                             <div className="aspect-[2/3] bg-[#1C1B33] rounded-lg overflow-hidden transition-transform duration-300 group-hover:scale-105">
                                 <img src={s.thumbnail_url || `https://api.dicebear.com/8.x/icons/svg?seed=${s.title}`} alt={s.title} className="w-full h-full object-cover" />
                             </div>
-                            <h3 className="mt-2 font-semibold text-white truncate group-hover:text-yellow-400">{s.title}</h3>
+                            <h3 className="mt-2 font-semibold text-white truncate group-hover:text-blue-400">{s.title}</h3>
                         </button>
                     ))}
                 </div>

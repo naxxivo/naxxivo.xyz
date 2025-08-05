@@ -26,7 +26,7 @@ const CreateEpisodeModal: React.FC<CreateEpisodeModalProps> = ({ isOpen, onClose
             const newEpisode: TablesInsert<'anime_episodes'> = {
                 series_id: seriesId,
                 episode_number: episodeNumber as number,
-                title: title || null,
+                title,
                 video_url: videoUrl
             };
             const { error: insertError } = await supabase.from('anime_episodes').insert([newEpisode]);
@@ -58,15 +58,15 @@ const CreateEpisodeModal: React.FC<CreateEpisodeModalProps> = ({ isOpen, onClose
                 <form onSubmit={handleSubmit} className="space-y-4">
                      <div>
                         <label htmlFor="episodeNumber" className="block text-sm font-medium text-gray-400 mb-2">Episode Number</label>
-                        <input id="episodeNumber" type="number" value={episodeNumber} onChange={e => setEpisodeNumber(e.target.value === '' ? '' : parseInt(e.target.value, 10))} required disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"/>
+                        <input id="episodeNumber" type="number" value={episodeNumber} onChange={e => setEpisodeNumber(e.target.value === '' ? '' : parseInt(e.target.value, 10))} required disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                     </div>
                      <div>
                         <label htmlFor="episodeTitle" className="block text-sm font-medium text-gray-400 mb-2">Episode Title</label>
-                        <input id="episodeTitle" type="text" value={title} onChange={e => setTitle(e.target.value)} required disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"/>
+                        <input id="episodeTitle" type="text" value={title} onChange={e => setTitle(e.target.value)} required disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                     </div>
                      <div>
                         <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-400 mb-2">Video URL (e.g., YouTube)</label>
-                        <input id="videoUrl" type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} required placeholder="https://www.youtube.com/watch?v=..." disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"/>
+                        <input id="videoUrl" type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} required placeholder="https://www.youtube.com/watch?v=..." disabled={loading} className="appearance-none block w-full px-4 py-3 bg-[#100F1F] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                     </div>
                     {error && <p className="text-red-400 text-sm" role="alert">{error}</p>}
                     <div className="pt-4"><Button type="submit" disabled={loading}>{loading ? 'Adding...' : 'Add Episode'}</Button></div>
