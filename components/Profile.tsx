@@ -2,8 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
+<<<<<<< HEAD
+import type { Tables, TablesInsert, TablesUpdate } from '../integrations/supabase/types';
+import { formatXp, generateAvatar } from '../../utils/helpers';
+=======
 import type { Tables } from '../integrations/supabase/types';
 import { formatXp, generateAvatar } from '../utils/helpers';
+>>>>>>> 29023a3126bfb9b64d47f4638a452217b35c9658
 import LoadingSpinner from './common/LoadingSpinner';
 
 // --- SVG Icons --- //
@@ -50,14 +55,21 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             setLoading(true);
             setError(null);
 
-            try {
-                const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', profileIdToFetch).single();
-                if (profileError) throw profileError;
-                if (!profileData) throw new Error("Profile not found.");
-                
-                const typedProfile = profileData as ProfileData;
-                setProfile(typedProfile);
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', profileIdToFetch)
+                .single();
+            
+            if (profileError || !profileData) {
+                setError(profileError?.message || "Profile not found.");
+                setLoading(false);
+                return;
+            }
+            
+            setProfile(profileData);
 
+            try {
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profileIdToFetch);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profileIdToFetch);
                 setFollowerCount(followers || 0);
@@ -68,14 +80,19 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     setIsFollowing((isFollowingCount || 0) > 0);
                 }
 
-                if (typedProfile.xp_balance >= 10000) {
-                    const { data: premiumData, error: premiumError } = await supabase.from('premium_features').select('*').eq('profile_id', profileIdToFetch).single();
-                    if(premiumError) console.warn("Could not fetch premium features, but continuing.", premiumError);
-                    if (premiumData) setPremiumFeatures(premiumData as PremiumFeatures);
+                if (profileData.xp_balance >= 10000) {
+                    const { data: premiumData, error: premiumError } = await supabase
+                        .from('premium_features')
+                        .select('*')
+                        .eq('profile_id', profileIdToFetch)
+                        .single();
+                    if(premiumError && premiumError.code !== 'PGRST116') { // Ignore "no rows" error
+                        console.warn("Could not fetch premium features, but continuing.", premiumError);
+                    }
+                    if (premiumData) setPremiumFeatures(premiumData);
                 }
-
             } catch (error: any) {
-                setError(error.message || "An error occurred while fetching the profile.");
+                setError(error.message || "An error occurred while fetching profile details.");
             } finally {
                 setLoading(false);
             }
@@ -93,8 +110,8 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 setFollowerCount(c => c - 1);
                 setIsFollowing(false);
             } else {
-                const newFollow = { follower_id: session.user.id, following_id: profileIdToFetch };
-                await supabase.from('follows').insert([newFollow]);
+                const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: profileIdToFetch };
+                await supabase.from('follows').insert(newFollow as any);
                 setFollowerCount(c => c + 1);
                 setIsFollowing(true);
             }
