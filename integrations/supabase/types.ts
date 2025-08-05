@@ -3,8 +3,8 @@ export type Json =
   | number
   | boolean
   | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+  | { [key: string]: any }
+  | any[]
 
 export type Database = {
   public: {
@@ -30,15 +30,6 @@ export type Database = {
           title?: string | null
           video_url?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "anime_episodes_series_id_fkey"
-            columns: ["series_id"]
-            isOneToOne: false
-            referencedRelation: "anime_series"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       anime_series: {
         Row: {
@@ -64,15 +55,6 @@ export type Database = {
           title?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "anime_series_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       comments: {
         Row: {
@@ -95,29 +77,6 @@ export type Database = {
           post_id?: number
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "comments_parent_comment_id_fkey"
-            columns: ["parent_comment_id"]
-            isOneToOne: false
-            referencedRelation: "comments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       follows: {
         Row: {
@@ -133,22 +92,6 @@ export type Database = {
           follower_id?: string
           following_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "follows_follower_id_fkey"
-            columns: ["follower_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "follows_following_id_fkey"
-            columns: ["following_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       game_moves: {
         Row: {
@@ -171,22 +114,6 @@ export type Database = {
           move_number?: number
           player_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "game_moves_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "game_moves_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       game_players: {
         Row: {
@@ -208,22 +135,6 @@ export type Database = {
           player_id?: string
           player_symbol?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "game_players_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "game_players_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       games: {
         Row: {
@@ -244,15 +155,6 @@ export type Database = {
           status?: string
           winner_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "games_winner_id_fkey"
-            columns: ["winner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       likes: {
         Row: {
@@ -269,22 +171,6 @@ export type Database = {
           post_id?: number
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "likes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       messages: {
         Row: {
@@ -310,22 +196,6 @@ export type Database = {
           sender_id?: string
           status?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "messages_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       notifications: {
         Row: {
@@ -351,29 +221,6 @@ export type Database = {
           type?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       page_components: {
         Row: {
@@ -396,15 +243,6 @@ export type Database = {
           grid_position?: Json | null
           page_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "page_components_page_id_fkey"
-            columns: ["page_id"]
-            isOneToOne: false
-            referencedRelation: "site_pages"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       posts: {
         Row: {
@@ -424,15 +262,6 @@ export type Database = {
           content_url?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "posts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       premium_features: {
         Row: {
@@ -449,15 +278,6 @@ export type Database = {
           music_url?: string | null
           profile_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "premium_features_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profile_music: {
         Row: {
@@ -477,15 +297,6 @@ export type Database = {
           music_url?: string
           profile_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profile_music_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
@@ -534,7 +345,6 @@ export type Database = {
           xp_balance?: number
           youtube_url?: string | null
         }
-        Relationships: []
       }
       site_pages: {
         Row: {
@@ -559,15 +369,6 @@ export type Database = {
           published?: boolean | null
           site_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "site_pages_site_id_fkey"
-            columns: ["site_id"]
-            isOneToOne: false
-            referencedRelation: "user_sites"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       site_versions: {
         Row: {
@@ -584,15 +385,6 @@ export type Database = {
           site_id?: string | null
           snapshot?: Json
         }
-        Relationships: [
-          {
-            foreignKeyName: "site_versions_site_id_fkey"
-            columns: ["site_id"]
-            isOneToOne: false
-            referencedRelation: "user_sites"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_sites: {
         Row: {
@@ -613,15 +405,6 @@ export type Database = {
           subdomain_path?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_sites_user_id_fkey1"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
