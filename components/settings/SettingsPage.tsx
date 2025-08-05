@@ -13,6 +13,7 @@ interface SettingsPageProps {
 
 type ProfileData = Tables<'profiles'>;
 type PremiumFeaturesData = Tables<'premium_features'>;
+type ProfileMusic = Tables<'profile_music'>;
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
     const [loading, setLoading] = useState(true);
@@ -22,8 +23,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
     const [websiteUrl, setWebsiteUrl] = useState('');
     const [youtubeUrl, setYoutubeUrl] = useState('');
     const [facebookUrl, setFacebookUrl] = useState('');
-    const [musicUrl, setMusicUrl] = useState('');
+    
+    // Music state
+    const [activeMusicUrl, setActiveMusicUrl] = useState('');
+    const [musicLibrary, setMusicLibrary] = useState<ProfileMusic[]>([]);
     const [musicFile, setMusicFile] = useState<File | null>(null);
+
     const [isUploading, setIsUploading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -31,118 +36,163 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
     
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const { data: profileData, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                if (profileError) throw profileError;
-                
-                if (profileData) {
-                    const typedProfile = profileData as ProfileData;
-                    setProfile(typedProfile);
-                    setName(typedProfile.name || '');
-                    setBio(typedProfile.bio || '');
-                    setWebsiteUrl(typedProfile.website_url || '');
-                    setYoutubeUrl(typedProfile.youtube_url || '');
-                    setFacebookUrl(typedProfile.facebook_url || '');
+    const fetchSettingsData = async () => {
+        setLoading(true);
+        try {
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+            if (profileError) throw profileError;
+            
+            if (profileData) {
+                setProfile(profileData);
+                setName(profileData.name || '');
+                setBio(profileData.bio || '');
+                setWebsiteUrl(profileData.website_url || '');
+                setYoutubeUrl(profileData.youtube_url || '');
+                setFacebookUrl(profileData.facebook_url || '');
 
-                    if (typedProfile.xp_balance >= 10000) {
-                        const { data: premiumData, error: premiumError } = await supabase
-                            .from('premium_features')
-                            .select('music_url')
-                            .eq('profile_id', session.user.id)
-                            .single();
-                        if(premiumError && premiumError.code !== 'PGRST116') { // Ignore no rows found
-                            console.warn("Could not load premium features", premiumError);
-                        }
-                        if (premiumData) {
-                            const typedPremiumData = premiumData as PremiumFeaturesData;
-                            setMusicUrl(typedPremiumData.music_url || '');
-                        }
+                if (profileData.xp_balance >= 10000) {
+                    const { data: premiumData } = await supabase
+                        .from('premium_features')
+                        .select('*')
+                        .eq('profile_id', session.user.id)
+                        .single();
+                    if (premiumData) {
+                        setActiveMusicUrl(premiumData.music_url || '');
                     }
-                } else {
-                    throw new Error("Profile not found");
-                }
-            } catch (err: any) {
-                setError(err.message || "Failed to load settings.");
-            } finally {
-                setLoading(false);
-            }
-        };
 
-        fetchData();
+                    const { data: libraryData } = await supabase
+                        .from('profile_music')
+                        .select('*')
+                        .eq('profile_id', session.user.id)
+                        .order('created_at', { ascending: false });
+                    if (libraryData) {
+                        setMusicLibrary(libraryData);
+                    }
+                }
+            } else {
+                throw new Error("Profile not found");
+            }
+        } catch (err: any) {
+            setError(err.message || "Failed to load settings.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSettingsData();
     }, [session.user.id]);
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file) {
-            setMusicFile(file);
+        if (!file) return;
+
+        setIsUploading(true);
+        setError(null);
+        try {
+            const fileName = `${session.user.id}-${Date.now()}-${file.name}`;
+            const { error: uploadError } = await supabase.storage
+                .from('premium')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('premium')
+                .getPublicUrl(fileName);
+
+            const newMusicTrack = {
+                profile_id: session.user.id,
+                music_url: publicUrl,
+                file_name: file.name,
+            };
+            
+            const { data: insertedTrack, error: insertError } = await supabase
+                .from('profile_music')
+                .insert([newMusicTrack])
+                .select()
+                .single();
+            
+            if (insertError) throw insertError;
+
+            if (insertedTrack) {
+                 setMusicLibrary(prev => [insertedTrack, ...prev]);
+                 // If this is the first song, set it as active
+                 if (!activeMusicUrl) {
+                    await handleSetActiveMusic(publicUrl);
+                 }
+            }
+
+        } catch (err: any) {
+            setError(err.message || "Failed to upload music.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleSetActiveMusic = async (url: string) => {
+        setActiveMusicUrl(url); // Optimistic update
+        try {
+            await supabase
+                .from('premium_features')
+                .upsert({ profile_id: session.user.id, music_url: url }, { onConflict: 'profile_id' });
+        } catch (err: any) {
+            setError(err.message || "Failed to set active music.");
         }
     };
     
-    const handleRemoveMusic = () => {
-        setMusicFile(null);
-        setMusicUrl('');
+    const handleDeleteMusic = async (trackId: number, trackUrl: string) => {
+        const confirmed = window.confirm("Are you sure you want to delete this track? This cannot be undone.");
+        if (!confirmed) return;
+
+        // Optimistic UI update
+        setMusicLibrary(prev => prev.filter(t => t.id !== trackId));
+        if (activeMusicUrl === trackUrl) {
+            setActiveMusicUrl('');
+        }
+        
+        try {
+            // Delete from library table
+            await supabase.from('profile_music').delete().eq('id', trackId);
+            
+            // Delete from storage
+            const filePath = trackUrl.split('/').pop();
+            if (filePath) {
+                await supabase.storage.from('premium').remove([decodeURIComponent(filePath)]);
+            }
+
+            // If it was the active track, remove it from premium_features
+            if (activeMusicUrl === trackUrl) {
+                await supabase
+                    .from('premium_features')
+                    .upsert({ profile_id: session.user.id, music_url: null }, { onConflict: 'profile_id' });
+            }
+        } catch(err: any) {
+            setError(err.message || "Failed to delete track.");
+            // Revert on error if needed (by re-fetching)
+            fetchSettingsData();
+        }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSaveChanges = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
         setError(null);
         setSuccessMessage(null);
 
-        let finalMusicUrl = musicUrl;
-
         try {
-            // 1. Handle music file upload if a new one is selected
-            if (musicFile) {
-                setIsUploading(true);
-                const fileName = `${session.user.id}-${Date.now()}-${musicFile.name}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('premium')
-                    .upload(fileName, musicFile, {
-                        cacheControl: '3600',
-                        upsert: true,
-                    });
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('premium')
-                    .getPublicUrl(fileName);
-                
-                finalMusicUrl = publicUrl;
-                setMusicFile(null);
-                setIsUploading(false);
-            }
-
-            // 2. Update profile details
-            const profileUpdates: TablesUpdate<'profiles'> = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
-            await supabase.from('profiles').update(profileUpdates as any).eq('id', session.user.id);
-
-
-            // 3. Update premium features, including the final music URL
-            if (profile && profile.xp_balance >= 10000) {
-                const premiumFeaturesUpdate = {
-                    profile_id: session.user.id,
-                    music_url: finalMusicUrl,
-                };
-                await supabase.from('premium_features').upsert(premiumFeaturesUpdate as any);
-
-                setMusicUrl(finalMusicUrl); // Update local state to reflect change
-            }
-
-            setSuccessMessage("Profile updated successfully!");
+            const profileUpdates = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
+            await supabase.from('profiles').update(profileUpdates).eq('id', session.user.id);
+            
+            setSuccessMessage("Profile details saved successfully!");
             setTimeout(() => setSuccessMessage(null), 3000);
             
         } catch (err: any) {
             setError(err.message || "An unexpected error occurred.");
-            setIsUploading(false);
         } finally {
             setIsSaving(false);
         }
@@ -160,14 +210,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
         <div className="space-y-6">
              <div className="relative mb-6">
                 <button onClick={onBack} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors" aria-label="Go back">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <h1 className="text-center text-3xl font-bold text-white">Settings</h1>
             </div>
             
-             <form className="bg-[#1C1B33] rounded-2xl p-6 space-y-6 shadow-lg" onSubmit={handleSubmit}>
+             <form className="bg-[#1C1B33] rounded-2xl p-6 space-y-6 shadow-lg" onSubmit={handleSaveChanges}>
                 <h2 className="text-xl font-bold text-white border-b border-gray-700 pb-3">Edit Profile</h2>
                  <Input
                     id="name"
@@ -193,51 +241,59 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                  <Input id="youtube" label="YouTube URL" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} disabled={isSaving} />
                  <Input id="facebook" label="Facebook URL" value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} disabled={isSaving} />
 
-                {profile && profile.xp_balance >= 10000 && (
-                     <>
-                        <h2 className="text-xl font-bold text-white border-b border-gray-700 pb-3 pt-4">Premium Features</h2>
-                        <div>
-                             <label className="block text-sm font-medium text-gray-400 mb-2">Profile Music</label>
-                            <div className="flex items-center space-x-4 p-3 bg-[#100F1F] rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
-                                <div className="flex-grow overflow-hidden">
-                                    <p className="text-white truncate text-sm">
-                                        {musicFile ? musicFile.name : (musicUrl ? decodeURIComponent(musicUrl.split('/').pop() || '') : 'No music selected')}
-                                    </p>
-                                    {isUploading && <p className="text-xs text-yellow-400">Uploading...</p>}
-                                </div>
-                                <div className="flex-shrink-0 flex items-center space-x-2">
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        accept="audio/*"
-                                        disabled={isSaving || isUploading}
-                                    />
-                                    <Button type="button" size="small" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isSaving || isUploading}>
-                                        {musicUrl || musicFile ? 'Change' : 'Upload'}
-                                    </Button>
-                                    {(musicUrl || musicFile) && (
-                                        <Button type="button" size="small" variant="secondary" onClick={handleRemoveMusic} disabled={isSaving || isUploading}>
-                                            Remove
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                )}
-                
-                {error && <p className="text-red-400 text-sm">{error}</p>}
-                {successMessage && <p className="text-green-400 text-sm">{successMessage}</p>}
-
                  <div className="pt-4">
                     <Button type="submit" disabled={isSaving}>
-                        {isSaving ? (isUploading ? 'Uploading Music...' : 'Saving...') : 'Save Changes'}
+                        {isSaving ? 'Saving Profile...' : 'Save Profile Changes'}
                     </Button>
                 </div>
             </form>
+
+            {profile && profile.xp_balance >= 10000 && (
+                 <div className="bg-[#1C1B33] rounded-2xl p-6 space-y-6 shadow-lg">
+                    <h2 className="text-xl font-bold text-white border-b border-gray-700 pb-3">Premium Features</h2>
+                    <div>
+                         <label className="block text-sm font-medium text-gray-400 mb-2">Profile Music</label>
+                        <div className="flex items-center space-x-4 p-3 bg-[#100F1F] rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
+                            <div className="flex-grow">
+                                <p className="text-white text-sm">Upload a new track to your library.</p>
+                                {isUploading && <p className="text-xs text-yellow-400">Uploading...</p>}
+                            </div>
+                            <div className="flex-shrink-0">
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="audio/*" disabled={isUploading} />
+                                <Button type="button" size="small" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                    Upload Music
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-3">Your Music Library</h3>
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                             {musicLibrary.length === 0 ? (
+                                <p className="text-gray-400 text-sm text-center py-4">Your library is empty. Upload some music!</p>
+                             ) : (
+                                musicLibrary.map(track => (
+                                    <div key={track.id} className="flex items-center p-3 bg-[#100F1F] rounded-lg">
+                                        <p className="flex-grow text-white truncate text-sm">{track.file_name || decodeURIComponent(track.music_url.split('/').pop() || '')}</p>
+                                        <div className="flex-shrink-0 flex items-center space-x-2">
+                                            {activeMusicUrl === track.music_url ? (
+                                                <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full">ACTIVE</span>
+                                            ) : (
+                                                <Button type="button" size="small" variant="secondary" onClick={() => handleSetActiveMusic(track.music_url)}>Set as Active</Button>
+                                            )}
+                                            <Button type="button" size="small" variant="secondary" className="!border-red-500 !text-red-500 hover:!bg-red-500 hover:!text-white" onClick={() => handleDeleteMusic(track.id, track.music_url)}>Delete</Button>
+                                        </div>
+                                    </div>
+                                ))
+                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
+            {successMessage && <p className="text-green-400 text-sm mt-4 text-center">{successMessage}</p>}
         </div>
     );
 };

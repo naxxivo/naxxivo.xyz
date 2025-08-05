@@ -509,6 +509,38 @@ export type Database = {
           },
         ]
       }
+      profile_music: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          id: number
+          music_url: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          id?: never
+          music_url: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          id?: never
+          music_url?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_music_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null

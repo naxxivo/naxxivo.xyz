@@ -109,8 +109,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile }) => 
                 if (error) throw error;
             } else {
                 // Like
-                const likeData: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
-                const { error } = await supabase.from('likes').insert(likeData as any);
+                const { error } = await supabase.from('likes').insert([{ user_id: session.user.id, post_id: postId }]);
                 if (error) throw error;
             }
         } catch (error) {
@@ -154,10 +153,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile }) => 
 
         setIsSubmittingComment(true);
         try {
-            const newCommentData: TablesInsert<'comments'> = { content: newComment, post_id: postId, user_id: session.user.id };
             const { data, error } = await supabase
                 .from('comments')
-                .insert(newCommentData as any)
+                .insert([{ content: newComment, post_id: postId, user_id: session.user.id }])
                 .select('*, profiles(username, name, photo_url)')
                 .single();
             

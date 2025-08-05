@@ -71,7 +71,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
 
         const { data, error } = await supabase
             .from('messages')
-            .select('id, created_at, content, sender_id, recipient_id, is_read')
+            .select('*')
             .or(filter)
             .order('created_at', { ascending: false })
             .range(from, to)
@@ -150,7 +150,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 const updatePayload: TablesUpdate<'messages'> = { is_read: true };
                 await supabase
                     .from('messages')
-                    .update(updatePayload as any)
+                    .update(updatePayload)
                     .in('id', unreadMessageIds);
             }
         };
@@ -164,7 +164,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 if (newMessage.sender_id === otherUser.id && newMessage.recipient_id === myId) {
                     setMessages(current => [...current, newMessage]);
                     const updatePayload: TablesUpdate<'messages'> = { is_read: true };
-                    await supabase.from('messages').update(updatePayload as any).eq('id', newMessage.id);
+                    await supabase.from('messages').update(updatePayload).eq('id', newMessage.id);
                 }
             }),
             update: channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => {
@@ -202,15 +202,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         };
         setMessages(current => [...current, optimisticMessage]);
 
-        const messageData = {
+        const { data, error } = await supabase.from('messages').insert([{
             sender_id: myId,
             recipient_id: otherUser.id,
             content,
             is_read: false,
             status: "sent",
-        };
-
-        const { data, error } = await supabase.from('messages').insert([messageData] as any).select().single();
+        }]).select().single();
         
         if (data) {
              const realMsg = data as unknown as Message;

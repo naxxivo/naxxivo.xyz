@@ -50,21 +50,21 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             setLoading(true);
             setError(null);
 
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', profileIdToFetch)
-                .single();
-            
-            if (profileError || !profileData) {
-                setError(profileError?.message || "Profile not found.");
-                setLoading(false);
-                return;
-            }
-            
-            setProfile(profileData);
-
             try {
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', profileIdToFetch)
+                    .single();
+                
+                if (profileError || !profileData) {
+                    setError(profileError?.message || "Profile not found.");
+                    setLoading(false);
+                    return;
+                }
+                
+                setProfile(profileData);
+
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profileIdToFetch);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profileIdToFetch);
                 setFollowerCount(followers || 0);
@@ -105,8 +105,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 setFollowerCount(c => c - 1);
                 setIsFollowing(false);
             } else {
-                const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: profileIdToFetch };
-                await supabase.from('follows').insert(newFollow as any);
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profileIdToFetch }]);
                 setFollowerCount(c => c + 1);
                 setIsFollowing(true);
             }

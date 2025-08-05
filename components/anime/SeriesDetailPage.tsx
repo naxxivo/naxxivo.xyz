@@ -29,7 +29,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
         try {
             const { data: seriesData, error: seriesError } = await supabase
                 .from('anime_series')
-                .select('id, created_at, description, title, thumbnail_url, banner_url, user_id')
+                .select('*')
                 .eq('id', seriesId)
                 .single();
             if (seriesError) throw seriesError;
@@ -41,16 +41,15 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, 
             
             const { data: episodesData, error: episodesError } = await supabase
                 .from('anime_episodes')
-                .select('id, created_at, episode_number, series_id, title, video_url')
+                .select('*')
                 .eq('series_id', seriesId)
                 .order('episode_number', { ascending: true });
             if (episodesError) throw episodesError;
 
             if (episodesData) {
-                const typedEpisodes = episodesData as Episode[];
-                setEpisodes(typedEpisodes);
-                if (typedEpisodes.length > 0) {
-                    setCurrentEpisode(typedEpisodes[0]);
+                setEpisodes(episodesData);
+                if (episodesData.length > 0) {
+                    setCurrentEpisode(episodesData[0]);
                 }
             }
 
