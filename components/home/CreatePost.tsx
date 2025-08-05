@@ -24,15 +24,15 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("You must be logged in to post.");
             
-            const newPost = {
-                caption,
+            const newPost: TablesInsert<'posts'> = {
+                caption: caption || null,
                 content_url: contentUrl || null,
                 user_id: user.id
             };
 
             const { error: insertError } = await supabase
                 .from('posts')
-                .insert([newPost]);
+                .insert(newPost);
             
             if (insertError) throw insertError;
 

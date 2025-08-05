@@ -25,13 +25,15 @@ const CreateSeriesModal: React.FC<CreateSeriesModalProps> = ({ isOpen, onClose, 
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("You must be logged in to create a series.");
 
-            const { error: insertError } = await supabase.from('anime_series').insert([{
+            const newSeries: TablesInsert<'anime_series'> = {
                 title,
                 description,
                 thumbnail_url: thumbnailUrl || null,
                 banner_url: bannerUrl || null,
                 user_id: user.id
-            }]);
+            };
+
+            const { error: insertError } = await supabase.from('anime_series').insert(newSeries);
             if (insertError) throw insertError;
             
             onSeriesCreated();

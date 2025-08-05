@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
+import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 
 
@@ -147,7 +147,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 .map(m => m.id);
 
             if (unreadMessageIds.length > 0) {
-                const updatePayload: TablesUpdate<'messages'> = { is_read: true };
+                const updatePayload = { is_read: true };
                 await supabase
                     .from('messages')
                     .update(updatePayload)
@@ -163,7 +163,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 const newMessage = payload.new as Message;
                 if (newMessage.sender_id === otherUser.id && newMessage.recipient_id === myId) {
                     setMessages(current => [...current, newMessage]);
-                    const updatePayload: TablesUpdate<'messages'> = { is_read: true };
+                    const updatePayload = { is_read: true };
                     await supabase.from('messages').update(updatePayload).eq('id', newMessage.id);
                 }
             }),
@@ -202,13 +202,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         };
         setMessages(current => [...current, optimisticMessage]);
 
-        const { data, error } = await supabase.from('messages').insert([{
+        const newMessagePayload: TablesInsert<'messages'> = {
             sender_id: myId,
             recipient_id: otherUser.id,
             content,
             is_read: false,
             status: "sent",
-        }]).select().single();
+        };
+
+        const { data, error } = await supabase.from('messages').insert(newMessagePayload).select().single();
         
         if (data) {
              const realMsg = data as unknown as Message;

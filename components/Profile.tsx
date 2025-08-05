@@ -105,7 +105,11 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 setFollowerCount(c => c - 1);
                 setIsFollowing(false);
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profileIdToFetch }]);
+                const newFollow: TablesInsert<'follows'> = {
+                    follower_id: session.user.id,
+                    following_id: profileIdToFetch
+                };
+                await supabase.from('follows').insert(newFollow);
                 setFollowerCount(c => c + 1);
                 setIsFollowing(true);
             }

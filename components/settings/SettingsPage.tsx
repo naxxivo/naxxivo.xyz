@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
 import Input from '../common/Input';
-import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
+import type { Tables, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 interface SettingsPageProps {
@@ -105,7 +105,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
                 .from('premium')
                 .getPublicUrl(fileName);
 
-            const newMusicTrack = {
+            const newMusicTrack: TablesInsert<'profile_music'> = {
                 profile_id: session.user.id,
                 music_url: publicUrl,
                 file_name: file.name,
@@ -113,7 +113,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
             
             const { data: insertedTrack, error: insertError } = await supabase
                 .from('profile_music')
-                .insert([newMusicTrack])
+                .insert(newMusicTrack)
                 .select()
                 .single();
             
@@ -137,9 +137,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
     const handleSetActiveMusic = async (url: string) => {
         setActiveMusicUrl(url); // Optimistic update
         try {
+            const payload: TablesInsert<'premium_features'> = { profile_id: session.user.id, music_url: url };
             await supabase
                 .from('premium_features')
-                .upsert({ profile_id: session.user.id, music_url: url }, { onConflict: 'profile_id' });
+                .upsert(payload, { onConflict: 'profile_id' });
         } catch (err: any) {
             setError(err.message || "Failed to set active music.");
         }
@@ -167,9 +168,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
 
             // If it was the active track, remove it from premium_features
             if (activeMusicUrl === trackUrl) {
+                const payload: TablesInsert<'premium_features'> = { profile_id: session.user.id, music_url: null };
                 await supabase
                     .from('premium_features')
-                    .upsert({ profile_id: session.user.id, music_url: null }, { onConflict: 'profile_id' });
+                    .upsert(payload, { onConflict: 'profile_id' });
             }
         } catch(err: any) {
             setError(err.message || "Failed to delete track.");
@@ -185,7 +187,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack }) => {
         setSuccessMessage(null);
 
         try {
-            const profileUpdates = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
+            const profileUpdates: TablesUpdate<'profiles'> = { name, bio, website_url: websiteUrl, youtube_url: youtubeUrl, facebook_url: facebookUrl };
             await supabase.from('profiles').update(profileUpdates).eq('id', session.user.id);
             
             setSuccessMessage("Profile details saved successfully!");
