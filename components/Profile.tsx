@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
@@ -105,7 +106,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 
                 if (profileError || !profileData) throw new Error(profileError?.message || "Profile not found.");
                 
-                setProfile(profileData as unknown as ProfileData);
+                setProfile(profileData as ProfileData);
 
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
@@ -259,7 +260,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (originalFollowStatus) {
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: userId });
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: userId }] as any);
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: userId }]);
             }
         } catch (error: any) { 
             console.error("Failed to update follow status:", error.message);
@@ -287,7 +288,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: (profiles as unknown as ProfileStub[]) || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }

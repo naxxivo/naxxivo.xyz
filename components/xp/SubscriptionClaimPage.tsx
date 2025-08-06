@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -46,7 +47,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
             if (subError) {
                 if (subError.code !== 'PGRST116') throw subError;
             }
-            setSubscription(subData as unknown as SubscriptionWithProduct | null);
+            setSubscription(subData as SubscriptionWithProduct | null);
             
             if(subData) {
                 const { data: claimData, error: claimError } = await supabase

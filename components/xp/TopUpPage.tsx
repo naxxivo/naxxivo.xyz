@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables } from '../../integrations/supabase/types';
@@ -41,7 +42,7 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
             if (error) {
                 console.error("Failed to fetch products:", error);
             } else {
-                setProducts((data as unknown as Product[]) || []);
+                setProducts((data as Product[]) || []);
             }
             setLoading(false);
         };

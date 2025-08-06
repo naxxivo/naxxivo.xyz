@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
 import Logo from '../common/Logo';
-import { BackArrowIcon } from '../common/AppIcons';
+import { BackArrowIcon, GoogleIcon, FacebookIcon } from '../common/AppIcons';
 import Input from '../common/Input';
 
 interface AuthFormProps {
@@ -52,6 +53,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
         setLoading(false);
     };
 
+    const handleOAuthSignIn = async (provider: 'google' | 'facebook') => {
+        setLoading(true);
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: provider,
+            options: {
+                redirectTo: window.location.origin,
+            },
+        });
+        if (error) {
+            setError(error.message);
+            setLoading(false);
+        }
+    };
+
     const toggleMode = () => {
         onSetMode(isSignUp ? 'login' : 'signup');
         setError(null);
@@ -99,6 +114,39 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
                             </Button>
                         </div>
                     </form>
+                )}
+
+                {!message && (
+                    <>
+                        <div className="relative flex py-5 items-center">
+                            <div className="flex-grow border-t border-gray-300"></div>
+                            <span className="flex-shrink mx-4 text-gray-400 text-sm">Or continue with</span>
+                            <div className="flex-grow border-t border-gray-300"></div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                            <Button
+                                onClick={() => handleOAuthSignIn('google')}
+                                variant="secondary"
+                                size="large"
+                                className="w-full"
+                                disabled={loading}
+                            >
+                                <GoogleIcon className="mr-2"/>
+                                Google
+                            </Button>
+                            <Button
+                                onClick={() => handleOAuthSignIn('facebook')}
+                                variant="secondary"
+                                size="large"
+                                className="w-full bg-[#1877F2] hover:bg-[#166eeb] text-white border-[#1877F2] hover:border-[#166eeb]"
+                                disabled={loading}
+                            >
+                                <FacebookIcon className="mr-2"/>
+                                Facebook
+                            </Button>
+                        </div>
+                    </>
                 )}
 
                 <p className="mt-8 text-center text-sm text-gray-500">
