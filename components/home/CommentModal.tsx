@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -9,6 +8,7 @@ import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
+// The type definition is correct, the issue is with the query result shape.
 type CommentWithProfile = {
     id: number;
     content: string;
@@ -18,7 +18,7 @@ type CommentWithProfile = {
         name: string | null;
         username: string;
         photo_url: string | null;
-    };
+    } | null;
 };
 
 interface CommentModalProps {
@@ -54,7 +54,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments((data as CommentWithProfile[]) || []);
+            setComments(data as unknown as CommentWithProfile[] || []);
         }
         setLoading(false);
     }, [postId]);
