@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
@@ -105,13 +106,13 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
 
             const { data: { publicUrl } } = supabase.storage.from('music').getPublicUrl(fileName);
 
-            const newTrack = {
+            const newTrack: TablesInsert<'profile_music'> = {
                 profile_id: myId,
                 music_url: publicUrl,
                 file_name: file.name
             };
             
-            const { error: insertError } = await supabase.from('profile_music').insert([newTrack]);
+            const { error: insertError } = await supabase.from('profile_music').insert([newTrack] as any);
             if (insertError) throw insertError;
             
             await fetchTracks();

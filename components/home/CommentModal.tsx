@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -7,7 +8,7 @@ import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
-// Explicit interface to avoid TypeScript compiler issues with complex nested Picks
+// The type definition is correct, the issue is with the query result shape.
 type CommentWithProfile = {
     id: number;
     content: string;
@@ -36,7 +37,8 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
 
     const fetchComments = useCallback(async () => {
         setLoading(true);
-        // Select only the required fields instead of '*'
+        // Add !inner hint to ensure Supabase returns a single object for the 'profiles' relation.
+        // This fixes the type mismatch where the API was returning an array.
         const { data, error } = await supabase
             .from('comments')
             .select(`
@@ -44,7 +46,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                 content,
                 user_id,
                 created_at,
-                profiles (name, username, photo_url)
+                profiles!inner (name, username, photo_url)
             `)
             .eq('post_id', postId)
             .order('created_at', { ascending: true });
@@ -52,7 +54,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments((data as CommentWithProfile[]) || []);
+            setComments(data as unknown as CommentWithProfile[] || []);
         }
         setLoading(false);
     }, [postId]);
