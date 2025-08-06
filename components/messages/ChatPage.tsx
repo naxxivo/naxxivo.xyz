@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -136,7 +137,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
             const unreadMessageIds = initialMessages.filter(m => m.recipient_id === myId && !m.is_read).map(m => m.id);
 
             if (unreadMessageIds.length > 0) {
-                await supabase.from('messages').update({ is_read: true } as any).in('id', unreadMessageIds);
+                await supabase.from('messages').update({ is_read: true }).in('id', unreadMessageIds);
             }
         };
         initChat();
@@ -148,7 +149,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 const newMessage = payload.new as Message;
                 if (newMessage.sender_id === otherUser.id && newMessage.recipient_id === myId) {
                     setMessages(current => [...current, newMessage]);
-                    await supabase.from('messages').update({ is_read: true } as any).eq('id', newMessage.id);
+                    await supabase.from('messages').update({ is_read: true }).eq('id', newMessage.id);
                 }
             }),
             update: channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => {
@@ -174,7 +175,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         setMessages(current => [...current, optimisticMessage]);
 
         const messagePayload: TablesInsert<'messages'> = { sender_id: myId, recipient_id: otherUser.id, content, is_read: false, status: "sent" };
-        const { data, error } = await supabase.from('messages').insert([messagePayload] as any).select().single();
+        const { data, error } = await supabase.from('messages').insert(messagePayload).select().single();
         
         if (data) {
              setMessages(current => current.map(m => m.id === tempId ? { ...m, id: data.id, created_at: data.created_at } : m));

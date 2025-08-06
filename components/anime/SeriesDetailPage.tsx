@@ -74,7 +74,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
                     .single();
 
                 if (seriesError) throw seriesError;
-                setSeries(seriesData as unknown as Series | null);
+                setSeries(seriesData);
 
                 const { data: episodesData, error: episodesError } = await supabase
                     .from('anime_episodes')
@@ -83,7 +83,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
                     .order('episode_number', { ascending: true });
 
                 if (episodesError) throw episodesError;
-                setEpisodes((episodesData as unknown as Episode[]) || []);
+                setEpisodes(episodesData || []);
 
             } catch (err: any) {
                 setError(err.message || "Failed to load series details.");

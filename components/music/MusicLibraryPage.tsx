@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
@@ -76,7 +77,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
     
     const handleSelectTrack = async (trackId: number) => {
         try {
-            const { error } = await supabase.from('profiles').update({ selected_music_id: trackId } as any).eq('id', myId);
+            const { error } = await supabase.from('profiles').update({ selected_music_id: trackId }).eq('id', myId);
             if (error) throw error;
             alert('Profile music updated!');
             onBack();
@@ -112,7 +113,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
                 file_name: file.name
             };
             
-            const { error: insertError } = await supabase.from('profile_music').insert([newTrack] as any);
+            const { error: insertError } = await supabase.from('profile_music').insert([newTrack]);
             if (insertError) throw insertError;
             
             await fetchTracks();
