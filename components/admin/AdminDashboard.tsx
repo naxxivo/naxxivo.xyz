@@ -1,15 +1,13 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const StatCard = ({ title, value, icon }: { title: string, value: string | number, icon: string }) => (
-    <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center">
         <div className="text-3xl mr-4">{icon}</div>
         <div>
-            <p className="text-gray-500 text-sm">{title}</p>
-            <p className="text-2xl font-bold text-gray-800">{value}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">{title}</p>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{value}</p>
         </div>
     </div>
 );
@@ -28,10 +26,12 @@ const AdminDashboard: React.FC = () => {
             try {
                 const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
                 const { count: paymentsCount } = await supabase.from('manual_payments').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-                const { data: approvedPayments } = await supabase.from('manual_payments').select('amount').eq('status', 'approved');
+                const { data: approvedPaymentsData, error } = await supabase.from('manual_payments').select('amount').eq('status', 'approved');
+                if (error) throw error;
+                const approvedPayments = approvedPaymentsData || [];
                 const { count: subsCount } = await supabase.from('user_subscriptions').select('*', { count: 'exact', head: true }).eq('is_active', true);
 
-                const totalRevenue = (approvedPayments || []).reduce((acc, p: { amount: number }) => acc + p.amount, 0);
+                const totalRevenue = approvedPayments.reduce((acc: number, p) => acc + p.amount, 0);
 
                 setStats({
                     totalUsers: usersCount || 0,

@@ -1,10 +1,8 @@
-
-
 import React, { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar, formatXp } from '../../utils/helpers';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import { motion } from 'framer-motion';
 
@@ -32,7 +30,8 @@ const UserCard: React.FC<UserCardProps> = ({ profile, session, isInitiallyFollow
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: profile.id });
                 setIsFollowing(false);
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profile.id }] as any);
+                const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: profile.id };
+                await supabase.from('follows').insert([newFollow] as any);
                 setIsFollowing(true);
             }
         } catch (error: any) {
@@ -52,7 +51,7 @@ const UserCard: React.FC<UserCardProps> = ({ profile, session, isInitiallyFollow
         >
             <button
                 onClick={() => onViewProfile(profile.id)}
-                className="w-full flex items-center p-3 bg-white rounded-2xl hover:bg-gray-50 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 shadow-sm"
+                className="w-full flex items-center p-3 bg-[var(--theme-card-bg)] rounded-2xl hover:bg-opacity-80 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] shadow-sm"
             >
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                     <img 
@@ -62,8 +61,8 @@ const UserCard: React.FC<UserCardProps> = ({ profile, session, isInitiallyFollow
                     />
                 </div>
                 <div className="ml-4 flex-grow overflow-hidden">
-                    <p className="truncate font-bold text-gray-800">{profile.name || profile.username}</p>
-                    <p className="text-sm truncate text-violet-600 font-semibold">{formatXp(profile.xp_balance)} XP</p>
+                    <p className="truncate font-bold text-[var(--theme-text)]">{profile.name || profile.username}</p>
+                    <p className="text-sm truncate text-[var(--theme-primary)] font-semibold">{formatXp(profile.xp_balance)} XP</p>
                 </div>
                 {!isMyProfile && (
                     <div className="ml-2 w-28 flex-shrink-0">

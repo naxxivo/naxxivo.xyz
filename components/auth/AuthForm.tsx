@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
@@ -74,7 +73,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
     };
 
     return (
-        <div className="min-h-screen bg-white flex flex-col p-6">
+        <div className="min-h-screen bg-[var(--theme-card-bg)] text-[var(--theme-text)] flex flex-col p-6">
             <header className="flex items-center">
                 <button onClick={() => onSetMode('onboarding')} className="text-gray-600 hover:text-gray-900">
                     <BackArrowIcon />
@@ -86,12 +85,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
                     <Logo />
                 </div>
 
-                <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                <h1 className="text-2xl font-bold text-[var(--theme-text)] mb-6 text-center">
                     {isSignUp ? "Create your Account" : "Welcome Back!"}
                 </h1>
 
                 {message ? (
-                     <div className="text-green-700 bg-green-100 p-4 rounded-lg my-4 text-center">
+                     <div className="text-[var(--theme-text-secondary)] bg-[var(--theme-primary)]/10 p-4 rounded-lg my-4 text-center">
                         <p className="font-semibold">Success!</p>
                         <p>{message}</p>
                     </div>
@@ -151,7 +150,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
 
                 <p className="mt-8 text-center text-sm text-gray-500">
                     {isSignUp ? "Already have an account?" : "Don't have an account?"}{' '}
-                    <button onClick={toggleMode} className="font-semibold text-violet-600 hover:underline">
+                    <button onClick={toggleMode} className="font-semibold text-[var(--theme-primary)] hover:underline">
                         {isSignUp ? "Sign In" : "Sign Up"}
                     </button>
                 </p>

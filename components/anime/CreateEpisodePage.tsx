@@ -46,7 +46,7 @@ const CreateEpisodePage: React.FC<CreateEpisodePageProps> = ({ onBack, onEpisode
             const newEpisode: TablesInsert<'anime_episodes'> = {
                 series_id: Number(selectedSeriesId),
                 episode_number: Number(episodeNumber),
-                title,
+                title: title || null,
                 video_url: videoUrl,
             };
 
@@ -63,10 +63,10 @@ const CreateEpisodePage: React.FC<CreateEpisodePageProps> = ({ onBack, onEpisode
     };
     
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="flex items-center p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-                <button onClick={onBack} className="text-gray-600 hover:text-gray-900"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-gray-800 mx-auto">Add New Episode</h1>
+        <div className="min-h-screen bg-[var(--theme-bg)]">
+            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Add New Episode</h1>
                 <div className="w-6"></div>
             </header>
 
@@ -74,14 +74,14 @@ const CreateEpisodePage: React.FC<CreateEpisodePageProps> = ({ onBack, onEpisode
                  {seriesList.length === 0 ? (
                     <div className="flex justify-center pt-20"><LoadingSpinner/></div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-sm">
+                    <form onSubmit={handleSubmit} className="space-y-4 bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm">
                         <div>
-                            <label htmlFor="series" className="block text-sm font-medium text-gray-700 mb-1">Series</label>
+                            <label htmlFor="series" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Series</label>
                             <select
                                 id="series"
                                 value={selectedSeriesId}
                                 onChange={e => setSelectedSeriesId(e.target.value)}
-                                className="appearance-none block w-full px-4 py-3 bg-gray-100 border-gray-200 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:text-sm"
+                                className="appearance-none block w-full px-4 py-3 bg-[var(--theme-bg)] border-transparent border rounded-lg text-[var(--theme-text)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)] sm:text-sm"
                                 required
                             >
                                 {seriesList.map(series => (

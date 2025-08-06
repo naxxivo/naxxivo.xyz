@@ -27,8 +27,50 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Default Green/Teal Theme */
+        :root {
+            --theme-bg: #DAF1DE;
+            --theme-text: #333333;
+            --theme-text-secondary: #235347;
+            --theme-primary: #0E2B26;
+            --theme-primary-hover: #0A1F1B;
+            --theme-primary-text: #FFFFFF;
+            --theme-secondary: #8EB69B;
+            --theme-secondary-hover: #DAF1DE; /* for secondary buttons */
+            --theme-secondary-text: #0E2B26;
+            --theme-card-bg: #FFFFFF;
+            --theme-card-bg-alt: rgba(218, 241, 222, 0.5); /* bg-[#DAF1DE]/50 */
+            --theme-header-bg: #8EB69B;
+            --theme-header-text: #FFFFFF;
+            --theme-ring: #0E2B26;
+        }
+
+        :root.dark {
+            --theme-bg: #0A1916;
+            --theme-text: #E0F0E9;
+            --theme-text-secondary: #8EB69B;
+            --theme-primary: #16A832;
+            --theme-primary-hover: #128a28;
+            --theme-primary-text: #FFFFFF;
+            --theme-secondary: #8EB69B;
+            --theme-secondary-hover: rgba(142, 182, 155, 0.1); /* #8EB69B/10 */
+            --theme-secondary-text: #8EB69B;
+            --theme-card-bg: #102A27;
+            --theme-card-bg-alt: #0A1916;
+            --theme-header-bg: #102A27;
+            --theme-header-text: #E0F0E9;
+            --theme-ring: #16A832;
+        }
+
+        /* Base styles */
+        html {
+            background-color: transparent;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
         body {
             font-family: 'Poppins', sans-serif;
+            background-color: var(--theme-bg);
+            color: var(--theme-text);
         }
         .font-logo {
             font-family: 'Pacifico', cursive;
@@ -37,8 +79,8 @@
            display: none;
         }
         .hide-scrollbar {
-           -ms-overflow-style: none;  /* IE and Edge */
-           scrollbar-width: none;  /* Firefox */
+           -ms-overflow-style: none;
+           scrollbar-width: none;
         }
     </style>
 <link rel="stylesheet" href="/index.css">
@@ -56,7 +98,7 @@
 }
 </script>
 </head>
-<body class="antialiased bg-gray-100 text-gray-800">
+<body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

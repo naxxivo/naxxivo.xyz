@@ -5,7 +5,7 @@ import { HomeIcon, MessageIcon, AddIcon, DiscoverIcon, ProfileIcon } from '../co
 type AuthView = 
     'home' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' | 
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
-    'top-up' | 'subscriptions' | 'manual-payment';
+    'top-up' | 'subscriptions' | 'manual-payment' | 'theme-customizer';
 
 interface BottomNavProps {
     activeView: AuthView;
@@ -25,11 +25,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
     const profileSubPages: AuthView[] = [
         'settings', 'edit-profile', 'music-library', 'tools', 
         'anime', 'anime-series', 'create-series', 'create-episode',
-        'top-up', 'subscriptions', 'manual-payment'
+        'top-up', 'subscriptions', 'manual-payment', 'theme-customizer'
     ];
 
     return (
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-20 bg-white/80 backdrop-blur-lg border-t border-gray-200 z-50">
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-20 bg-[var(--theme-header-bg)]/80 backdrop-blur-lg border-t border-t-[var(--theme-secondary)]/30 z-50">
             <div className="h-full flex justify-around items-center">
                 {navItems.map((item) => {
                     if (item.view === 'add') {
@@ -37,7 +37,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
                              <motion.button
                                 key={item.view}
                                 onClick={onAddPost}
-                                className="p-3 bg-violet-500 text-white rounded-2xl shadow-lg -translate-y-4 hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                                className="p-3 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-2xl shadow-lg -translate-y-4 hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
                                 aria-label={item.label}
                                 whileHover={{ scale: 1.1, rotate: 90 }}
                                 whileTap={{ scale: 0.9 }}
@@ -52,11 +52,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
                         <button
                             key={item.view}
                             onClick={() => setAuthView(item.view as 'home' | 'discover' | 'profile' | 'messages')}
-                            className={`transition-colors duration-200 relative ${isActive ? 'text-violet-600' : 'text-gray-400 hover:text-violet-500'}`}
+                            className={`transition-colors duration-200 relative ${isActive ? 'text-[var(--theme-primary)]' : 'text-[var(--theme-header-text)]/70 hover:text-[var(--theme-header-text)]'}`}
                             aria-label={item.label}
                         >
                             <Icon isActive={isActive} />
-                            {isActive && <motion.div layoutId="active-nav-dot" className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-violet-600 rounded-full" />}
+                            {isActive && <motion.div layoutId="active-nav-dot" className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[var(--theme-primary)] rounded-full" />}
                         </button>
                     )
                 })}

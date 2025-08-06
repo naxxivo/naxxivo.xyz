@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -8,17 +7,12 @@ import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
-// The type definition is correct, the issue is with the query result shape.
-type CommentWithProfile = {
-    id: number;
-    content: string;
-    user_id: string;
-    created_at: string;
+type CommentWithProfile = Tables<'comments'> & {
     profiles: {
         name: string | null;
         username: string;
         photo_url: string | null;
-    } | null;
+    };
 };
 
 interface CommentModalProps {
@@ -54,7 +48,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments(data as unknown as CommentWithProfile[] || []);
+            setComments((data as unknown as CommentWithProfile[]) || []);
         }
         setLoading(false);
     }, [postId]);
@@ -105,12 +99,12 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                     animate={{ y: 0 }}
                     exit={{ y: "100%" }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    className="bg-white w-full max-w-sm max-h-[80vh] rounded-t-2xl shadow-xl flex flex-col"
+                    className="bg-[var(--theme-card-bg)] w-full max-w-sm max-h-[80vh] rounded-t-2xl shadow-xl flex flex-col"
                     onClick={e => e.stopPropagation()}
                 >
-                    <header className="flex-shrink-0 p-4 border-b border-gray-200 text-center relative">
-                        <h2 className="text-lg font-bold">Comments</h2>
-                        <button onClick={onClose} className="absolute top-1/2 -translate-y-1/2 right-4 text-gray-500 hover:text-gray-800" aria-label="Close">
+                    <header className="flex-shrink-0 p-4 border-b border-black/10 dark:border-white/10 text-center relative">
+                        <h2 className="text-lg font-bold text-[var(--theme-text)]">Comments</h2>
+                        <button onClick={onClose} className="absolute top-1/2 -translate-y-1/2 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white" aria-label="Close">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </header>
@@ -122,19 +116,19 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                             comments.map(comment => (
                                 <div key={comment.id} className="flex items-start space-x-3">
                                     <img src={comment.profiles?.photo_url || generateAvatar(comment.profiles?.name || '')} alt={comment.profiles?.name || ''} className="w-8 h-8 rounded-full flex-shrink-0" />
-                                    <div className="bg-gray-100 rounded-lg p-3 text-sm">
-                                        <p className="font-semibold text-gray-800">{comment.profiles?.name || 'Anonymous'}</p>
-                                        <p className="text-gray-700">{comment.content}</p>
+                                    <div className="bg-[var(--theme-bg)] rounded-lg p-3 text-sm">
+                                        <p className="font-semibold text-[var(--theme-text)]">{comment.profiles?.name || 'Anonymous'}</p>
+                                        <p className="text-[var(--theme-text)]">{comment.content}</p>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-center text-gray-500 pt-10">No comments yet. Be the first!</p>
+                            <p className="text-center text-[var(--theme-text-secondary)] pt-10">No comments yet. Be the first!</p>
                         )}
                         <div ref={commentsEndRef} />
                     </main>
 
-                    <footer className="flex-shrink-0 p-2 border-t border-gray-200">
+                    <footer className="flex-shrink-0 p-2 border-t border-black/10 dark:border-white/10">
                         <form onSubmit={handleSubmitComment} className="flex items-center space-x-2">
                              <img src={session.user.user_metadata.photo_url || generateAvatar(session.user.id)} alt="My avatar" className="w-8 h-8 rounded-full" />
                             <input
@@ -142,7 +136,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                                 value={newComment}
                                 onChange={e => setNewComment(e.target.value)}
                                 placeholder="Add a comment..."
-                                className="flex-grow bg-gray-100 border-transparent rounded-full text-gray-800 placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                                className="flex-grow bg-[var(--theme-bg)] border-transparent rounded-full text-[var(--theme-text)] placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
                                 disabled={isSubmitting}
                                 autoFocus
                             />

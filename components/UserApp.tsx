@@ -22,12 +22,13 @@ import CreateEpisodePage from './anime/CreateEpisodePage';
 import TopUpPage from './xp/TopUpPage';
 import SubscriptionClaimPage from './xp/SubscriptionClaimPage';
 import ManualPaymentPage from './xp/ManualPaymentPage';
+import ThemeCustomizerPage from './settings/ThemeCustomizerPage';
 import { motion, AnimatePresence, type Transition } from 'framer-motion';
 
 type AuthView =
     'home' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
-    'top-up' | 'subscriptions' | 'manual-payment';
+    'top-up' | 'subscriptions' | 'manual-payment' | 'theme-customizer';
 
 const pageVariants = {
     initial: { opacity: 0, x: "100%" },
@@ -118,6 +119,10 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         setAuthView('manual-payment');
     }
 
+    const handleNavigateToThemeCustomizer = () => {
+        setAuthView('theme-customizer');
+    };
+
     const handleNavigateToAdminPanel = () => {
         if (onEnterAdminView) {
             onEnterAdminView();
@@ -159,6 +164,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         onBack={() => setAuthView('profile')} 
                         onNavigateToEditProfile={handleNavigateToEditProfile}
                         onNavigateToMusicLibrary={handleNavigateToMusicLibrary}
+                        onNavigateToThemeCustomizer={handleNavigateToThemeCustomizer}
                         onLogout={handleLogout}
                       />,
             'edit-profile': <EditProfilePage 
@@ -172,9 +178,9 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                             />,
             'music-library': <MusicLibraryPage
                                 session={session}
-                                onBack={() => setAuthView('settings')}
+                                onBack={() => setAuthView('profile')} // Changed from 'settings' for better UX flow
                             />,
-            tools: <ToolsPage onBack={() => setAuthView('profile')} onNavigateToAnime={handleNavigateToAnime} onNavigateToTopUp={handleNavigateToTopUp} />,
+            tools: <ToolsPage onBack={() => setAuthView('profile')} onNavigateToAnime={handleNavigateToAnime} onNavigateToTopUp={handleNavigateToTopUp} onNavigateToMusicLibrary={handleNavigateToMusicLibrary} />,
             anime: <AnimePage 
                         key={refreshAnimeKey}
                         onBack={() => setAuthView('tools')}
@@ -190,12 +196,13 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
             'create-episode': <CreateEpisodePage onBack={() => setAuthView('anime')} onEpisodeCreated={() => setAuthView('anime')} />,
             'top-up': <TopUpPage onBack={() => setAuthView('tools')} onPurchase={handleNavigateToManualPayment} onManageSubscriptions={handleNavigateToSubscriptions} />,
             'subscriptions': <SubscriptionClaimPage onBack={() => setAuthView('top-up')} session={session} />,
-            'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} />
+            'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} />,
+            'theme-customizer': <ThemeCustomizerPage onBack={() => setAuthView('settings')} />,
         }[authView];
 
         const isFullScreenPage = [
             'profile', 'music-library', 'tools', 'anime', 'anime-series', 'create-series', 'create-episode',
-            'top-up', 'subscriptions', 'manual-payment'
+            'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile', 'theme-customizer'
         ].includes(authView);
 
         pageContent = (
@@ -232,8 +239,8 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     }
 
     return (
-        <div className="w-full min-h-screen bg-gray-200 flex justify-center">
-            <div className="w-full max-w-sm bg-white min-h-screen shadow-2xl relative overflow-x-hidden">
+        <div className="w-full min-h-screen bg-gray-200 dark:bg-black flex justify-center">
+            <div className="w-full max-w-sm bg-white dark:bg-gray-900 min-h-screen shadow-2xl relative overflow-x-hidden">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={chattingWith ? 'chat' : 'main'}

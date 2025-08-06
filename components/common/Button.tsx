@@ -8,11 +8,11 @@ interface ButtonProps extends HTMLMotionProps<"button"> {
 }
 
 const Button: React.FC<ButtonProps> = ({ children, className, variant = 'primary', size = 'large', ...props }) => {
-    const baseClasses = "w-full flex justify-center items-center font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-300";
+    const baseClasses = "w-full flex justify-center items-center font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] dark:focus:ring-offset-[var(--theme-bg)] transition-all duration-300";
     
     const variantClasses = {
-        primary: "text-white bg-violet-500 hover:bg-violet-600 shadow-md hover:shadow-lg disabled:bg-violet-300 disabled:shadow-none disabled:cursor-not-allowed",
-        secondary: "text-violet-600 bg-white border-2 border-violet-200 hover:bg-violet-50 hover:border-violet-400 focus:ring-violet-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
+        primary: "text-[var(--theme-primary-text)] bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-hover)] shadow-md hover:shadow-lg disabled:bg-opacity-50 disabled:shadow-none disabled:cursor-not-allowed",
+        secondary: "text-[var(--theme-secondary-text)] bg-[var(--theme-card-bg)] border-2 border-[var(--theme-secondary)] hover:bg-[var(--theme-secondary-hover)] hover:border-[var(--theme-text-secondary)] disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed dark:bg-transparent dark:hover:bg-[var(--theme-secondary-hover)] dark:hover:text-white"
     };
     
     const sizeClasses = {

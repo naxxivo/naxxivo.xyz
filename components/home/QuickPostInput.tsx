@@ -38,7 +38,7 @@ const QuickPostInput: React.FC<QuickPostInputProps> = ({ session, onPostCreated 
     };
 
     return (
-        <div className="flex items-center space-x-3 bg-white p-2 rounded-2xl shadow-sm">
+        <div className="flex items-center space-x-3 bg-[var(--theme-card-bg)] p-2 rounded-2xl shadow-sm">
             <img 
                 src={session.user.user_metadata.photo_url || generateAvatar(session.user.id)} 
                 alt="My avatar" 
@@ -50,7 +50,7 @@ const QuickPostInput: React.FC<QuickPostInputProps> = ({ session, onPostCreated 
                 onChange={(e) => setCaption(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handlePost(); }}
                 placeholder="Share your memories..."
-                className="flex-grow bg-gray-100 border-transparent rounded-full text-gray-800 placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="flex-grow bg-[var(--theme-bg)] border-transparent rounded-full text-[var(--theme-text)] placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
                 disabled={isPosting}
             />
             <AnimatePresence>

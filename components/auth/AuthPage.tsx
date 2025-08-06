@@ -16,13 +16,13 @@ const Polaroid = ({ src, alt, rotation, position, text, animationDelay }: { src:
     transition={{ type: 'spring', stiffness: 50, delay: animationDelay }}
   >
     <img src={src} alt={alt} className="w-full h-auto" />
-    {text && <p className="text-center font-logo text-gray-700 text-lg mt-2">{text}</p>}
+    {text && <p className="text-center font-logo text-[#235347] text-lg mt-2">{text}</p>}
   </motion.div>
 );
 
 const AuthPage: React.FC<AuthPageProps> = ({ onSetMode }) => {
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-between p-6">
+    <div className="min-h-screen bg-[var(--theme-card-bg)] text-gray-800 flex flex-col justify-between p-6">
       <header className="w-full max-w-sm mx-auto flex justify-between items-center text-sm">
         <span>3:19</span>
         <div className="flex items-center gap-2">
@@ -58,7 +58,9 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSetMode }) => {
           />
         </div>
 
-        <Logo />
+        <div className="text-[var(--theme-text)]">
+            <Logo />
+        </div>
 
       </main>
 

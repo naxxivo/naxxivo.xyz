@@ -30,7 +30,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
                     supabase
                         .from('profiles')
                         .select('id, name, username, photo_url, xp_balance, created_at')
-                        .order('created_at', { ascending: false }),
+                        .order('xp_balance', { ascending: false }),
                     supabase.from('follows').select('following_id').eq('follower_id', myId)
                 ]);
 
@@ -65,7 +65,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
     
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800">Discover</h1>
+            <h1 className="text-3xl font-bold text-[var(--theme-text)]">Discover</h1>
 
             <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -76,7 +76,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
                     placeholder="Search for travelers..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-gray-100 border-transparent rounded-full text-gray-800 placeholder-gray-500 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full bg-[var(--theme-card-bg)] border-transparent rounded-full text-[var(--theme-text)] placeholder-gray-500 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
                 />
             </div>
             
@@ -105,9 +105,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
                             />
                         ))
                     ) : (
-                         <div className="text-center py-16 px-4 bg-gray-50 rounded-2xl">
-                            <h2 className="text-xl font-semibold text-gray-800">No users found</h2>
-                            <p className="text-gray-500 mt-2">Try adjusting your search or check back later!</p>
+                         <div className="text-center py-16 px-4 bg-[var(--theme-card-bg-alt)] rounded-2xl">
+                            <h2 className="text-xl font-semibold text-[var(--theme-text)]">No users found</h2>
+                            <p className="text-[var(--theme-text-secondary)] mt-2">Try adjusting your search or check back later!</p>
                         </div>
                     )}
                 </div>

@@ -14,20 +14,20 @@ export interface Database {
           action: string
           admin_user_id: string
           created_at: string
-          details: any | null
+          details: Json | null
           id: number
           target_id: string
         }
         Insert: {
           action: string
           admin_user_id: string
-          details?: any | null
+          details?: Json | null
           target_id: string
         }
         Update: {
           action?: string
           admin_user_id?: string
-          details?: any | null
+          details?: Json | null
           target_id?: string
         }
       }
@@ -76,6 +76,26 @@ export interface Database {
           thumbnail_url?: string | null
           title?: string
           user_id?: string
+        }
+      }
+      app_settings: {
+        Row: {
+          key: string
+          value: Json
+          description: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          key: string
+          value: Json
+          description?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          key?: string
+          value?: Json
+          description?: string | null
+          updated_at?: string | null
         }
       }
       comments: {
@@ -280,6 +300,29 @@ export interface Database {
           xp_amount?: number | null
         }
       }
+      profile_gifs: {
+        Row: {
+          id: number
+          user_id: string
+          gif_url: string
+          storage_path: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          user_id: string
+          gif_url: string
+          storage_path: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          user_id?: string
+          gif_url?: string
+          storage_path?: string
+          created_at?: string
+        }
+      }
       profile_music: {
         Row: {
           created_at: string
@@ -309,6 +352,7 @@ export interface Database {
           photo_url: string | null
           role: Database["public"]["Enums"]["user_role"]
           selected_music_id: number | null
+          active_gif_id: number | null
           status: Database["public"]["Enums"]["profile_status"]
           username: string
           xp_balance: number
@@ -321,6 +365,7 @@ export interface Database {
           photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           selected_music_id?: number | null
+          active_gif_id?: number | null
           status?: Database["public"]["Enums"]["profile_status"]
           username: string
           xp_balance?: number
@@ -333,6 +378,7 @@ export interface Database {
           photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           selected_music_id?: number | null
+          active_gif_id?: number | null
           status?: Database["public"]["Enums"]["profile_status"]
           username?: string
           xp_balance?: number
@@ -366,16 +412,44 @@ export interface Database {
           user_id?: string
         }
       }
+      user_themes: {
+        Row: {
+          user_id: string
+          light_theme: Json
+          dark_theme: Json
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          light_theme: Json
+          dark_theme: Json
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          light_theme?: Json
+          dark_theme?: Json
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      claim_daily_xp: {
+      add_xp_to_user: {
         Args: {
-          p_subscription_id: number
+          user_id_to_update: string
+          xp_to_add: number
         }
         Returns: undefined
+      }
+      deduct_xp_for_action: {
+        Args: {
+          p_user_id: string
+          p_cost: number
+        }
+        Returns: string
       }
     }
     Enums: {
@@ -395,99 +469,32 @@ export interface Database {
 type PublicSchema = Database["public"]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+  T extends keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+> = (PublicSchema["Tables"] & PublicSchema["Views"])[T] extends {
+  Row: infer R
+}
+  ? R
+  : never
 
-export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
+export type TablesInsert<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T] extends {
+    Insert: infer I
+  }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
 
-export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
+export type TablesUpdate<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T] extends {
+    Update: infer U
+  }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
 
-export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][T]
 
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+export type CompositeTypes<T extends keyof PublicSchema["CompositeTypes"]> =
+  PublicSchema["CompositeTypes"][T]
+
 
 export const Constants = {
   public: {
