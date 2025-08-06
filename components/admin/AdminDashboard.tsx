@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -31,7 +30,7 @@ const AdminDashboard: React.FC = () => {
                 const { data: approvedPayments } = await supabase.from('manual_payments').select('amount').eq('status', 'approved');
                 const { count: subsCount } = await supabase.from('user_subscriptions').select('*', { count: 'exact', head: true }).eq('is_active', true);
 
-                const totalRevenue = (approvedPayments || []).reduce((acc, p) => acc + p.amount, 0);
+                const totalRevenue = ((approvedPayments as any[]) || []).reduce((acc, p) => acc + p.amount, 0);
 
                 setStats({
                     totalUsers: usersCount || 0,

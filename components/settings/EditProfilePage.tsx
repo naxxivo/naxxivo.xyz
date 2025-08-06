@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -90,11 +89,10 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                 .from(bucket)
                 .getPublicUrl(fileName);
             
-            const updatePayload: TablesUpdate<'profiles'> = type === 'avatar'
-                ? { photo_url: publicUrl }
-                : { cover_url: publicUrl };
+            const updateField = type === 'avatar' ? 'photo_url' : 'cover_url';
+            const updateData = { [updateField]: publicUrl };
             
-            await supabase.from('profiles').update(updatePayload).eq('id', session.user.id);
+            await supabase.from('profiles').update(updateData as any).eq('id', session.user.id);
             
             if (type === 'avatar') setPhotoUrl(publicUrl);
             if (type === 'cover') setCoverUrl(publicUrl);
@@ -121,10 +119,10 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
 
         setIsSaving(true);
         try {
-            const profileUpdates: TablesUpdate<'profiles'> = { name, username, bio };
+            const profileUpdates = { name, username, bio };
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update(profileUpdates)
+                .update(profileUpdates as any)
                 .eq('id', session.user.id);
 
             if (updateError) throw updateError;

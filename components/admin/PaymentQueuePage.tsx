@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
@@ -35,7 +34,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                     const endDate = new Date(startDate);
                     endDate.setDate(startDate.getDate() + product.subscription_duration_days);
 
-                    const newSubscription: TablesInsert<'user_subscriptions'> = {
+                    const newSubscription = {
                         user_id: userId,
                         product_id: product.id,
                         payment_id: payment.id,
@@ -43,7 +42,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                         end_date: endDate.toISOString(),
                         is_active: true,
                     };
-                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription]);
+                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription] as any);
                     if (subError) throw new Error(`Failed to create subscription: ${subError.message}`);
                 }
                 
@@ -67,7 +66,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                     const newXp = (profile.xp_balance || 0) + xpToAdd;
                     const { error: updateXpError } = await supabase
                         .from('profiles')
-                        .update({ xp_balance: newXp })
+                        .update({ xp_balance: newXp } as any)
                         .eq('id', userId);
                     if (updateXpError) throw new Error(`Failed to update user XP: ${updateXpError.message}`);
                 }
@@ -80,7 +79,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                     reviewed_by: session.user.id,
                     admin_notes: notes || 'Approved and items awarded.',
                 };
-                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
     
                 if (updateError) {
                     // This is a critical state. User got the item, but payment is still pending. Alert admin to fix manually.
@@ -93,7 +92,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                     reviewed_by: session.user.id,
                     admin_notes: notes || 'Rejected without notes.',
                 };
-                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
                 if (updateError) throw updateError;
             }
 

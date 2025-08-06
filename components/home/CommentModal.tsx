@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -55,7 +54,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments((data as CommentWithProfile[]) || []);
+            setComments(data as unknown as CommentWithProfile[] || []);
         }
         setLoading(false);
     }, [postId]);
@@ -79,7 +78,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                 user_id: session.user.id,
                 content: newComment.trim(),
             };
-            const { error } = await supabase.from('comments').insert([commentData]);
+            const { error } = await supabase.from('comments').insert([commentData] as any);
             if (error) throw error;
             
             setNewComment('');
