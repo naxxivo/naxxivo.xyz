@@ -41,7 +41,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
                 const { data: followsData, error: followsError } = followsPromise;
                 if (followsError) throw followsError;
                 if (followsData) {
-                    const followingIds = new Set(followsData.map(f => f.following_id));
+                    const followingIds = new Set(followsData.map((f: { following_id: string }) => f.following_id));
                     setFollowingSet(followingIds);
                 }
 

@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
-    children: React.ReactNode;
+// The original interface was missing standard button attributes.
+// This new interface extends React.ButtonHTMLAttributes<HTMLButtonElement> to include them.
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary';
     size?: 'large' | 'small';
 }
 
-const Button: React.FC<ButtonProps> = ({ children, className, variant = 'primary', size = 'large', ...props }) => {
+const Button: React.FC<ButtonProps & HTMLMotionProps<"button">> = ({ children, className, variant = 'primary', size = 'large', ...props }) => {
     const baseClasses = "w-full flex justify-center items-center font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] dark:focus:ring-offset-[var(--theme-bg)] transition-all duration-300";
     
     const variantClasses = {

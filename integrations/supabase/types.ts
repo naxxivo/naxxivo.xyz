@@ -309,18 +309,14 @@ export interface Database {
           created_at: string
         }
         Insert: {
-          id?: number
           user_id: string
           gif_url: string
           storage_path: string
-          created_at?: string
         }
         Update: {
-          id?: number
           user_id?: string
           gif_url?: string
           storage_path?: string
-          created_at?: string
         }
       }
       profile_music: {

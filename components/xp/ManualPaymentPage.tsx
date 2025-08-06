@@ -49,7 +49,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                 
                 const { data: productData, error: productError } = productResponse;
                 if (productError) throw productError;
-                setProduct(productData);
+                setProduct(productData as any);
 
                 const { data: settingsData, error: settingsError } = settingsResponse;
                 if (settingsError) throw new Error("Could not load payment instructions.");

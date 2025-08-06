@@ -113,19 +113,33 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             }
 
             try {
-                const { data: profileData, error: profileError } = await supabase
+                const { data: profileBase, error: profileError } = await supabase
                     .from('profiles')
                     .select(`
                         id, cover_url, xp_balance, role, photo_url, name, username, bio, active_gif_id,
-                        profile_music ( music_url ),
-                        profile_gifs!active_gif_id ( gif_url )
+                        profile_music ( music_url )
                     `)
                     .eq('id', userId)
                     .single();
                 
-                if (profileError || !profileData) throw new Error(profileError?.message || "Profile not found.");
+                if (profileError || !profileBase) throw new Error(profileError?.message || "Profile not found.");
                 
-                setProfile(profileData as ProfileData);
+                let activeGif: { gif_url: string } | null = null;
+                if (profileBase.active_gif_id) {
+                    const { data: gifData } = await supabase
+                        .from('profile_gifs')
+                        .select('gif_url')
+                        .eq('id', profileBase.active_gif_id)
+                        .single();
+                    activeGif = gifData;
+                }
+
+                const fullProfileData = {
+                    ...profileBase,
+                    profile_gifs: activeGif
+                };
+
+                setProfile(fullProfileData as any);
 
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
@@ -149,7 +163,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     .order('created_at', { ascending: false });
 
                 if(postError) throw postError;
-                setPosts(postData || []);
+                setPosts((postData as any) || []);
 
             } catch (error: any) {
                 setError(error.message || "An error occurred.");
@@ -318,7 +332,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as any) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }

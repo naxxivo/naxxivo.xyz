@@ -173,7 +173,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         setMessages(current => [...current, optimisticMessage]);
 
         const messagePayload: TablesInsert<'messages'> = { sender_id: myId, recipient_id: otherUser.id, content, is_read: false, status: "sent" };
-        const { data, error } = await supabase.from('messages').insert([messagePayload]).select().single();
+        const { data, error } = await supabase.from('messages').insert([messagePayload] as any).select().single();
         
         if (data) {
              setMessages(current => current.map(m => m.id === tempId ? { ...m, id: data.id, created_at: data.created_at } : m));

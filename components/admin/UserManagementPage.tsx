@@ -86,7 +86,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
         
         try {
             // Update the profile first
-            const { error: profileError } = await supabase.from('profiles').update(profileUpdatePayload).eq('id', targetId);
+            const { error: profileError } = await supabase.from('profiles').update(profileUpdatePayload as any).eq('id', targetId);
             if (profileError) throw profileError;
 
             // Then insert into the audit log
