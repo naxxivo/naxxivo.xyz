@@ -1,42 +1,110 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
-import type { Tables, Enums, TablesUpdate } from '../../integrations/supabase/types';
+import type { Tables, Enums, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 type Payment = Tables<'manual_payments'> & {
     profiles: Pick<Tables<'profiles'>, 'name' | 'username'> | null;
-    products: Pick<Tables<'products'>, 'name'> | null;
+    products: Tables<'products'> | null;
 };
 
-const PaymentReviewModal = ({ payment, onClose, onUpdate }: { payment: Payment; onClose: () => void; onUpdate: () => void; }) => {
+const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: Payment; onClose: () => void; onUpdate: () => void; session: Session; }) => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [notes, setNotes] = useState('');
 
     const handleUpdate = async (newStatus: Enums<'payment_status'>) => {
         setIsProcessing(true);
         try {
-            const updatePayload: TablesUpdate<'manual_payments'> = {
-                status: newStatus,
-                reviewed_at: new Date().toISOString(),
-                admin_notes: notes || null,
-            };
-            const { error } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+            if (newStatus === 'approved') {
+                // --- Start of Awarding Logic ---
+                if (!payment.products) {
+                    throw new Error("Product details not found for this payment. Cannot process approval.");
+                }
+    
+                const product = payment.products;
+                const userId = payment.user_id;
+                
+                let xpToAdd = 0;
+                
+                // Award subscription if applicable
+                if (product.product_type === 'subscription' && product.subscription_duration_days) {
+                    const startDate = new Date();
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + product.subscription_duration_days);
 
-            if (error) throw error;
-            
-            // TODO: In a real app, you would call a serverless function here to award XP/subscriptions
-            // if (newStatus === 'approved') { ... }
+                    const newSubscription: TablesInsert<'user_subscriptions'> = {
+                        user_id: userId,
+                        product_id: product.id,
+                        payment_id: payment.id,
+                        start_date: startDate.toISOString(),
+                        end_date: endDate.toISOString(),
+                        is_active: true,
+                    };
+                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription]);
+                    if (subError) throw new Error(`Failed to create subscription: ${subError.message}`);
+                }
+                
+                // Determine total XP to add
+                if (product.product_type === 'package' && product.xp_amount) {
+                    xpToAdd = product.xp_amount;
+                } else if (product.product_type === 'subscription' && product.subscription_initial_xp) {
+                    xpToAdd = product.subscription_initial_xp;
+                }
+                
+                // Update user's XP balance
+                if (xpToAdd > 0) {
+                    const { data: profile, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('xp_balance')
+                        .eq('id', userId)
+                        .single();
+
+                    if (profileError || !profile) throw new Error(`Failed to fetch user profile: ${profileError?.message || 'Profile not found'}`);
+    
+                    const newXp = (profile.xp_balance || 0) + xpToAdd;
+                    const { error: updateXpError } = await supabase
+                        .from('profiles')
+                        .update({ xp_balance: newXp })
+                        .eq('id', userId);
+                    if (updateXpError) throw new Error(`Failed to update user XP: ${updateXpError.message}`);
+                }
+                // --- End of Awarding Logic ---
+    
+                // If we reach here, awarding was successful. Now update the payment status.
+                const updatePayload: TablesUpdate<'manual_payments'> = {
+                    status: 'approved',
+                    reviewed_at: new Date().toISOString(),
+                    reviewed_by: session.user.id,
+                    admin_notes: notes || 'Approved and items awarded.',
+                };
+                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+    
+                if (updateError) {
+                    // This is a critical state. User got the item, but payment is still pending. Alert admin to fix manually.
+                    throw new Error(`CRITICAL: User ${userId} was awarded product ${product.id}, but failed to update payment status. Please manually set payment ${payment.id} to 'approved'.`);
+                }
+            } else { // Logic for 'rejected'
+                const updatePayload: TablesUpdate<'manual_payments'> = {
+                    status: 'rejected',
+                    reviewed_at: new Date().toISOString(),
+                    reviewed_by: session.user.id,
+                    admin_notes: notes || 'Rejected without notes.',
+                };
+                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+                if (updateError) throw updateError;
+            }
 
             onUpdate();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to update payment:", error);
-            alert("Failed to update payment status.");
+            alert(`Failed to update payment status: ${error.message}`);
         } finally {
             setIsProcessing(false);
         }
     };
+
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
@@ -85,14 +153,19 @@ const PaymentQueuePage: React.FC<{ session: Session }> = ({ session }) => {
         setLoading(true);
         const { data, error } = await supabase
             .from('manual_payments')
-            .select(`*, profiles (name, username), products (name)`)
+            .select(`
+                id, created_at, amount, user_id, sender_details, screenshot_url, 
+                profiles (name, username), 
+                products (id, name, product_type, price, xp_amount, subscription_initial_xp, subscription_duration_days)
+            `)
             .eq('status', 'pending')
-            .order('created_at');
+            .order('created_at', { ascending: true });
         
         if (error) {
             console.error("Failed to fetch payments:", error);
+            setPayments([]);
         } else {
-            setPayments(data as Payment[] || []);
+            setPayments(data || []);
         }
         setLoading(false);
     }, []);
@@ -137,6 +210,7 @@ const PaymentQueuePage: React.FC<{ session: Session }> = ({ session }) => {
             )}
             {selectedPayment && (
                 <PaymentReviewModal 
+                    session={session}
                     payment={selectedPayment} 
                     onClose={() => setSelectedPayment(null)} 
                     onUpdate={() => {

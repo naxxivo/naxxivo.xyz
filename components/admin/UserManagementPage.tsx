@@ -19,7 +19,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
     useEffect(() => {
         const fetchUsers = async () => {
             setLoading(true);
-            let query = supabase.from('profiles').select('*').order('created_at', { ascending: false });
+            let query = supabase.from('profiles').select('id, name, username, photo_url, status, xp_balance, role, created_at').order('created_at', { ascending: false });
 
             if (searchTerm) {
                 query = query.or(`name.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%,id.ilike.%${searchTerm}%`);
@@ -91,7 +91,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.xp_balance}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{user.role}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                        <button disabled className="text-gray-400 cursor-not-allowed">Edit</button>
                                     </td>
                                 </tr>
                             ))}

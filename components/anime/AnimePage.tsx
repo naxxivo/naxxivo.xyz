@@ -24,7 +24,7 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
         const fetchSeries = async () => {
             setLoading(true);
             try {
-                const { data, error } = await supabase.from('anime_series').select('*').order('created_at', { ascending: false });
+                const { data, error } = await supabase.from('anime_series').select('id, title, thumbnail_url').order('created_at', { ascending: false });
                 if (error) throw error;
                 setSeries(data || []);
             } catch (err: any) {

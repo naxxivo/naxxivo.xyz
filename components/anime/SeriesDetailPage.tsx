@@ -13,6 +13,33 @@ interface SeriesDetailPageProps {
 type Series = Tables<'anime_series'>;
 type Episode = Tables<'anime_episodes'>;
 
+const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct'; id: string } | null => {
+    if (!url) return null;
+
+    let match;
+
+    // YouTube: covers watch, shorts, youtu.be, and embed links
+    match = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (match && match[1]) return { platform: 'youtube', id: match[1] };
+    
+    // Vimeo: covers vimeo.com/ID and vimeo.com/video/ID
+    match = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(?:video\/)?([0-9]+)/);
+    if (match && match[1]) return { platform: 'vimeo', id: match[1] };
+
+    // Direct video file link
+    try {
+        const path = new URL(url).pathname.toLowerCase();
+        if (['.mp4', '.webm', '.ogg', '.mov'].some(ext => path.endsWith(ext))) {
+            return { platform: 'direct', id: url };
+        }
+    } catch (e) {
+        // Not a valid URL
+    }
+
+    return null;
+};
+
+
 const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack }) => {
     const [series, setSeries] = useState<Series | null>(null);
     const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -28,7 +55,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
             try {
                 const { data: seriesData, error: seriesError } = await supabase
                     .from('anime_series')
-                    .select('*')
+                    .select('id, title, description, banner_url, thumbnail_url')
                     .eq('id', seriesId)
                     .single();
 
@@ -37,7 +64,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
 
                 const { data: episodesData, error: episodesError } = await supabase
                     .from('anime_episodes')
-                    .select('*')
+                    .select('id, episode_number, title, video_url')
                     .eq('series_id', seriesId)
                     .order('episode_number', { ascending: true });
 
@@ -53,6 +80,9 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
 
         fetchDetails();
     }, [seriesId]);
+    
+    const videoDetails = selectedEpisodeUrl ? getVideoDetails(selectedEpisodeUrl) : null;
+
 
     if (loading) return <div className="flex justify-center pt-20"><LoadingSpinner /></div>;
     if (error) return <div className="text-center pt-20 text-red-500">{error}</div>;
@@ -63,14 +93,39 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
             <div className="relative">
                 {selectedEpisodeUrl ? (
                     <div className="w-full aspect-video bg-black flex items-center justify-center">
-                        <video
-                            key={selectedEpisodeUrl} // Re-mounts the video player on URL change
-                            src={selectedEpisodeUrl}
-                            controls
-                            autoPlay
-                            playsInline
-                            className="w-full h-full"
-                        />
+                       {videoDetails?.platform === 'youtube' ? (
+                            <iframe
+                                className="w-full h-full"
+                                src={`https://www.youtube.com/embed/${videoDetails.id}?autoplay=1`}
+                                title="YouTube video player"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                            ></iframe>
+                        ) : videoDetails?.platform === 'vimeo' ? (
+                            <iframe
+                                className="w-full h-full"
+                                src={`https://player.vimeo.com/video/${videoDetails.id}?autoplay=1`}
+                                title="Vimeo video player"
+                                frameBorder="0"
+                                allow="autoplay; fullscreen; picture-in-picture"
+                                allowFullScreen
+                            ></iframe>
+                        ) : videoDetails?.platform === 'direct' ? (
+                             <video
+                                key={selectedEpisodeUrl}
+                                src={videoDetails.id}
+                                controls
+                                autoPlay
+                                playsInline
+                                className="w-full h-full"
+                            />
+                        ) : (
+                             <div className="text-white text-center p-4">
+                                <p className="font-semibold">Unsupported or Invalid Video URL</p>
+                                <p className="text-sm text-gray-400 break-all mt-2">{selectedEpisodeUrl}</p>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="w-full aspect-video bg-gray-300 relative">
@@ -78,7 +133,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
                         <div className="absolute inset-0 bg-black/30"></div>
                     </div>
                 )}
-                 <button onClick={onBack} className="absolute top-3 left-3 bg-black/30 text-white rounded-full p-2 hover:bg-black/50 transition-colors">
+                 <button onClick={onBack} className="absolute top-3 left-3 bg-black/30 text-white rounded-full p-2 hover:bg-black/50 transition-colors z-10">
                     <BackArrowIcon />
                  </button>
             </div>

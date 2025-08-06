@@ -53,8 +53,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                     .from('messages')
                     .select('content, created_at, is_read, sender_id, recipient_id')
                     .or(`sender_id.eq.${myId},recipient_id.eq.${myId}`)
-                    .order('created_at', { ascending: false })
-                    .returns<FetchedMessage[]>();
+                    .order('created_at', { ascending: false });
 
                 if (messagesError) throw messagesError;
                 
@@ -86,8 +85,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                 const { data: typedProfiles, error: profilesError } = await supabase
                     .from('profiles')
                     .select('id, name, username, photo_url')
-                    .in('id', Array.from(otherUserIds))
-                    .returns<ProfileStub[]>();
+                    .in('id', Array.from(otherUserIds));
 
                 if (profilesError) throw profilesError;
                 

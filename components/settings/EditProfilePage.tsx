@@ -39,13 +39,13 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
             try {
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('*')
+                    .select('name, username, bio, photo_url, cover_url')
                     .eq('id', session.user.id)
                     .single();
                 if (error) throw error;
                 
                 if (data) {
-                    setProfile(data);
+                    setProfile(data as ProfileData);
                     setName(data.name || '');
                     setUsername(data.username || '');
                     setBio(data.bio || '');

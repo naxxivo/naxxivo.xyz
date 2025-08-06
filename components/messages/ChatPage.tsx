@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
+import type { Tables, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import { BackArrowIcon } from '../common/AppIcons';
 
@@ -73,8 +73,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
             .select('id, created_at, content, sender_id, recipient_id, is_read, status')
             .or(filter)
             .order('created_at', { ascending: false })
-            .range(from, to)
-            .returns<Message[]>();
+            .range(from, to);
         
         if (error) {
             console.error("Failed to fetch messages:", error);
@@ -175,7 +174,8 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         const optimisticMessage: Message = { id: tempId, content, created_at: new Date().toISOString(), sender_id: myId, recipient_id: otherUser.id, is_read: false, status: 'sent' };
         setMessages(current => [...current, optimisticMessage]);
 
-        const { data, error } = await supabase.from('messages').insert([{ sender_id: myId, recipient_id: otherUser.id, content, is_read: false, status: "sent" }]).select().single<Message>();
+        const messagePayload: TablesInsert<'messages'> = { sender_id: myId, recipient_id: otherUser.id, content, is_read: false, status: "sent" };
+        const { data, error } = await supabase.from('messages').insert([messagePayload]).select().single<Message>();
         
         if (data) {
              setMessages(current => current.map(m => m.id === tempId ? { ...m, id: data.id, created_at: data.created_at } : m));

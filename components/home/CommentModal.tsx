@@ -7,7 +7,8 @@ import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
-type CommentWithProfile = Tables<'comments'> & {
+// Use a specific Pick type to improve performance and type safety
+type CommentWithProfile = Pick<Tables<'comments'>, 'id' | 'content' | 'user_id' | 'created_at'> & {
     profiles: Pick<Tables<'profiles'>, 'name' | 'username' | 'photo_url'> | null;
 };
 
@@ -27,10 +28,14 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
 
     const fetchComments = useCallback(async () => {
         setLoading(true);
+        // Select only the required fields instead of '*'
         const { data, error } = await supabase
             .from('comments')
             .select(`
-                *,
+                id,
+                content,
+                user_id,
+                created_at,
                 profiles (name, username, photo_url)
             `)
             .eq('post_id', postId)
@@ -63,7 +68,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                 user_id: session.user.id,
                 content: newComment.trim(),
             };
-            const { error } = await supabase.from('comments').insert(commentData);
+            const { error } = await supabase.from('comments').insert([commentData]);
             if (error) throw error;
             
             setNewComment('');

@@ -25,7 +25,7 @@ const QuickPostInput: React.FC<QuickPostInputProps> = ({ session, onPostCreated 
                 caption: caption.trim(),
                 content_url: null,
             };
-            const { error } = await supabase.from('posts').insert([newPost]);
+            const { error } = await supabase.from('posts').insert([newPost] as any);
             if (error) throw error;
             setCaption('');
             onPostCreated();

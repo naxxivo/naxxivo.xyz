@@ -11,7 +11,8 @@ interface SearchOverlayProps {
     onViewProfile: (userId: string) => void;
 }
 
-type Profile = Tables<'profiles'>;
+// Use a specific Pick type for search results to improve performance
+type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'>;
 
 const useDebounce = (value: string, delay: number) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -40,9 +41,10 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile })
             }
             setLoading(true);
             try {
+                // Select only required fields instead of '*'
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('*')
+                    .select('id, name, username, photo_url')
                     .or(`name.ilike.%${debouncedSearchTerm}%,username.ilike.%${debouncedSearchTerm}%`)
                     .limit(10);
                 

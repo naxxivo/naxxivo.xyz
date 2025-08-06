@@ -30,7 +30,7 @@ const UserCard: React.FC<UserCardProps> = ({ profile, session, isInitiallyFollow
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: profile.id });
                 setIsFollowing(false);
             } else {
-                await supabase.from('follows').insert({ follower_id: session.user.id, following_id: profile.id });
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profile.id }]);
                 setIsFollowing(true);
             }
         } catch (error: any) {

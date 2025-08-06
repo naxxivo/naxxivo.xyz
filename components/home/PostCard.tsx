@@ -22,17 +22,32 @@ interface PostCardProps {
     onOpenComments: () => void;
 }
 
-const isVideoUrl = (url: string): boolean => {
-    if (!url) return false;
+const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct'; id: string } | null => {
+    if (!url) return null;
+
+    let match;
+
+    // YouTube: covers watch, shorts, youtu.be, and embed links
+    match = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (match && match[1]) return { platform: 'youtube', id: match[1] };
+    
+    // Vimeo: covers vimeo.com/ID and vimeo.com/video/ID
+    match = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(?:video\/)?([0-9]+)/);
+    if (match && match[1]) return { platform: 'vimeo', id: match[1] };
+
+    // Direct video file link
     try {
         const path = new URL(url).pathname.toLowerCase();
-        // A simple check for common video file extensions
-        return ['.mp4', '.webm', '.ogg'].some(ext => path.endsWith(ext));
+        if (['.mp4', '.webm', '.ogg', '.mov'].some(ext => path.endsWith(ext))) {
+            return { platform: 'direct', id: url };
+        }
     } catch (e) {
-        // Invalid URL, treat as not a video
-        return false;
+        // Not a valid URL, will be treated as an image below
     }
+
+    return null;
 };
+
 
 const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpenComments }) => {
     const { profiles: profile, caption, content_url, created_at, id: postId, user_id } = post;
@@ -41,6 +56,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
     const [likeCount, setLikeCount] = useState(post.likes.length);
     const [userHasLiked, setUserHasLiked] = useState(post.likes.some(like => like.user_id === session.user.id));
     const commentCount = post.comments[0]?.count ?? 0;
+    
+    const videoDetails = content_url ? getVideoDetails(content_url) : null;
 
     const handleLikeToggle = async () => {
         const originalLikeStatus = userHasLiked;
@@ -53,7 +70,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
             if (originalLikeStatus) {
                 await supabase.from('likes').delete().match({ user_id: session.user.id, post_id: postId });
             } else {
-                await supabase.from('likes').insert([{ user_id: session.user.id, post_id: postId }]);
+                const like: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
+                await supabase.from('likes').insert([like]);
             }
         } catch (error) {
             setUserHasLiked(originalLikeStatus);
@@ -72,7 +90,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
         if (navigator.share) {
             try {
                 await navigator.share(shareData);
-                return; // Exit after successful native share
+                return; // Exit after successful share
             } catch (error: any) {
                  if (error.name === 'AbortError') {
                     return; // User cancelled, do nothing.
@@ -118,17 +136,35 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
             </div>
 
             {content_url && (
-                <div className="w-full bg-black">
-                    {isVideoUrl(content_url) ? (
+                <div className="w-full bg-black aspect-video">
+                    {videoDetails?.platform === 'youtube' ? (
+                        <iframe
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${videoDetails.id}`}
+                            title={`YouTube video player for ${caption || 'post'}`}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                        ></iframe>
+                    ) : videoDetails?.platform === 'vimeo' ? (
+                        <iframe
+                            className="w-full h-full"
+                            src={`https://player.vimeo.com/video/${videoDetails.id}`}
+                            title={`Vimeo video player for ${caption || 'post'}`}
+                            frameBorder="0"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    ) : videoDetails?.platform === 'direct' ? (
                         <video 
-                            src={content_url} 
+                            src={videoDetails.id} 
                             controls 
                             playsInline
-                            className="w-full h-auto max-h-[60vh] object-contain"
+                            className="w-full h-full object-contain"
                             preload="metadata"
                         />
                     ) : (
-                        <img src={content_url} alt="Post content" className="w-full h-auto object-cover max-h-[60vh]" loading="lazy" />
+                        <img src={content_url} alt="Post content" className="w-full h-full object-cover" loading="lazy" />
                     )}
                 </div>
             )}

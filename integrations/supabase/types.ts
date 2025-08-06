@@ -30,7 +30,6 @@ export interface Database {
           details?: any | null
           target_id?: string
         }
-        Relationships: []
       }
       anime_episodes: {
         Row: {
@@ -53,7 +52,6 @@ export interface Database {
           title?: string | null
           video_url?: string
         }
-        Relationships: []
       }
       anime_series: {
         Row: {
@@ -79,7 +77,6 @@ export interface Database {
           title?: string
           user_id?: string
         }
-        Relationships: []
       }
       comments: {
         Row: {
@@ -105,7 +102,6 @@ export interface Database {
           status?: Database["public"]["Enums"]["comment_status"]
           user_id?: string
         }
-        Relationships: []
       }
       daily_claims: {
         Row: {
@@ -128,7 +124,6 @@ export interface Database {
           user_id?: string
           user_subscription_id?: number
         }
-        Relationships: []
       }
       follows: {
         Row: {
@@ -144,7 +139,6 @@ export interface Database {
           follower_id?: string
           following_id?: string
         }
-        Relationships: []
       }
       likes: {
         Row: {
@@ -161,7 +155,6 @@ export interface Database {
           post_id?: number
           user_id?: string
         }
-        Relationships: []
       }
       manual_payments: {
         Row: {
@@ -199,7 +192,6 @@ export interface Database {
           status?: Database["public"]["Enums"]["payment_status"]
           user_id?: string
         }
-        Relationships: []
       }
       messages: {
         Row: {
@@ -225,7 +217,6 @@ export interface Database {
           sender_id?: string
           status?: string
         }
-        Relationships: []
       }
       posts: {
         Row: {
@@ -248,7 +239,6 @@ export interface Database {
           status?: Database["public"]["Enums"]["post_status"]
           user_id?: string
         }
-        Relationships: []
       }
       products: {
         Row: {
@@ -289,7 +279,6 @@ export interface Database {
           subscription_initial_xp?: number | null
           xp_amount?: number | null
         }
-        Relationships: []
       }
       profile_music: {
         Row: {
@@ -309,7 +298,6 @@ export interface Database {
           music_url?: string
           profile_id?: string
         }
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -349,7 +337,6 @@ export interface Database {
           username?: string
           xp_balance?: number
         }
-        Relationships: []
       }
       user_subscriptions: {
         Row: {
@@ -378,7 +365,6 @@ export interface Database {
           start_date?: string
           user_id?: string
         }
-        Relationships: []
       }
     }
     Views: {

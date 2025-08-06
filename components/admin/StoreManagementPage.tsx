@@ -17,7 +17,7 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
     useEffect(() => {
         const fetchProducts = async () => {
             setLoading(true);
-            const { data, error } = await supabase.from('products').select('*').order('created_at');
+            const { data, error } = await supabase.from('products').select('id, name, product_type, price, xp_amount, is_active, created_at').order('created_at');
             if (error) {
                 console.error("Failed to fetch products:", error);
             } else {
@@ -32,7 +32,7 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
         <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Store Products</h2>
-                <button className="bg-violet-500 text-white px-4 py-2 rounded-md hover:bg-violet-600">
+                <button disabled className="bg-violet-300 text-white px-4 py-2 rounded-md cursor-not-allowed">
                     Create New Product
                 </button>
             </div>
@@ -66,7 +66,7 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                        <button disabled className="text-gray-400 cursor-not-allowed">Edit</button>
                                     </td>
                                 </tr>
                             ))}

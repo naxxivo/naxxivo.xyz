@@ -78,7 +78,12 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
             const { data: postData, error: postsError } = await supabase
                 .from('posts')
                 .select(`
-                    *,
+                    id,
+                    created_at,
+                    caption,
+                    content_url,
+                    user_id,
+                    status,
                     profiles (
                         username,
                         name,
@@ -87,11 +92,10 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                     likes ( user_id ),
                     comments ( count )
                 `)
-                .order('created_at', { ascending: false })
-                .returns<PostWithDetails[]>();
+                .order('created_at', { ascending: false });
             
             if (postsError) throw postsError;
-            if (postData) setPosts(postData);
+            if (postData) setPosts(postData as PostWithDetails[]);
 
         } catch (error: any) {
             setError(error.message || "Failed to fetch posts.");

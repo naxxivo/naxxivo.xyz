@@ -29,7 +29,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
                 const [profilesPromise, followsPromise] = await Promise.all([
                     supabase
                         .from('profiles')
-                        .select('*')
+                        .select('id, name, username, photo_url, xp_balance, created_at')
                         .order('created_at', { ascending: false }),
                     supabase.from('follows').select('following_id').eq('follower_id', myId)
                 ]);

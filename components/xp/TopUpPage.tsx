@@ -12,7 +12,8 @@ interface TopUpPageProps {
     onManageSubscriptions: () => void;
 }
 
-type Product = Tables<'products'>;
+// Use a specific Pick type for products to improve performance and type safety
+type Product = Pick<Tables<'products'>, 'id' | 'product_type' | 'price' | 'icon' | 'name' | 'description' | 'xp_amount'>;
 
 const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubscriptions }) => {
     const [products, setProducts] = useState<Product[]>([]);
@@ -21,9 +22,10 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
     useEffect(() => {
         const fetchProducts = async () => {
             setLoading(true);
+            // Select only required fields instead of '*'
             const { data, error } = await supabase
                 .from('products')
-                .select('*')
+                .select('id, product_type, price, icon, name, description, xp_amount')
                 .eq('is_active', true)
                 .order('price', { ascending: true });
             
