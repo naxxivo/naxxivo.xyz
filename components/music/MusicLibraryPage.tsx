@@ -113,7 +113,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
             const { error: uploadError } = await supabase.storage.from('music').upload(fileName, file);
             if (uploadError) throw uploadError;
             const { data: { publicUrl } } = supabase.storage.from('music').getPublicUrl(fileName);
-            const { error: insertError } = await supabase.from('profile_music').insert([{ profile_id: myId, music_url: publicUrl, file_name: file.name }]);
+            const { error: insertError } = await supabase.from('profile_music').insert([{ profile_id: myId, music_url: publicUrl, file_name: file.name }] as any);
             if (insertError) throw insertError;
             await fetchData();
         } catch (err: any) {
@@ -156,7 +156,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage.from('gifs').getPublicUrl(filePath);
-            const { error: insertError } = await supabase.from('profile_gifs').insert([{ user_id: myId, gif_url: publicUrl, storage_path: filePath }]);
+            const { error: insertError } = await supabase.from('profile_gifs').insert([{ user_id: myId, gif_url: publicUrl, storage_path: filePath }] as any);
             if (insertError) throw insertError;
 
             await fetchData();

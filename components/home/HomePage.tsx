@@ -104,9 +104,9 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                 supabase.from('follows').select('following_id').eq('follower_id', myId)
             ]);
             
-            const { data, error: postsError } = postsPromise;
+            const { data: postData, error: postsError } = postsPromise;
             if (postsError) throw postsError;
-            if (data) setPosts(data as any);
+            if (postData) setPosts(postData);
 
             const { data: followsData, error: followsError } = followsPromise;
             if (followsError) throw followsError;

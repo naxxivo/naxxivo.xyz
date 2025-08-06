@@ -48,7 +48,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments((data as any) || []);
+            setComments((data as unknown as CommentWithProfile[]) || []);
         }
         setLoading(false);
     }, [postId]);

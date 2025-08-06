@@ -26,12 +26,12 @@ const AdminDashboard: React.FC = () => {
             try {
                 const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
                 const { count: paymentsCount } = await supabase.from('manual_payments').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-                const { data, error } = await supabase.from('manual_payments').select('amount').eq('status', 'approved');
+                const { data: approvedPaymentsData, error } = await supabase.from('manual_payments').select('amount').eq('status', 'approved');
                 if (error) throw error;
-                const approvedPayments = (data as any[]) || [];
+                const approvedPayments = approvedPaymentsData || [];
                 const { count: subsCount } = await supabase.from('user_subscriptions').select('*', { count: 'exact', head: true }).eq('is_active', true);
 
-                const totalRevenue = approvedPayments.reduce((acc: number, p: { amount: number }) => acc + p.amount, 0);
+                const totalRevenue = approvedPayments.reduce((acc: number, p) => acc + p.amount, 0);
 
                 setStats({
                     totalUsers: usersCount || 0,
