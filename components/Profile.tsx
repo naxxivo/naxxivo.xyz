@@ -1,9 +1,11 @@
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
 import type { Tables, TablesInsert } from '../integrations/supabase/types';
-import { generateAvatar, formatXp } from '../../utils/helpers';
+import { generateAvatar, formatXp } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
 import { BackArrowIcon, SettingsIcon, SendPlaneIcon, MusicNoteIcon, ToolsIcon, CoinIcon, AdminIcon } from './common/AppIcons';
@@ -21,10 +23,13 @@ interface ProfileProps {
     onViewProfile: (userId: string) => void;
 }
 
-type ProfileData = Tables<'profiles'> & {
+type ProfileData = Pick<Tables<'profiles'>, 'id' | 'cover_url' | 'xp_balance' | 'role' | 'photo_url' | 'name' | 'username' | 'bio'> & {
     profile_music: { music_url: string }[] | null;
 };
-type PostData = Pick<Tables<'posts'>, 'id' | 'content_url'>;
+interface PostData {
+    id: number;
+    content_url: string | null;
+}
 type ProfileStub = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'>;
 
 const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, onNavigateToSettings, onNavigateToTools, onNavigateToAdminPanel, onViewProfile }) => {
@@ -85,7 +90,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 
                 if (profileError || !profileData) throw new Error(profileError?.message || "Profile not found.");
                 
-                setProfile(profileData);
+                setProfile(profileData as ProfileData);
 
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
@@ -239,7 +244,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (originalFollowStatus) {
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: userId });
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: userId }]);
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: userId }] as any);
             }
         } catch (error: any) { 
             console.error("Failed to update follow status:", error.message);

@@ -7,6 +7,7 @@ import Logo from '../common/Logo';
 import { SearchIcon } from '../common/AppIcons';
 import CommentModal from './CommentModal';
 import QuickPostInput from './QuickPostInput';
+import type { Tables } from '../../integrations/supabase/types';
 
 interface HomePageProps {
     session: Session;
@@ -21,6 +22,7 @@ export type PostWithDetails = {
     caption: string | null;
     content_url: string | null;
     user_id: string;
+    status: Tables<'posts'>['status'];
     profiles: {
         username: string | null;
         name: string | null;
@@ -95,7 +97,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                 .order('created_at', { ascending: false });
             
             if (postsError) throw postsError;
-            if (postData) setPosts(postData as PostWithDetails[]);
+            if (postData) setPosts(postData as unknown as PostWithDetails[]);
 
         } catch (error: any) {
             setError(error.message || "Failed to fetch posts.");

@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import type { Tables } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 
-type Product = Tables<'products'>;
+type Product = Pick<Tables<'products'>, 'id' | 'name' | 'product_type' | 'price' | 'xp_amount' | 'is_active' | 'created_at'>;
 
 interface StoreManagementPageProps {
     session: Session;

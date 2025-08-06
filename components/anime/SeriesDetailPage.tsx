@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables } from '../../integrations/supabase/types';
@@ -10,8 +12,9 @@ interface SeriesDetailPageProps {
     onBack: () => void;
 }
 
-type Series = Tables<'anime_series'>;
-type Episode = Tables<'anime_episodes'>;
+type Series = Pick<Tables<'anime_series'>, 'id' | 'title' | 'description' | 'banner_url' | 'thumbnail_url'>;
+type Episode = Pick<Tables<'anime_episodes'>, 'id' | 'episode_number' | 'title' | 'video_url'>;
+
 
 const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct'; id: string } | null => {
     if (!url) return null;

@@ -4,9 +4,9 @@ import type { Session } from '@supabase/supabase-js';
 import type { Tables, Enums, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 
-type Payment = Tables<'manual_payments'> & {
+type Payment = Pick<Tables<'manual_payments'>, 'id' | 'created_at' | 'amount' | 'user_id' | 'sender_details' | 'screenshot_url'> & {
     profiles: Pick<Tables<'profiles'>, 'name' | 'username'> | null;
-    products: Tables<'products'> | null;
+    products: Pick<Tables<'products'>, 'id' | 'name' | 'product_type' | 'price' | 'xp_amount' | 'subscription_initial_xp' | 'subscription_duration_days'> | null;
 };
 
 const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: Payment; onClose: () => void; onUpdate: () => void; session: Session; }) => {
@@ -41,7 +41,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                         end_date: endDate.toISOString(),
                         is_active: true,
                     };
-                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription]);
+                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription] as any);
                     if (subError) throw new Error(`Failed to create subscription: ${subError.message}`);
                 }
                 
@@ -65,7 +65,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                     const newXp = (profile.xp_balance || 0) + xpToAdd;
                     const { error: updateXpError } = await supabase
                         .from('profiles')
-                        .update({ xp_balance: newXp })
+                        .update({ xp_balance: newXp } as any)
                         .eq('id', userId);
                     if (updateXpError) throw new Error(`Failed to update user XP: ${updateXpError.message}`);
                 }
@@ -78,7 +78,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                     reviewed_by: session.user.id,
                     admin_notes: notes || 'Approved and items awarded.',
                 };
-                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
     
                 if (updateError) {
                     // This is a critical state. User got the item, but payment is still pending. Alert admin to fix manually.
@@ -91,7 +91,7 @@ const PaymentReviewModal = ({ payment, onClose, onUpdate, session }: { payment: 
                     reviewed_by: session.user.id,
                     admin_notes: notes || 'Rejected without notes.',
                 };
-                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+                const { error: updateError } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
                 if (updateError) throw updateError;
             }
 
@@ -165,7 +165,7 @@ const PaymentQueuePage: React.FC<{ session: Session }> = ({ session }) => {
             console.error("Failed to fetch payments:", error);
             setPayments([]);
         } else {
-            setPayments(data || []);
+            setPayments((data as any) || []);
         }
         setLoading(false);
     }, []);

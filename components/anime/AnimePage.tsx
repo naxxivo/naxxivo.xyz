@@ -12,7 +12,7 @@ interface AnimePageProps {
     onCreateEpisode: () => void;
 }
 
-type AnimeSeries = Tables<'anime_series'>;
+type AnimeSeries = Pick<Tables<'anime_series'>, 'id' | 'title' | 'thumbnail_url'>;
 
 const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSeries, onCreateEpisode }) => {
     const [series, setSeries] = useState<AnimeSeries[]>([]);

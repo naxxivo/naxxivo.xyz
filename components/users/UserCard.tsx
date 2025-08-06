@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -6,7 +8,7 @@ import type { Tables } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import { motion } from 'framer-motion';
 
-type Profile = Tables<'profiles'>;
+type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'xp_balance' | 'created_at'>;
 
 interface UserCardProps {
     profile: Profile;
@@ -30,7 +32,7 @@ const UserCard: React.FC<UserCardProps> = ({ profile, session, isInitiallyFollow
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: profile.id });
                 setIsFollowing(false);
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profile.id }]);
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: profile.id }] as any);
                 setIsFollowing(true);
             }
         } catch (error: any) {

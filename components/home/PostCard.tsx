@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -71,7 +72,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
                 await supabase.from('likes').delete().match({ user_id: session.user.id, post_id: postId });
             } else {
                 const like: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
-                await supabase.from('likes').insert([like]);
+                await supabase.from('likes').insert([like] as any);
             }
         } catch (error) {
             setUserHasLiked(originalLikeStatus);

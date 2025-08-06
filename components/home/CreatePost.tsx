@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
@@ -32,7 +33,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
 
             const { error: insertError } = await supabase
                 .from('posts')
-                .insert([newPost]);
+                .insert([newPost] as any);
             
             if (insertError) throw insertError;
 

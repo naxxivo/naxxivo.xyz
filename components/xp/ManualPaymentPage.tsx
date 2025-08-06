@@ -84,7 +84,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                 status: 'pending'
             };
 
-            const { error: insertError } = await supabase.from('manual_payments').insert([paymentRecord]);
+            const { error: insertError } = await supabase.from('manual_payments').insert([paymentRecord] as any);
             if (insertError) throw insertError;
 
             alert('Your payment submission has been received! It will be reviewed shortly.');

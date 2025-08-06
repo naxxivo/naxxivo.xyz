@@ -41,7 +41,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
             if (subError) {
                 if (subError.code !== 'PGRST116') throw subError;
             }
-            setSubscription(subData);
+            setSubscription(subData as SubscriptionWithProduct | null);
             
             if(subData) {
                 const { data: claimData, error: claimError } = await supabase

@@ -5,7 +5,7 @@ import type { Tables } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { generateAvatar } from '../../utils/helpers';
 
-type Profile = Tables<'profiles'>;
+type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'status' | 'xp_balance' | 'role' | 'created_at'>;
 
 interface UserManagementPageProps {
     session: Session;

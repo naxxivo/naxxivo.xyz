@@ -24,7 +24,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
     const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const [isUploading, setIsUploading] = useState(false);
 
@@ -75,7 +75,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
     
     const handleSelectTrack = async (trackId: number) => {
         try {
-            const { error } = await supabase.from('profiles').update({ selected_music_id: trackId }).eq('id', myId);
+            const { error } = await supabase.from('profiles').update({ selected_music_id: trackId } as any).eq('id', myId);
             if (error) throw error;
             alert('Profile music updated!');
             onBack();
@@ -111,7 +111,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
                 file_name: file.name
             };
             
-            const { error: insertError } = await supabase.from('profile_music').insert([newTrack]);
+            const { error: insertError } = await supabase.from('profile_music').insert([newTrack] as any);
             if (insertError) throw insertError;
             
             await fetchTracks();

@@ -11,7 +11,7 @@ interface UsersPageProps {
     onViewProfile: (userId: string) => void;
 }
 
-type Profile = Tables<'profiles'>;
+type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'xp_balance' | 'created_at'>;
 
 const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
