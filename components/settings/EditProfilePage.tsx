@@ -94,7 +94,7 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                 ? { photo_url: publicUrl }
                 : { cover_url: publicUrl };
             
-            await supabase.from('profiles').update(updatePayload).eq('id', session.user.id);
+            await supabase.from('profiles').update(updatePayload as any).eq('id', session.user.id);
             
             if (type === 'avatar') setPhotoUrl(publicUrl);
             if (type === 'cover') setCoverUrl(publicUrl);
@@ -124,7 +124,7 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
             const profileUpdates: TablesUpdate<'profiles'> = { name, username, bio };
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update(profileUpdates)
+                .update(profileUpdates as any)
                 .eq('id', session.user.id);
 
             if (updateError) throw updateError;

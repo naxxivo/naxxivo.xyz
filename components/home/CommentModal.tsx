@@ -9,7 +9,6 @@ import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
-// The type definition is correct, the issue is with the query result shape.
 type CommentWithProfile = {
     id: number;
     content: string;
@@ -19,7 +18,7 @@ type CommentWithProfile = {
         name: string | null;
         username: string;
         photo_url: string | null;
-    } | null;
+    };
 };
 
 interface CommentModalProps {
@@ -79,7 +78,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                 user_id: session.user.id,
                 content: newComment.trim(),
             };
-            const { error } = await supabase.from('comments').insert([commentData]);
+            const { error } = await supabase.from('comments').insert([commentData] as any);
             if (error) throw error;
             
             setNewComment('');
