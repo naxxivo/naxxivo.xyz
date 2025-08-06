@@ -4,59 +4,46 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <title>NAXXIVO - Your World, Your Story</title>
-    <meta name="description" content="A social app for sharing memories, connecting with friends, and discovering new adventures." />
-    <meta name="keywords" content="NAXXIVO, social media, community, posts, images, travel, memories, connect, share" />
+    <title>NAXXIVO - Share Your World</title>
+    <meta name="description" content="NAXXIVO is an all-in-one platform with an anime-inspired aesthetic for users to share posts, images, and videos. Join the community, connect with friends, and share your moments." />
+    <meta name="keywords" content="NAXXIVO, anime, social media, community, posts, images, videos, connect, share" />
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Favicon and Apple Touch Icon -->
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="NAXXIVO - Your World, Your Story" />
+    <meta property="og:title" content="NAXXIVO - Share Your World" />
     <meta property="og:description" content="Join the community, connect with friends, and share your moments on NAXXIVO." />
-    <meta property="og:image" content="https://storage.googleapis.com/pai-images/421457c631c34a21a605809823c93e43.jpeg" />
+    <meta property="og:image" content="https://raw.githubusercontent.com/ai-sidekick/example-apps/main/naxxivo-og-image.png" />
     <meta property="og:url" content="" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="NAXXIVO - Your World, Your Story" />
+    <meta property="twitter:title" content="NAXXIVO - Share Your World" />
     <meta property="twitter:description" content="Join the community, connect with friends, and share your moments on NAXXIVO." />
-    <meta property="twitter:image" content="https://storage.googleapis.com/pai-images/421457c631c34a21a605809823c93e43.jpeg" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        .font-logo {
-            font-family: 'Pacifico', cursive;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-           display: none;
-        }
-        .hide-scrollbar {
-           -ms-overflow-style: none;  /* IE and Edge */
-           scrollbar-width: none;  /* Firefox */
-        }
-    </style>
-<link rel="stylesheet" href="/index.css">
+    <meta property="twitter:image" content="https://raw.githubusercontent.com/ai-sidekick/example-apps/main/naxxivo-og-image.png" />
 <script type="importmap">
 {
   "imports": {
-    "path": "https://esm.sh/path@^0.12.7",
-    "vite": "https://esm.sh/vite@^7.0.6",
+    "react": "https://esm.sh/react@^19.1.1",
     "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
     "react/": "https://esm.sh/react@^19.1.1/",
-    "react": "https://esm.sh/react@^19.1.1",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.53.0",
-    "framer-motion": "https://esm.sh/framer-motion@^12.23.12"
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.12",
+    "path": "https://esm.sh/path@^0.12.7",
+    "vite": "https://esm.sh/vite@^7.0.6",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^4.7.0"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
-<body class="antialiased bg-gray-100 text-gray-800">
+<body class="antialiased bg-[#100F1F] text-gray-200">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
