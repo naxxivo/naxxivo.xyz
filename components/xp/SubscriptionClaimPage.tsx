@@ -13,7 +13,11 @@ interface SubscriptionClaimPageProps {
 }
 
 type SubscriptionWithProduct = Tables<'user_subscriptions'> & {
-    products: Pick<Tables<'products'>, 'name' | 'subscription_duration_days' | 'subscription_daily_xp'> | null
+    products: {
+        name: string;
+        subscription_duration_days: number | null;
+        subscription_daily_xp: number | null;
+    } | null;
 };
 type Claim = Tables<'daily_claims'>;
 

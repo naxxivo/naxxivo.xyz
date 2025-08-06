@@ -12,8 +12,19 @@ interface SeriesDetailPageProps {
     onBack: () => void;
 }
 
-type Series = Pick<Tables<'anime_series'>, 'id' | 'title' | 'description' | 'banner_url' | 'thumbnail_url'>;
-type Episode = Pick<Tables<'anime_episodes'>, 'id' | 'episode_number' | 'title' | 'video_url'>;
+type Series = {
+    id: number;
+    title: string;
+    description: string | null;
+    banner_url: string | null;
+    thumbnail_url: string | null;
+};
+type Episode = {
+    id: number;
+    episode_number: number;
+    title: string | null;
+    video_url: string;
+};
 
 
 const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct'; id: string } | null => {
@@ -63,7 +74,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
                     .single();
 
                 if (seriesError) throw seriesError;
-                setSeries(seriesData);
+                setSeries(seriesData as Series | null);
 
                 const { data: episodesData, error: episodesError } = await supabase
                     .from('anime_episodes')
@@ -72,7 +83,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
                     .order('episode_number', { ascending: true });
 
                 if (episodesError) throw episodesError;
-                setEpisodes(episodesData || []);
+                setEpisodes((episodesData as Episode[]) || []);
 
             } catch (err: any) {
                 setError(err.message || "Failed to load series details.");

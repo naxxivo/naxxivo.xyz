@@ -7,9 +7,17 @@ import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
-// Use a specific Pick type to improve performance and type safety
-type CommentWithProfile = Pick<Tables<'comments'>, 'id' | 'content' | 'user_id' | 'created_at'> & {
-    profiles: Pick<Tables<'profiles'>, 'name' | 'username' | 'photo_url'> | null;
+// Explicit interface to avoid TypeScript compiler issues with complex nested Picks
+type CommentWithProfile = {
+    id: number;
+    content: string;
+    user_id: string;
+    created_at: string;
+    profiles: {
+        name: string | null;
+        username: string;
+        photo_url: string | null;
+    } | null;
 };
 
 interface CommentModalProps {

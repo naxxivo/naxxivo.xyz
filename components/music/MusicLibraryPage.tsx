@@ -105,13 +105,13 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
 
             const { data: { publicUrl } } = supabase.storage.from('music').getPublicUrl(fileName);
 
-            const newTrack: TablesInsert<'profile_music'> = {
+            const newTrack = {
                 profile_id: myId,
                 music_url: publicUrl,
                 file_name: file.name
             };
             
-            const { error: insertError } = await supabase.from('profile_music').insert([newTrack] as any);
+            const { error: insertError } = await supabase.from('profile_music').insert([newTrack]);
             if (insertError) throw insertError;
             
             await fetchTracks();

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
-import type { Tables, TablesInsert } from '../integrations/supabase/types';
+import type { Tables, TablesInsert, Enums } from '../integrations/supabase/types';
 import { generateAvatar, formatXp } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
@@ -23,14 +23,28 @@ interface ProfileProps {
     onViewProfile: (userId: string) => void;
 }
 
-type ProfileData = Pick<Tables<'profiles'>, 'id' | 'cover_url' | 'xp_balance' | 'role' | 'photo_url' | 'name' | 'username' | 'bio'> & {
+type ProfileData = {
+    id: string;
+    cover_url: string | null;
+    xp_balance: number;
+    role: Enums<'user_role'>;
+    photo_url: string | null;
+    name: string | null;
+    username: string;
+    bio: string | null;
+} & {
     profile_music: { music_url: string }[] | null;
 };
 interface PostData {
     id: number;
     content_url: string | null;
 }
-type ProfileStub = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'>;
+type ProfileStub = {
+    id: string;
+    name: string | null;
+    username: string;
+    photo_url: string | null;
+};
 
 const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, onNavigateToSettings, onNavigateToTools, onNavigateToAdminPanel, onViewProfile }) => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -272,7 +286,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: profiles || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }

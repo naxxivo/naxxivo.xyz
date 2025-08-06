@@ -12,8 +12,16 @@ interface TopUpPageProps {
     onManageSubscriptions: () => void;
 }
 
-// Use a specific Pick type for products to improve performance and type safety
-type Product = Pick<Tables<'products'>, 'id' | 'product_type' | 'price' | 'icon' | 'name' | 'description' | 'xp_amount'>;
+// Use a specific type for products to improve performance and type safety
+type Product = {
+    id: number;
+    product_type: "package" | "subscription";
+    price: number;
+    icon: string | null;
+    name: string;
+    description: string | null;
+    xp_amount: number | null;
+};
 
 const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubscriptions }) => {
     const [products, setProducts] = useState<Product[]>([]);
