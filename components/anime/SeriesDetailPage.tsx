@@ -1,187 +1,162 @@
-
-
 import React, { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables } from '../../integrations/supabase/types';
+import Button from '../common/Button';
+import CreateEpisodeModal from './CreateEpisodeModal';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { BackArrowIcon, PlayIcon } from '../common/AppIcons';
-import { motion } from 'framer-motion';
 
 interface SeriesDetailPageProps {
+    session: Session;
     seriesId: number;
     onBack: () => void;
 }
 
-type Series = {
-    id: number;
-    title: string;
-    description: string | null;
-    banner_url: string | null;
-    thumbnail_url: string | null;
-};
-type Episode = {
-    id: number;
-    episode_number: number;
-    title: string | null;
-    video_url: string;
-};
+type Series = Tables<'anime_series'>;
+type Episode = Tables<'anime_episodes'>;
 
-
-const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct'; id: string } | null => {
-    if (!url) return null;
-
-    let match;
-
-    // YouTube: covers watch, shorts, youtu.be, and embed links
-    match = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if (match && match[1]) return { platform: 'youtube', id: match[1] };
-    
-    // Vimeo: covers vimeo.com/ID and vimeo.com/video/ID
-    match = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(?:video\/)?([0-9]+)/);
-    if (match && match[1]) return { platform: 'vimeo', id: match[1] };
-
-    // Direct video file link
-    try {
-        const path = new URL(url).pathname.toLowerCase();
-        if (['.mp4', '.webm', '.ogg', '.mov'].some(ext => path.endsWith(ext))) {
-            return { platform: 'direct', id: url };
-        }
-    } catch (e) {
-        // Not a valid URL
-    }
-
-    return null;
-};
-
-
-const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack }) => {
+const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ session, seriesId, onBack }) => {
     const [series, setSeries] = useState<Series | null>(null);
     const [episodes, setEpisodes] = useState<Episode[]>([]);
-    const [selectedEpisodeUrl, setSelectedEpisodeUrl] = useState<string | null>(null);
+    const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
+    const fetchDetails = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { data: seriesData, error: seriesError } = await supabase
+                .from('anime_series')
+                .select('id, created_at, title, thumbnail_url, description, banner_url, user_id')
+                .eq('id', seriesId)
+                .single();
+            if (seriesError) throw seriesError;
+            if (seriesData) {
+                setSeries(seriesData as unknown as Series);
+            } else {
+                throw new Error("Series not found.");
+            }
+            
+            const { data: episodesData, error: episodesError } = await supabase
+                .from('anime_episodes')
+                .select('id, created_at, episode_number, title, video_url, series_id')
+                .eq('series_id', seriesId)
+                .order('episode_number', { ascending: true });
+            if (episodesError) throw episodesError;
+
+            if (episodesData) {
+                const typedEpisodes = episodesData as unknown as Episode[];
+                setEpisodes(typedEpisodes);
+                if (typedEpisodes.length > 0) {
+                    setCurrentEpisode(typedEpisodes[0]);
+                }
+            }
+
+        } catch (err: any) {
+            setError(err.message || 'Failed to load series details.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (!seriesId) return;
-        const fetchDetails = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const { data: seriesData, error: seriesError } = await supabase
-                    .from('anime_series')
-                    .select('id, title, description, banner_url, thumbnail_url')
-                    .eq('id', seriesId)
-                    .single();
-
-                if (seriesError) throw seriesError;
-                setSeries(seriesData as Series | null);
-
-                const { data: episodesData, error: episodesError } = await supabase
-                    .from('anime_episodes')
-                    .select('id, episode_number, title, video_url')
-                    .eq('series_id', seriesId)
-                    .order('episode_number', { ascending: true });
-
-                if (episodesError) throw episodesError;
-                setEpisodes((episodesData as Episode[]) || []);
-
-            } catch (err: any) {
-                setError(err.message || "Failed to load series details.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchDetails();
     }, [seriesId]);
     
-    const videoDetails = selectedEpisodeUrl ? getVideoDetails(selectedEpisodeUrl) : null;
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner /></div>;
+    }
 
-
-    if (loading) return <div className="flex justify-center pt-20"><LoadingSpinner /></div>;
-    if (error) return <div className="text-center pt-20 text-red-500">{error}</div>;
-    if (!series) return <div className="text-center pt-20 text-gray-500">Series not found.</div>;
+    if (error || !series) {
+        return <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center"><p className="text-red-400">{error || "Series not found."}</p><Button onClick={onBack} className="mt-4 w-auto px-6">Back</Button></div>;
+    }
+    
+    const canManage = series.user_id === session.user.id;
+    const bannerUrl = series.banner_url || "https://via.placeholder.com/800x200/1C1B33/3B82F6?text=No+Banner";
 
     return (
-        <div className="min-h-screen bg-white">
-            <div className="relative">
-                {selectedEpisodeUrl ? (
-                    <div className="w-full aspect-video bg-black flex items-center justify-center">
-                       {videoDetails?.platform === 'youtube' ? (
-                            <iframe
-                                className="w-full h-full"
-                                src={`https://www.youtube.com/embed/${videoDetails.id}?autoplay=1`}
-                                title="YouTube video player"
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowFullScreen
-                            ></iframe>
-                        ) : videoDetails?.platform === 'vimeo' ? (
-                            <iframe
-                                className="w-full h-full"
-                                src={`https://player.vimeo.com/video/${videoDetails.id}?autoplay=1`}
-                                title="Vimeo video player"
-                                frameBorder="0"
-                                allow="autoplay; fullscreen; picture-in-picture"
-                                allowFullScreen
-                            ></iframe>
-                        ) : videoDetails?.platform === 'direct' ? (
-                             <video
-                                key={selectedEpisodeUrl}
-                                src={videoDetails.id}
-                                controls
-                                autoPlay
-                                playsInline
-                                className="w-full h-full"
-                            />
-                        ) : (
-                             <div className="text-white text-center p-4">
-                                <p className="font-semibold">Unsupported or Invalid Video URL</p>
-                                <p className="text-sm text-gray-400 break-all mt-2">{selectedEpisodeUrl}</p>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="w-full aspect-video bg-gray-300 relative">
-                        {series.banner_url && <img src={series.banner_url} alt={`${series.title} banner`} className="w-full h-full object-cover" />}
-                        <div className="absolute inset-0 bg-black/30"></div>
-                    </div>
-                )}
-                 <button onClick={onBack} className="absolute top-3 left-3 bg-black/30 text-white rounded-full p-2 hover:bg-black/50 transition-colors z-10">
-                    <BackArrowIcon />
-                 </button>
-            </div>
-            
-            <div className="p-4">
-                <h1 className="text-2xl font-bold text-gray-800">{series.title}</h1>
-                {series.description && <p className="text-gray-600 mt-2 text-sm">{series.description}</p>}
-            </div>
+        <div className="min-h-screen bg-[#100F1F]">
+             <header className="flex items-center p-3 bg-[#1C1B33] shadow-md sticky top-0 z-10 w-full">
+                <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <h2 className="text-lg font-bold text-white truncate">{series.title}</h2>
+            </header>
 
-            <div className="p-4 pt-2">
-                <h2 className="text-lg font-semibold mb-3">Episodes</h2>
-                <div className="space-y-2">
-                    {episodes.length > 0 ? episodes.map(ep => (
-                        <motion.button
-                            key={ep.id}
-                            onClick={() => setSelectedEpisodeUrl(ep.video_url)}
-                            className="w-full flex items-center p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                            whileTap={{ scale: 0.98 }}
-                        >
-                            <div className="w-10 h-10 bg-violet-200 text-violet-600 rounded-md flex items-center justify-center font-bold text-lg flex-shrink-0">
-                                {ep.episode_number}
-                            </div>
-                            <div className="ml-4 text-left flex-grow overflow-hidden">
-                                <p className="font-medium truncate">{ep.title || `Episode ${ep.episode_number}`}</p>
-                            </div>
-                            <div className="ml-2 text-violet-500">
-                                <PlayIcon className="w-5 h-5" />
-                            </div>
-                        </motion.button>
-                    )) : (
-                        <p className="text-gray-500">No episodes have been added yet.</p>
+            <main className="w-full max-w-4xl mx-auto p-4 space-y-6">
+                {/* Video Player */}
+                <div className="aspect-w-16 aspect-h-9 w-full bg-black rounded-lg overflow-hidden shadow-2xl">
+                    {currentEpisode?.video_url ? (
+                        <iframe
+                            src={currentEpisode.video_url.replace("watch?v=", "embed/")} // Basic YouTube embed conversion
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title={currentEpisode.title || `Episode ${currentEpisode.episode_number}`}
+                            className="w-full h-full"
+                        ></iframe>
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500">
+                           <p>Select an episode to begin watching.</p>
+                        </div>
                     )}
                 </div>
-            </div>
+                
+                {/* Series Info */}
+                 <div className="bg-[#1C1B33] rounded-2xl p-6 shadow-lg">
+                    <div className="flex flex-col md:flex-row gap-6">
+                        <div className="flex-shrink-0 w-32 h-48 bg-gray-800 rounded-lg overflow-hidden">
+                             <img src={series.thumbnail_url || `https://api.dicebear.com/8.x/icons/svg?seed=${series.title}`} alt={series.title} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-grow">
+                             <h1 className="text-3xl font-bold text-white">{series.title}</h1>
+                             {currentEpisode && (
+                                <h2 className="text-xl font-semibold text-blue-400 mt-1">
+                                    Now Playing: Ep {currentEpisode.episode_number} - {currentEpisode.title}
+                                </h2>
+                            )}
+                             <p className="mt-4 text-gray-300">{series.description}</p>
+                        </div>
+                    </div>
+                </div>
+
+
+                {/* Episode List */}
+                <div className="bg-[#1C1B33] rounded-2xl p-6 shadow-lg">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-white">Episodes</h2>
+                        {canManage && <div className="w-40"><Button onClick={() => setCreateModalOpen(true)}>Add Episode</Button></div>}
+                    </div>
+                    
+                    <ul className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                        {episodes.map(ep => (
+                            <li key={ep.id}>
+                                <button 
+                                    onClick={() => setCurrentEpisode(ep)}
+                                    className={`w-full text-left p-3 rounded-lg transition-colors ${currentEpisode?.id === ep.id ? 'bg-blue-500 text-white' : 'bg-[#100F1F] hover:bg-[#2a2942]'}`}
+                                >
+                                    <span className="font-bold">Ep {ep.episode_number}:</span> {ep.title}
+                                </button>
+                            </li>
+                        ))}
+                         {episodes.length === 0 && (
+                            <p className="text-gray-400 text-center py-4">No episodes have been added yet.</p>
+                        )}
+                    </ul>
+                </div>
+            </main>
+            
+            <CreateEpisodeModal 
+                isOpen={isCreateModalOpen}
+                onClose={() => setCreateModalOpen(false)}
+                seriesId={seriesId}
+                onEpisodeCreated={() => {
+                    setCreateModalOpen(false);
+                    fetchDetails();
+                }}
+            />
         </div>
     );
 };
