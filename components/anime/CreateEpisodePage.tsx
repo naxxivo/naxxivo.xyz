@@ -50,7 +50,7 @@ const CreateEpisodePage: React.FC<CreateEpisodePageProps> = ({ onBack, onEpisode
                 video_url: videoUrl,
             };
 
-            const { error: insertError } = await supabase.from('anime_episodes').insert([newEpisode] as any);
+            const { error: insertError } = await supabase.from('anime_episodes').insert(newEpisode as any);
             if (insertError) throw insertError;
             
             onEpisodeCreated();

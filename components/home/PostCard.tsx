@@ -76,7 +76,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
                 await supabase.from('likes').delete().match({ user_id: session.user.id, post_id: postId });
             } else {
                 const newLike: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
-                await supabase.from('likes').insert([newLike] as any);
+                await supabase.from('likes').insert(newLike as any);
             }
         } catch (error: any) {
             console.error("Failed to update like status:", error.message);
@@ -99,7 +99,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: user_id });
             } else {
                 const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: user_id };
-                await supabase.from('follows').insert([newFollow] as any);
+                await supabase.from('follows').insert(newFollow as any);
             }
         } catch (error: any) {
             console.error("Failed to update follow status:", error.message);

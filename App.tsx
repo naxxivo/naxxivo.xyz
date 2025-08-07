@@ -25,12 +25,12 @@ const App: React.FC = () => {
         document.documentElement.classList.remove('dark');
         
         // Setup auth listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: Session | null) => {
             setSession(session);
         });
 
         // Initial session fetch
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null }}) => {
             setSession(session);
             setLoading(false); // Initial loading is done after first session check
         });
@@ -55,7 +55,7 @@ const App: React.FC = () => {
                 if (profile && !profile.has_seen_welcome_bonus) {
                     setShowWelcomeBonus(true);
                     const updatePayload: TablesUpdate<'profiles'> = { has_seen_welcome_bonus: true };
-                    await supabase.from('profiles').update(updatePayload as any).eq('id', session.user.id);
+                    await supabase.from('profiles').update(updatePayload).eq('id', session.user.id);
                 }
             };
             getProfileAndSetupListener();

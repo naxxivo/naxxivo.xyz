@@ -28,9 +28,11 @@ const UserRow: React.FC<{ user: Profile, rank: number, onViewProfile: (userId: s
         <motion.button
             onClick={() => onViewProfile(user.id)}
             className={`w-full flex items-center p-3 rounded-xl hover:bg-opacity-80 transition-all text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] shadow-sm ${cardBgClass}`}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            {...{
+                initial: { opacity: 0, x: -20 },
+                animate: { opacity: 1, x: 0 },
+                transition: { type: 'spring', stiffness: 300, damping: 25 },
+            } as any}
         >
             <div className="font-bold text-lg w-10 text-center text-[var(--theme-text-secondary)] flex items-center justify-center">
                  {isTopThree ? rankIcon : <span className="text-xl">{rank}</span>}

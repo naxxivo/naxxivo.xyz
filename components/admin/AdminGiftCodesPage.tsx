@@ -34,7 +34,7 @@ const AdminGiftCodesPage: React.FC<{ session: Session }> = ({ session }) => {
                 created_by: session.user.id,
                 uses_remaining: codeData.max_uses, // Initialize remaining uses
             };
-            const { error } = await supabase.from('gift_codes').insert([payload] as any);
+            const { error } = await supabase.from('gift_codes').insert(payload as any);
             if (error) throw error;
             setIsModalOpen(false);
             await fetchCodes();

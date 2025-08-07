@@ -7,7 +7,11 @@ import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 
-type CommentWithProfile = Tables<'comments'> & {
+interface CommentWithProfile {
+    id: number;
+    content: string;
+    user_id: string;
+    created_at: string;
     profiles: {
         name: string | null;
         username: string;
@@ -48,7 +52,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments((data as any) || []);
+            setComments((data as any[]) || []);
         }
         setLoading(false);
     }, [postId]);
@@ -72,7 +76,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                 user_id: session.user.id,
                 content: newComment.trim(),
             };
-            const { error } = await supabase.from('comments').insert([commentData] as any);
+            const { error } = await supabase.from('comments').insert(commentData as any);
             if (error) throw error;
             
             setNewComment('');

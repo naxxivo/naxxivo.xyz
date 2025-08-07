@@ -105,7 +105,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
             
             const { data: postData, error: postsError } = postsPromise;
             if (postsError) throw postsError;
-            setPosts((postData as any) || []);
+            setPosts((postData as any[]) || []);
 
             const { data: followsData, error: followsError } = followsPromise;
             if (followsError) throw followsError;

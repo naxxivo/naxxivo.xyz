@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 import type { Enums, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
 import type { PaymentWithDetails } from './PaymentQueuePage';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -41,7 +41,7 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                         end_date: endDate.toISOString(),
                         is_active: true,
                     };
-                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription] as any);
+                    const { error: subError } = await supabase.from('user_subscriptions').insert(newSubscription);
                     if (subError) throw new Error(`Failed to create subscription: ${subError.message}`);
                 }
                 
@@ -59,7 +59,7 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                 
                 const finalNotes = notes || `Approved and awarded: ${product.name}`;
                 const updatePayload: TablesUpdate<'manual_payments'> = { status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: finalNotes };
-                const { error } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
+                const { error } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
                 if (error) {
                     // This is a critical state. User got the item, but payment is still pending. Alert admin to fix manually.
                     throw new Error(`CRITICAL: User ${userId} was awarded product ${product.id}, but failed to update payment status. Please manually set payment ${payment.id} to 'approved'.`);
@@ -67,7 +67,7 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
 
             } else { // Logic for 'rejected'
                 const updatePayload: TablesUpdate<'manual_payments'> = { status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: notes || 'Rejected without notes.'};
-                const { error } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
+                const { error } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
                 if (error) throw error;
             }
 

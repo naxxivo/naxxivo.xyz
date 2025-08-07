@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
 import type { Tables, Enums } from '../../integrations/supabase/types';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 
 
 interface CollectionPageProps {

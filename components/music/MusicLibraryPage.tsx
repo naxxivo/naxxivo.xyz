@@ -94,7 +94,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
     const handleSelectTrack = async (trackId: number) => {
         try {
             const update: TablesUpdate<'profiles'> = { selected_music_id: trackId };
-            const { error } = await supabase.from('profiles').update(update as any).eq('id', myId);
+            const { error } = await supabase.from('profiles').update(update).eq('id', myId);
             if (error) throw error;
             alert('Profile music updated!');
             onBack();
@@ -115,7 +115,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
             if (uploadError) throw uploadError;
             const { data: { publicUrl } } = supabase.storage.from('music').getPublicUrl(fileName);
             const newTrack: TablesInsert<'profile_music'> = { profile_id: myId, music_url: publicUrl, file_name: file.name };
-            const { error: insertError } = await supabase.from('profile_music').insert([newTrack] as any);
+            const { error: insertError } = await supabase.from('profile_music').insert(newTrack);
             if (insertError) throw insertError;
             await fetchData();
         } catch (err: any) {
@@ -159,7 +159,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
 
             const { data: { publicUrl } } = supabase.storage.from('gifs').getPublicUrl(filePath);
             const newGif: TablesInsert<'profile_gifs'> = { user_id: myId, gif_url: publicUrl, storage_path: filePath };
-            const { error: insertError } = await supabase.from('profile_gifs').insert([newGif] as any);
+            const { error: insertError } = await supabase.from('profile_gifs').insert(newGif);
             if (insertError) throw insertError;
 
             await fetchData();
@@ -173,7 +173,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
     
     const handleSetActiveGif = async (gifId: number) => {
         const update: TablesUpdate<'profiles'> = { active_gif_id: gifId };
-        const { error } = await supabase.from('profiles').update(update as any).eq('id', myId);
+        const { error } = await supabase.from('profiles').update(update).eq('id', myId);
         if (error) {
             alert(`Error: ${error.message}`);
         } else {

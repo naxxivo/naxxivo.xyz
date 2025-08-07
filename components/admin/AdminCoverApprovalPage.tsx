@@ -19,13 +19,13 @@ const AdminCoverApprovalPage: React.FC<{ session: Session }> = ({ session }) => 
         try {
             const { data, error } = await supabase
                 .from('store_items')
-                .select('*, profiles(name, username, photo_url)')
+                .select('*, profiles:created_by_user_id(name, username, photo_url)')
                 .eq('is_approved', false)
                 .eq('category', 'PROFILE_COVER')
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
-            setCovers((data as any) || []);
+            setCovers((data as any[]) || []);
         } catch (error: any) {
             alert(`Failed to fetch covers: ${error.message}`);
         } finally {
@@ -43,7 +43,7 @@ const AdminCoverApprovalPage: React.FC<{ session: Session }> = ({ session }) => 
             if (shouldApprove) {
                 const { error } = await supabase
                     .from('store_items')
-                    .update({ is_approved: true, is_active: true } as any)
+                    .update({ is_approved: true, is_active: true })
                     .eq('id', itemId);
                 if (error) throw error;
             } else {

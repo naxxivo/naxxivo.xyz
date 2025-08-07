@@ -47,17 +47,21 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSucces
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    {...{
+                        initial: { opacity: 0 },
+                        animate: { opacity: 1 },
+                        exit: { opacity: 0 },
+                    } as any}
                     className="fixed inset-0 bg-black bg-opacity-60 z-[70] flex justify-center items-center p-4"
                     onClick={onClose}
                 >
                     <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.9, opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                        {...{
+                            initial: { scale: 0.9, opacity: 0 },
+                            animate: { scale: 1, opacity: 1 },
+                            exit: { scale: 0.9, opacity: 0 },
+                            transition: { type: 'spring', stiffness: 300, damping: 25 },
+                        } as any}
                         className="bg-[var(--theme-card-bg)] w-full max-w-sm rounded-2xl shadow-xl p-6 relative flex flex-col"
                         onClick={e => e.stopPropagation()}
                     >

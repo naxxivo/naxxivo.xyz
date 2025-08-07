@@ -66,7 +66,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [refreshAnimeKey, setRefreshAnimeKey] = useState(0);
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await (supabase.auth as any).signOut();
     };
 
     const handlePostCreated = () => {

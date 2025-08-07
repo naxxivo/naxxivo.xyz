@@ -47,9 +47,19 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
         try {
             const payload = { ...itemData, price: Number(itemData.price) || 0 };
             
-            const { error } = await supabase.from('store_items').upsert(payload as any).select();
-            
-            if (error) throw error;
+            if (editingItem) { // If we are editing, update the existing item
+                const { error } = await supabase
+                    .from('store_items')
+                    .update(payload)
+                    .eq('id', editingItem.id);
+                if (error) throw error;
+            } else { // Otherwise, insert a new item
+                const { id, ...insertPayload } = payload; // Remove id from payload for insert
+                const { error } = await supabase
+                    .from('store_items')
+                    .insert(insertPayload);
+                if (error) throw error;
+            }
             
             setIsModalOpen(false);
             await fetchItems();
@@ -63,7 +73,7 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
     return (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold dark:text-gray-200">Store Items</h2>
+                <h2 className="text-xl font-bold dark:text-gray-200">Bazaar Items</h2>
                 <button 
                     onClick={handleCreateNew}
                     className="bg-violet-500 hover:bg-violet-600 text-white px-4 py-2 rounded-md transition-colors"

@@ -36,7 +36,7 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
             if (error) {
                 console.error("Failed to fetch products:", error);
             } else {
-                setProducts((data as any) || []);
+                setProducts((data as any[]) || []);
             }
             setLoading(false);
         };
@@ -48,7 +48,7 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
         setIsRedeeming(true);
         setRedeemMessage(null);
         try {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            const { data: { user }, error: userError } = await (supabase.auth as any).getUser();
             if(userError || !user) throw new Error("You must be logged in to redeem a code.");
 
             const { data: rpcData, error } = await supabase.rpc('redeem_gift_code', {

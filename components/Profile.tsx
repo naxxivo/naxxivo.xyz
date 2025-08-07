@@ -167,7 +167,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
 
                 if(postError) throw postError;
                 if (postData) {
-                    setPosts(postData as any);
+                    setPosts(postData as any[]);
                 } else {
                     setPosts([]);
                 }
@@ -217,7 +217,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: userId });
             } else {
                 const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: userId };
-                await supabase.from('follows').insert([newFollow] as any);
+                await supabase.from('follows').insert(newFollow as any);
             }
         } catch (error: any) { 
             console.error("Failed to update follow status:", error.message);
@@ -245,7 +245,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: (profiles as any) || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }
@@ -280,7 +280,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
 
     return (
         <div className="bg-[var(--theme-bg)] min-h-screen">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+            <motion.div {...{ initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.5 } } as any}>
                 {/* --- HEADER --- */}
                 <div className="relative h-48">
                      <div className="absolute inset-0">

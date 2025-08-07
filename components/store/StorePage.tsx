@@ -6,7 +6,7 @@ import Button from '../common/Button';
 import { formatXp } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
 import type { Tables, Enums, Json } from '../../integrations/supabase/types';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 
 interface StorePageProps {
     onBack: () => void;
@@ -28,13 +28,10 @@ const ItemCard = ({ item, onPurchase, onPreview, isOwned, canAfford }: { item: S
 
     return (
         <motion.div
-            {...{
-                layout: true,
-                initial: { opacity: 0, scale: 0.8 },
-                animate: { opacity: 1, scale: 1 },
-                exit: { opacity: 0, scale: 0.8 },
-                transition: { type: 'spring', stiffness: 300, damping: 25 },
-            } as any}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="bg-[var(--theme-card-bg)] rounded-xl shadow-sm overflow-hidden flex flex-col"
         >
             <div className="w-full h-32 bg-[var(--theme-bg)] flex items-center justify-center p-2">
@@ -71,13 +68,13 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
         setLoading(true);
         try {
             const [itemsRes, inventoryRes, profileRes] = await Promise.all([
-                supabase.from('store_items').select('*, profiles(username)').eq('is_active', true).eq('is_approved', true),
+                supabase.from('store_items').select('*, profiles:created_by_user_id(username)').eq('is_active', true).eq('is_approved', true),
                 supabase.from('user_inventory').select('item_id').eq('user_id', session.user.id),
                 supabase.from('profiles').select('xp_balance').eq('id', session.user.id).single()
             ]);
 
             if (itemsRes.error) throw itemsRes.error;
-            setItems((itemsRes.data as any) || []);
+            setItems((itemsRes.data as any[]) || []);
 
             if (inventoryRes.error) throw inventoryRes.error;
             setOwnedItemIds(new Set(inventoryRes.data.map(i => i.item_id)));
@@ -143,10 +140,8 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
                         >
                             {activeTab === tab && (
                                 <motion.div
-                                    {...{
-                                        layoutId: "store-tab-active",
-                                        transition: { type: 'spring', stiffness: 300, damping: 30 },
-                                    } as any}
+                                    layoutId="store-tab-active"
+                                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                     className="absolute inset-0 bg-[var(--theme-card-bg)] rounded-full shadow"
                                 />
                             )}
@@ -162,11 +157,14 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
                  {loading ? (
                      <div className="flex justify-center pt-20"><LoadingSpinner /></div>
                  ) : (
-                    <motion.div {...{layout:true} as any} className="grid grid-cols-2 gap-4">
+                    <motion.div layout className="grid grid-cols-2 gap-4">
                         <AnimatePresence>
                             {activeTab === 'Profile Covers' && (
                                 <motion.button
-                                    layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
                                     onClick={onNavigateToUploadCover}
                                     className="bg-[var(--theme-card-bg)] rounded-xl shadow-sm flex flex-col items-center justify-center p-4 text-center border-2 border-dashed border-[var(--theme-secondary)]/50 hover:border-[var(--theme-primary)] transition-colors"
                                 >
@@ -193,20 +191,16 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
             <AnimatePresence>
                 {previewItem && (
                     <motion.div
-                        {...{
-                            initial: { opacity: 0 },
-                            animate: { opacity: 1 },
-                            exit: { opacity: 0 },
-                        } as any}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
                         onClick={() => setPreviewItem(null)}
                     >
                         <motion.div
-                             {...{
-                                initial: { scale: 0.9 },
-                                animate: { scale: 1 },
-                                exit: { scale: 0.9 },
-                            } as any}
+                             initial={{ scale: 0.9 }}
+                             animate={{ scale: 1 }}
+                             exit={{ scale: 0.9 }}
                              className="bg-[var(--theme-card-bg)] rounded-xl p-4 w-full max-w-sm text-center"
                              onClick={e => e.stopPropagation()}
                         >

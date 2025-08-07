@@ -31,7 +31,7 @@ const UserCard: React.FC<UserCardProps> = ({ profile, session, isInitiallyFollow
                 setIsFollowing(false);
             } else {
                 const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: profile.id };
-                await supabase.from('follows').insert([newFollow] as any);
+                await supabase.from('follows').insert(newFollow as any);
                 setIsFollowing(true);
             }
         } catch (error: any) {
