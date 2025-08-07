@@ -8,9 +8,10 @@ import ProductsManagementPage from './StoreManagementPage'; // Manages products 
 import AppSettingsPage from './AppSettingsPage';
 import AdminTasksPage from './AdminTasksPage';
 import AdminGiftCodesPage from './AdminGiftCodesPage';
+import AdminCoverApprovalPage from './AdminCoverApprovalPage';
 import { 
     ToolsIcon, ProfileIcon, CreditCardIcon, StoreIcon, SettingsIcon, 
-    LogoutIcon, ClipboardListIcon, GiftIcon, PaintBrushIcon 
+    LogoutIcon, ClipboardListIcon, GiftIcon, PaintBrushIcon, CheckCircleIcon 
 } from '../common/AppIcons';
 
 interface AdminPanelProps {
@@ -18,17 +19,16 @@ interface AdminPanelProps {
     onExitAdminView: () => void;
 }
 
-// Renamed 'store' to 'products' and added 'store_items' for clarity
-type AdminView = 'dashboard' | 'users' | 'payments' | 'products' | 'store_items' | 'settings' | 'tasks' | 'gift_codes';
+type AdminView = 'dashboard' | 'users' | 'payments' | 'products' | 'store_items' | 'settings' | 'tasks' | 'gift_codes' | 'cover_approvals';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => {
     const [view, setView] = useState<AdminView>('dashboard');
 
-    // Updated nav items for better clarity and added icons
     const navItems: { id: AdminView; label: string; icon: JSX.Element }[] = [
         { id: 'dashboard', label: 'Dashboard', icon: <ToolsIcon className="w-5 h-5"/> },
         { id: 'users', label: 'Users', icon: <ProfileIcon className="w-5 h-5"/> },
         { id: 'payments', label: 'Payments', icon: <CreditCardIcon className="w-5 h-5"/> },
+        { id: 'cover_approvals', label: 'Cover Approvals', icon: <CheckCircleIcon className="w-5 h-5"/> },
         { id: 'products', label: 'Top-Up Products', icon: <PaintBrushIcon className="w-5 h-5"/> },
         { id: 'store_items', label: 'Bazaar Items', icon: <StoreIcon className="w-5 h-5"/> },
         { id: 'tasks', label: 'Tasks', icon: <ClipboardListIcon className="w-5 h-5"/> },
@@ -46,6 +46,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
         case 'tasks': content = <AdminTasksPage />; break;
         case 'gift_codes': content = <AdminGiftCodesPage session={session} />; break;
         case 'settings': content = <AppSettingsPage />; break;
+        case 'cover_approvals': content = <AdminCoverApprovalPage session={session} />; break;
         default: content = <AdminDashboard />;
     }
 

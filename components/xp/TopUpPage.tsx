@@ -36,7 +36,7 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
             if (error) {
                 console.error("Failed to fetch products:", error);
             } else {
-                setProducts((data as Product[]) || []);
+                setProducts((data as any) || []);
             }
             setLoading(false);
         };

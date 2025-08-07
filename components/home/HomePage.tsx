@@ -105,7 +105,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
             
             const { data: postData, error: postsError } = postsPromise;
             if (postsError) throw postsError;
-            if (postData) setPosts(postData as PostWithDetails[]);
+            setPosts((postData as any) || []);
 
             const { data: followsData, error: followsError } = followsPromise;
             if (followsError) throw followsError;
@@ -130,7 +130,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
             currentPosts.map(p => {
                 if (p.id === postId) {
                     const newCommentCount = (p.comments[0]?.count ?? 0) + 1;
-                    return { ...p, comments: [{ count: newCommentCount }] } as PostWithDetails;
+                    return { ...p, comments: [{ count: newCommentCount }] };
                 }
                 return p;
             })

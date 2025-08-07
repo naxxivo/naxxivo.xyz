@@ -27,13 +27,14 @@ import CollectionPage from './store/CollectionPage';
 import InfoPage from './info/InfoPage';
 import EarnXpPage from './xp/EarnXpPage';
 import PasswordModal from './common/PasswordModal';
+import UploadCoverPage from './store/UploadCoverPage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export type AuthView =
     'home' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
     'top-up' | 'subscriptions' | 'manual-payment' |
-    'store' | 'collection' | 'info' | 'earn-xp';
+    'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover';
 
 const pageVariants = {
     initial: { opacity: 0, x: "100%" },
@@ -129,6 +130,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const handleNavigateToCollection = () => setAuthView('collection');
     const handleNavigateToInfo = () => setAuthView('info');
     const handleNavigateToEarnXp = () => setAuthView('earn-xp');
+    const handleNavigateToUploadCover = () => setAuthView('upload-cover');
 
     const handleViewProfile = (userId: string) => {
         setIsSearchOpen(false);
@@ -206,16 +208,17 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
             'top-up': <TopUpPage onBack={() => setAuthView('tools')} onPurchase={handleNavigateToManualPayment} onManageSubscriptions={handleNavigateToSubscriptions} />,
             'subscriptions': <SubscriptionClaimPage onBack={() => setAuthView('top-up')} session={session} />,
             'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} />,
-            store: <StorePage onBack={() => setAuthView('tools')} session={session} />,
+            store: <StorePage onBack={() => setAuthView('tools')} session={session} onNavigateToUploadCover={handleNavigateToUploadCover} />,
             collection: <CollectionPage onBack={() => setAuthView('tools')} session={session} />,
             info: <InfoPage onBack={() => setAuthView('tools')} />,
             'earn-xp': <EarnXpPage onBack={() => setAuthView('tools')} session={session} />,
+            'upload-cover': <UploadCoverPage onBack={() => setAuthView('store')} session={session} />,
         }[authView];
 
         const isFullScreenPage = [
             'profile', 'music-library', 'tools', 'anime', 'anime-series', 'create-series', 'create-episode',
             'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile',
-            'store', 'collection', 'info', 'earn-xp'
+            'store', 'collection', 'info', 'earn-xp', 'upload-cover'
         ].includes(authView);
 
         pageContent = (

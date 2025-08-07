@@ -63,7 +63,8 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
             await fetchProducts(); // Refresh the list
         } catch (err: any) {
              console.error('Failed to save product:', err);
-             alert(`Save failed: ${err.message}`);
+             const errorMessage = err.message || JSON.stringify(err);
+             alert(`Save failed: ${errorMessage}`);
         }
     };
 

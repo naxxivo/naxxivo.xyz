@@ -22,7 +22,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
         'settings', 'edit-profile', 'music-library', 'tools', 
         'anime', 'anime-series', 'create-series', 'create-episode',
         'top-up', 'subscriptions', 'manual-payment',
-        'store', 'collection', 'info', 'earn-xp'
+        'store', 'collection', 'info', 'earn-xp', 'upload-cover'
     ];
 
     return (

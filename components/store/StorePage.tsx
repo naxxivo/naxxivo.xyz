@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { BackArrowIcon, CoinIcon } from '../common/AppIcons';
+import { BackArrowIcon, CoinIcon, UploadIcon } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
 import { formatXp } from '../../utils/helpers';
@@ -11,10 +11,13 @@ import type { Session } from '@supabase/supabase-js';
 interface StorePageProps {
     onBack: () => void;
     session: Session;
+    onNavigateToUploadCover: () => void;
 }
 
-type StoreCategory = 'Featured' | 'Profile FX' | 'Themes' | 'Badges';
-type StoreItem = Tables<'store_items'>;
+type StoreCategory = 'Featured' | 'Profile FX' | 'Profile Covers' | 'Themes' | 'Badges';
+type StoreItem = Tables<'store_items'> & {
+    profiles: { username: string } | null;
+};
 
 const ItemCard = ({ item, onPurchase, onPreview, isOwned, canAfford }: { item: StoreItem, onPurchase: (item: StoreItem) => void, onPreview: (item: StoreItem) => void, isOwned: boolean, canAfford: boolean }) => {
 
@@ -35,17 +38,17 @@ const ItemCard = ({ item, onPurchase, onPreview, isOwned, canAfford }: { item: S
             className="bg-[var(--theme-card-bg)] rounded-xl shadow-sm overflow-hidden flex flex-col"
         >
             <div className="w-full h-32 bg-[var(--theme-bg)] flex items-center justify-center p-2">
-                <img src={item.preview_url || undefined} alt={item.name} className={`object-contain max-h-full max-w-full ${item.category === 'PROFILE_FX' ? 'h-24 w-24 rounded-full' : ''}`} />
+                <img src={item.preview_url || undefined} alt={item.name} className={`object-contain max-h-full max-w-full ${item.category === 'PROFILE_FX' || item.category === 'PROFILE_COVER' ? 'h-24 w-24' : ''}`} />
             </div>
             <div className="p-4 flex flex-col flex-grow">
                 <h3 className="font-bold text-[var(--theme-text)]">{item.name}</h3>
+                {item.created_by_user_id && item.profiles && <p className="text-xs text-[var(--theme-text-secondary)]">by @{item.profiles.username}</p>}
                 <p className="text-xs text-[var(--theme-text-secondary)] flex-grow mt-1">{item.description}</p>
                 <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center font-bold text-lg text-[var(--theme-primary)]">
                         <CoinIcon className="w-5 h-5 mr-1" />
                         <span>{item.price > 0 ? formatXp(item.price) : 'Free'}</span>
                     </div>
-                    <Button onClick={() => onPreview(item)} variant="secondary" size="small" className="w-auto px-3">Preview</Button>
                 </div>
                  <Button onClick={handlePurchase} disabled={isOwned || !canAfford} size="small" className="w-full mt-2">
                     {isOwned ? 'Owned' : (canAfford ? 'Purchase' : 'Not enough XP')}
@@ -55,7 +58,7 @@ const ItemCard = ({ item, onPurchase, onPreview, isOwned, canAfford }: { item: S
     );
 };
 
-const StorePage: React.FC<StorePageProps> = ({ onBack, session }) => {
+const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUploadCover }) => {
     const [activeTab, setActiveTab] = useState<StoreCategory>('Featured');
     const [previewItem, setPreviewItem] = useState<StoreItem | null>(null);
     const [isPurchasing, setIsPurchasing] = useState(false);
@@ -68,13 +71,13 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session }) => {
         setLoading(true);
         try {
             const [itemsRes, inventoryRes, profileRes] = await Promise.all([
-                supabase.from('store_items').select('*').eq('is_active', true),
+                supabase.from('store_items').select('*, profiles(username)').eq('is_active', true).eq('is_approved', true),
                 supabase.from('user_inventory').select('item_id').eq('user_id', session.user.id),
                 supabase.from('profiles').select('xp_balance').eq('id', session.user.id).single()
             ]);
 
             if (itemsRes.error) throw itemsRes.error;
-            setItems(itemsRes.data || []);
+            setItems((itemsRes.data as any) || []);
 
             if (inventoryRes.error) throw inventoryRes.error;
             setOwnedItemIds(new Set(inventoryRes.data.map(i => i.item_id)));
@@ -113,6 +116,7 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session }) => {
     const filteredItems = items.filter(item => {
         if (activeTab === 'Featured') return true; // Or add a `is_featured` flag to your table
         if (activeTab === 'Profile FX') return item.category === 'PROFILE_FX';
+        if (activeTab === 'Profile Covers') return item.category === 'PROFILE_COVER';
         if (activeTab === 'Themes') return item.category === 'THEME';
         if (activeTab === 'Badges') return item.category === 'BADGE';
         return false;
@@ -131,7 +135,7 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session }) => {
 
             <div className="p-2 flex-shrink-0">
                 <div className="flex bg-[var(--theme-card-bg-alt)] p-1 rounded-full w-full">
-                    {(['Featured', 'Profile FX', 'Themes', 'Badges'] as const).map(tab => (
+                    {(['Featured', 'Profile FX', 'Profile Covers', 'Themes', 'Badges'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -160,6 +164,17 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session }) => {
                  ) : (
                     <motion.div {...{layout:true} as any} className="grid grid-cols-2 gap-4">
                         <AnimatePresence>
+                            {activeTab === 'Profile Covers' && (
+                                <motion.button
+                                    layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                                    onClick={onNavigateToUploadCover}
+                                    className="bg-[var(--theme-card-bg)] rounded-xl shadow-sm flex flex-col items-center justify-center p-4 text-center border-2 border-dashed border-[var(--theme-secondary)]/50 hover:border-[var(--theme-primary)] transition-colors"
+                                >
+                                    <UploadIcon className="w-10 h-10 text-[var(--theme-primary)]"/>
+                                    <h3 className="font-bold text-[var(--theme-text)] mt-2">Upload Your Own</h3>
+                                    <p className="text-xs text-[var(--theme-text-secondary)] mt-1">Cost: 25,000 XP</p>
+                                </motion.button>
+                            )}
                             {filteredItems.map(item => (
                                 <ItemCard 
                                     key={item.id} 
@@ -197,7 +212,7 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session }) => {
                         >
                             <h2 className="text-lg font-bold text-[var(--theme-text)]">Preview: {previewItem.name}</h2>
                             <div className="my-4 h-48 bg-[var(--theme-bg)] rounded-lg flex items-center justify-center p-2">
-                                <img src={previewItem.preview_url || undefined} alt={previewItem.name} className={`object-contain max-h-full max-w-full ${previewItem.category === 'PROFILE_FX' ? 'h-32 w-32 rounded-full' : ''}`} />
+                                <img src={previewItem.preview_url || undefined} alt={previewItem.name} className={`object-contain max-h-full max-w-full ${previewItem.category === 'PROFILE_FX' || previewItem.category === 'PROFILE_COVER' ? 'h-32 w-32' : ''}`} />
                             </div>
                             <Button onClick={() => setPreviewItem(null)} variant="secondary">Close</Button>
                         </motion.div>

@@ -41,9 +41,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
             });
 
             if (error) throw error;
-            setMessages((data as Message[]) || []);
+            setMessages((data as unknown as Message[]) || []);
         } catch (err: any) {
             setError(err.message || 'Failed to load messages.');
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -95,7 +96,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         setNewMessage('');
         setMessages(current => [...current, optimisticMessage as Message]);
 
-        const { error } = await supabase.from('messages').insert([messageData] as TablesInsert<'messages'>[]);
+        const { error } = await supabase.from('messages').insert([messageData] as any);
 
         if (error) {
             console.error('Failed to send message:', error);

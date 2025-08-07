@@ -35,7 +35,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ onBack, onSeriesCre
                 user_id: user.id
             };
 
-            const { error: insertError } = await supabase.from('anime_series').insert([newSeries] as TablesInsert<'anime_series'>[]);
+            const { error: insertError } = await supabase.from('anime_series').insert([newSeries] as any);
             if (insertError) throw insertError;
 
             onSeriesCreated();

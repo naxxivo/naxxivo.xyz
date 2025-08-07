@@ -46,6 +46,7 @@ type ProfileData = Tables<'profiles'> & {
     profile_gifs: { gif_url: string } | null;
     active_badge?: StoreItem | null;
     active_fx?: StoreItem | null;
+    active_cover?: StoreItem | null;
 };
 
 type ProfileStub = {
@@ -73,11 +74,11 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     const isMyProfile = userId === session.user.id;
 
     const handleCommentAdded = useCallback((postId: number) => {
-        setPosts(currentPosts => 
+        setPosts((currentPosts: PostWithDetails[]) => 
             currentPosts.map(p => {
                 if (p.id === postId) {
                     const newCommentCount = (p.comments[0]?.count ?? 0) + 1;
-                    return { ...p, comments: [{ count: newCommentCount }] } as PostWithDetails;
+                    return { ...p, comments: [{ count: newCommentCount }] };
                 }
                 return p;
             })
@@ -124,16 +125,23 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     const { data: fxData } = await supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_fx_id).single();
                     activeFx = fxData as StoreItem | null;
                 }
+                
+                let activeCover: StoreItem | null = null;
+                if (profileBase.active_cover_id) {
+                    const { data: coverData } = await supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_cover_id).single();
+                    activeCover = coverData as StoreItem | null;
+                }
 
                 // Step 3: Combine all data
-                const fullProfileData = {
+                const fullProfileData: ProfileData = {
                     ...profileBase,
                     profile_gifs: activeGif,
                     active_badge: activeBadge,
                     active_fx: activeFx,
+                    active_cover: activeCover
                 };
 
-                setProfile(fullProfileData as ProfileData);
+                setProfile(fullProfileData);
 
                 // Step 4: Fetch counts and posts
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
@@ -159,7 +167,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
 
                 if(postError) throw postError;
                 if (postData) {
-                    setPosts(postData as PostWithDetails[]);
+                    setPosts(postData as any);
                 } else {
                     setPosts([]);
                 }
@@ -209,7 +217,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: userId });
             } else {
                 const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: userId };
-                await supabase.from('follows').insert([newFollow] as TablesInsert<'follows'>[]);
+                await supabase.from('follows').insert([newFollow] as any);
             }
         } catch (error: any) { 
             console.error("Failed to update follow status:", error.message);
@@ -237,7 +245,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as any) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }
@@ -260,6 +268,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     const profileImageUrl = isPlaying && activeGifUrl ? activeGifUrl : (profile.photo_url || generateAvatar(profile.name || profile.username));
     
     const activeFxUrl = profile.active_fx?.preview_url;
+    const activeCoverUrl = profile.active_cover?.preview_url;
     const activeBadgeUrl = profile.active_badge?.preview_url;
 
     const statItem = (value: string | number, label: string) => (
@@ -301,8 +310,9 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     <div className="relative bg-[var(--theme-card-bg)] rounded-t-3xl pt-20 p-6 text-center">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                              <button onClick={handleAvatarClick} className="relative w-32 h-32 block group focus:outline-none rounded-full focus:ring-4 focus:ring-offset-2 focus:ring-offset-[var(--theme-card-bg)] focus:ring-[var(--theme-ring)]">
-                                {activeFxUrl && <img src={activeFxUrl} alt="Profile Effect" className="absolute inset-[-16px] w-44 h-44 pointer-events-none" />}
+                                {activeFxUrl && !activeCoverUrl && <img src={activeFxUrl} alt="Profile Effect" className="absolute inset-[-16px] w-44 h-44 pointer-events-none" />}
                                 <img src={profileImageUrl} alt="avatar" className="relative w-32 h-32 rounded-full object-cover border-4 border-[var(--theme-card-bg)] shadow-lg" />
+                                {activeCoverUrl && <img src={activeCoverUrl} alt="Profile Cover" className="absolute inset-0 w-full h-full pointer-events-none" />}
                                 {isMyProfile && (profile.profile_music?.length ?? 0) > 0 && (
                                     <div className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-md z-20">
                                         <MusicNoteIcon className="text-[var(--theme-primary)]" />

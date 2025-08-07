@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import GiftCodeFormModal from './GiftCodeFormModal';
@@ -34,7 +34,7 @@ const AdminGiftCodesPage: React.FC<{ session: Session }> = ({ session }) => {
                 created_by: session.user.id,
                 uses_remaining: codeData.max_uses, // Initialize remaining uses
             };
-            const { error } = await supabase.from('gift_codes').insert([payload] as TablesInsert<'gift_codes'>[]);
+            const { error } = await supabase.from('gift_codes').insert([payload] as any);
             if (error) throw error;
             setIsModalOpen(false);
             await fetchCodes();

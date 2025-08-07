@@ -355,27 +355,28 @@ export interface Database {
           active_fx_id: number | null
           active_badge_id: number | null
           is_admin: boolean | null
+          active_cover_id: number | null
         }
         Insert: {
+          id: string
+          username: string
           bio?: string | null
           cover_url?: string | null
-          id: string
           name?: string | null
           photo_url?: string | null
           selected_music_id?: number | null
           active_gif_id?: number | null
           status?: Database["public"]["Enums"]["profile_status"]
-          username: string
           xp_balance?: number
           has_seen_welcome_bonus?: boolean
           active_fx_id?: number | null
           active_badge_id?: number | null
           is_admin?: boolean | null
+          active_cover_id?: number | null
         }
         Update: {
           bio?: string | null
           cover_url?: string | null
-          id?: string
           name?: string | null
           photo_url?: string | null
           selected_music_id?: number | null
@@ -387,6 +388,7 @@ export interface Database {
           active_fx_id?: number | null
           active_badge_id?: number | null
           is_admin?: boolean | null
+          active_cover_id?: number | null
         }
       },
       user_subscriptions: {
@@ -545,6 +547,8 @@ export interface Database {
           asset_details: Json | null;
           is_active: boolean;
           created_at: string;
+          created_by_user_id: string | null;
+          is_approved: boolean | null;
         };
         Insert: {
           name: string;
@@ -554,6 +558,8 @@ export interface Database {
           preview_url?: string | null;
           asset_details?: Json | null;
           is_active?: boolean;
+          created_by_user_id?: string | null;
+          is_approved?: boolean | null;
         };
         Update: {
           name?: string;
@@ -563,6 +569,8 @@ export interface Database {
           preview_url?: string | null;
           asset_details?: Json | null;
           is_active?: boolean;
+          created_by_user_id?: string | null;
+          is_approved?: boolean | null;
         };
       },
       user_inventory: {
@@ -593,6 +601,14 @@ export interface Database {
       buy_store_item: {
         Args: {
           p_item_id: number
+        }
+        Returns: string
+      }
+      create_user_profile_cover: {
+        Args: {
+          p_name: string
+          p_preview_url: string
+          p_description: string
         }
         Returns: string
       }
@@ -639,8 +655,8 @@ export interface Database {
           admin_notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
-          profiles: Json
-          products: Json
+          profiles: any
+          products: any
         }[]
       }
       redeem_gift_code: {
@@ -664,7 +680,7 @@ export interface Database {
       post_status: "live" | "suspended" | "under_review"
       product_type: "package" | "subscription"
       profile_status: "active" | "banned"
-      store_item_category: "PROFILE_FX" | "THEME" | "BADGE"
+      store_item_category: "PROFILE_FX" | "THEME" | "BADGE" | "PROFILE_COVER"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -723,6 +739,7 @@ export const Constants = {
         ProfileFx: "PROFILE_FX",
         Theme: "THEME",
         Badge: "BADGE",
+        ProfileCover: "PROFILE_COVER"
       },
     },
   },

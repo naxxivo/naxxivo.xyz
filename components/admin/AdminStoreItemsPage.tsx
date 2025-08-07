@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 import type { Tables } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import StoreItemFormModal from './StoreItemFormModal';
@@ -55,7 +55,8 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
             await fetchItems();
         } catch (err: any) {
              console.error('Failed to save store item:', err);
-             alert(`Save failed: ${err.message || 'An unknown error occurred.'}`);
+             const errorMessage = err.message || JSON.stringify(err);
+             alert(`Save failed: ${errorMessage}`);
         }
     };
 

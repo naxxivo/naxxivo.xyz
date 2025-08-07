@@ -23,7 +23,7 @@ const PaymentQueuePage: React.FC<{ session: Session }> = ({ session }) => {
             if (error) throw error;
             
             // The data from RPC is already joined. We just cast it to our display type.
-            setPayments(data as any);
+            setPayments(data as any || []);
 
         } catch (error: any) {
             console.error("Failed to fetch payments:", error.message || error);
