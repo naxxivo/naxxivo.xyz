@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -20,8 +21,6 @@ interface PostCardProps {
     session: Session;
     onViewProfile: (userId: string) => void;
     onOpenComments: () => void;
-    isInitiallyFollowing?: boolean;
-    hideFollowButton?: boolean;
 }
 
 const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct'; id: string } | null => {
@@ -51,41 +50,15 @@ const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct
 };
 
 
-const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpenComments, isInitiallyFollowing = false, hideFollowButton = false }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpenComments }) => {
     const { profiles: profile, caption, content_url, created_at, id: postId, user_id } = post;
     const timeAgo = new Date(created_at).toLocaleDateString();
 
     const [likeCount, setLikeCount] = useState(post.likes.length);
     const [userHasLiked, setUserHasLiked] = useState(post.likes.some(like => like.user_id === session.user.id));
-    const [isFollowing, setIsFollowing] = useState(isInitiallyFollowing);
-    const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
-    
     const commentCount = post.comments[0]?.count ?? 0;
-    const isMyPost = user_id === session.user.id;
     
     const videoDetails = content_url ? getVideoDetails(content_url) : null;
-
-    const handleFollowToggle = async () => {
-        if (isMyPost || isUpdatingFollow) return;
-        
-        setIsUpdatingFollow(true);
-        const originalFollowStatus = isFollowing;
-        setIsFollowing(!originalFollowStatus);
-
-        try {
-            if (originalFollowStatus) {
-                await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: user_id });
-            } else {
-                const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: user_id };
-                await supabase.from('follows').insert([newFollow] as any);
-            }
-        } catch (error: any) {
-            console.error("Failed to update follow status:", error.message);
-            setIsFollowing(originalFollowStatus); // Revert on error
-        } finally {
-            setIsUpdatingFollow(false);
-        }
-    };
 
     const handleLikeToggle = async () => {
         const originalLikeStatus = userHasLiked;
@@ -144,35 +117,21 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ type: 'spring', duration: 0.8 }}
-            className="bg-[var(--theme-card-bg)] rounded-2xl shadow-sm flex flex-col"
+            className="bg-white rounded-2xl shadow-sm flex flex-col"
         >
             <div className="flex items-center p-4">
-                <div className="flex items-center flex-grow">
-                    <button onClick={() => onViewProfile(user_id)} className="flex items-center text-left focus:outline-none rounded-full focus:ring-2 focus:ring-[var(--theme-ring)]">
-                        <img 
-                          src={profile?.photo_url || generateAvatar(profile?.name || profile?.username || user_id)} 
-                          alt={profile?.name || ''} 
-                          className="w-10 h-10 rounded-full object-cover" 
-                        />
-                        <div className="ml-3">
-                            <p className="font-bold text-[var(--theme-text)] text-sm">{profile?.name || 'Anonymous'}</p>
-                            <p className="text-xs text-[var(--theme-text-secondary)]">{timeAgo}</p>
-                        </div>
-                    </button>
-                    {!isMyPost && !hideFollowButton && (
-                        <>
-                            <span className="text-gray-400 mx-2 font-bold">·</span>
-                             <button
-                                onClick={handleFollowToggle}
-                                disabled={isUpdatingFollow}
-                                className={`font-semibold text-sm transition-colors duration-200 disabled:cursor-not-allowed ${isFollowing ? 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]' : 'text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)]'}`}
-                            >
-                                {isUpdatingFollow ? '...' : isFollowing ? 'Following' : 'Follow'}
-                            </button>
-                        </>
-                    )}
-                </div>
-                <button className="ml-auto text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)] flex-shrink-0">
+                <button onClick={() => onViewProfile(user_id)} className="flex items-center text-left focus:outline-none rounded-full focus:ring-2 focus:ring-violet-500">
+                    <img 
+                      src={profile?.photo_url || generateAvatar(profile?.name || profile?.username || user_id)} 
+                      alt={profile?.name || ''} 
+                      className="w-10 h-10 rounded-full object-cover" 
+                    />
+                    <div className="ml-3">
+                        <p className="font-bold text-gray-800 text-sm">{profile?.name || 'Anonymous'}</p>
+                        <p className="text-xs text-gray-500">{timeAgo}</p>
+                    </div>
+                </button>
+                <button className="ml-auto text-gray-500 hover:text-gray-800">
                     <OptionsIcon />
                 </button>
             </div>
@@ -212,10 +171,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
             )}
             
             <div className="p-4">
-                <div className="flex items-center space-x-5 text-[var(--theme-text-secondary)]">
+                <div className="flex items-center space-x-5 text-gray-600">
                     <motion.button
                         onClick={handleLikeToggle}
-                        className={`flex items-center space-x-2 hover:text-[var(--theme-primary)] transition-colors ${userHasLiked ? 'text-[var(--theme-primary)]' : ''}`}
+                        className={`flex items-center space-x-2 hover:text-violet-500 transition-colors ${userHasLiked ? 'text-violet-500' : ''}`}
                         whileTap={{ scale: 0.9 }}
                     >
                          <motion.div initial={false} animate={{ scale: userHasLiked ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
@@ -223,16 +182,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
                         </motion.div>
                         <span className="font-semibold text-sm">{likeCount}</span>
                     </motion.button>
-                    <button onClick={onOpenComments} className="flex items-center space-x-2 hover:text-[var(--theme-primary)] transition-colors">
+                    <button onClick={onOpenComments} className="flex items-center space-x-2 hover:text-violet-500 transition-colors">
                         <CommentIcon />
                         <span className="font-semibold text-sm">{commentCount}</span>
                     </button>
-                     <button onClick={handleShare} className="flex items-center space-x-2 hover:text-[var(--theme-primary)] transition-colors ml-auto">
+                     <button onClick={handleShare} className="flex items-center space-x-2 hover:text-violet-500 transition-colors ml-auto">
                         <ShareIcon />
                     </button>
                 </div>
 
-                {caption && <p className="mt-3 text-sm text-[var(--theme-text)]">{caption}</p>}
+                {caption && <p className="mt-3 text-sm text-gray-700">{caption}</p>}
             </div>
         </motion.div>
     );

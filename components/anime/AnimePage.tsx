@@ -37,10 +37,10 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
     }, []);
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)]">
-            <header className="flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">Watch Anime</h1>
+        <div className="min-h-screen bg-gray-50">
+            <header className="flex items-center p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+                <button onClick={onBack} className="text-gray-600 hover:text-gray-900"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-gray-800 mx-auto">Watch Anime</h1>
                 <div className="w-6"></div> {/* Placeholder for centering */}
             </header>
 
@@ -58,18 +58,18 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
                                     transition={{ delay: index * 0.05 }}
                                 >
                                     <button onClick={() => onViewSeries(item.id)} className="w-full text-left group">
-                                        <div className="aspect-[3/4] bg-[var(--theme-secondary)]/40 rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-shadow">
+                                        <div className="aspect-[3/4] bg-gray-200 rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-shadow">
                                             {item.thumbnail_url && <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />}
                                         </div>
-                                        <p className="font-semibold mt-2 text-sm text-[var(--theme-text)] truncate">{item.title}</p>
+                                        <p className="font-semibold mt-2 text-sm text-gray-800 truncate">{item.title}</p>
                                     </button>
                                 </motion.div>
                             ))}
                         </div>
                     ) : (
                         <div className="text-center py-20">
-                            <h2 className="text-xl font-semibold text-[var(--theme-text)]">No Anime Here Yet</h2>
-                            <p className="text-[var(--theme-text-secondary)] mt-2">Be the first to create a new series!</p>
+                            <h2 className="text-xl font-semibold text-gray-700">No Anime Here Yet</h2>
+                            <p className="text-gray-500 mt-2">Be the first to create a new series!</p>
                         </div>
                     )
                 )}
@@ -79,16 +79,15 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
                  <AnimatePresence>
                     {isFabMenuOpen && (
                         <motion.div
-                            key="fab-menu"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             className="flex flex-col items-end space-y-3 mb-3"
                         >
-                            <button onClick={onCreateEpisode} className="flex items-center bg-[var(--theme-card-bg)] shadow-lg rounded-full px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:bg-gray-100 dark:hover:bg-opacity-80">
+                            <button onClick={onCreateEpisode} className="flex items-center bg-white shadow-lg rounded-full px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
                                 Add Episode
                             </button>
-                            <button onClick={onCreateSeries} className="flex items-center bg-[var(--theme-card-bg)] shadow-lg rounded-full px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:bg-gray-100 dark:hover:bg-opacity-80">
+                            <button onClick={onCreateSeries} className="flex items-center bg-white shadow-lg rounded-full px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
                                 Create Series
                             </button>
                         </motion.div>
@@ -96,7 +95,7 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
                 </AnimatePresence>
                 <motion.button
                     onClick={() => setFabMenuOpen(!isFabMenuOpen)}
-                    className="w-14 h-14 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-full flex items-center justify-center shadow-lg hover:bg-[var(--theme-primary-hover)]"
+                    className="w-14 h-14 bg-violet-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-violet-600"
                     whileHover={{ scale: 1.1 }}
                     animate={{ rotate: isFabMenuOpen ? 45 : 0 }}
                 >

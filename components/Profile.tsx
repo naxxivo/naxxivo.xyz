@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+
+
+import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
@@ -8,26 +11,6 @@ import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
 import { BackArrowIcon, SettingsIcon, SendPlaneIcon, MusicNoteIcon, ToolsIcon, CoinIcon, AdminIcon } from './common/AppIcons';
 import { motion } from 'framer-motion';
-import PostCard from './home/PostCard';
-import CommentModal from './home/CommentModal';
-
-// --- Types --- //
-type PostWithDetails = {
-    id: number;
-    created_at: string;
-    caption: string | null;
-    content_url: string | null;
-    user_id: string;
-    status: Tables<'posts'>['status'];
-    profiles: {
-        username: string | null;
-        name: string | null;
-        photo_url: string | null;
-    } | null;
-    likes: Array<{ user_id: string }>;
-    comments: Array<{ count: number }>;
-};
-
 
 // --- Profile Component --- //
 interface ProfileProps {
@@ -41,11 +24,22 @@ interface ProfileProps {
     onViewProfile: (userId: string) => void;
 }
 
-type ProfileData = Tables<'profiles'> & {
+type ProfileData = {
+    id: string;
+    cover_url: string | null;
+    xp_balance: number;
+    role: Enums<'user_role'>;
+    photo_url: string | null;
+    name: string | null;
+    username: string;
+    bio: string | null;
+} & {
     profile_music: { music_url: string }[] | null;
-    profile_gifs: { gif_url: string } | null;
 };
-
+interface PostData {
+    id: number;
+    content_url: string | null;
+}
 type ProfileStub = {
     id: string;
     name: string | null;
@@ -55,7 +49,7 @@ type ProfileStub = {
 
 const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, onNavigateToSettings, onNavigateToTools, onNavigateToAdminPanel, onViewProfile }) => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
-    const [posts, setPosts] = useState<PostWithDetails[]>([]);
+    const [posts, setPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [followerCount, setFollowerCount] = useState(0);
@@ -63,7 +57,6 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     const [isFollowing, setIsFollowing] = useState(false);
     const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
     const [modalState, setModalState] = useState<{ type: 'followers' | 'following' | null; users: ProfileStub[]; loading: boolean; title: string }>({ type: null, users: [], loading: false, title: '' });
-    const [commentModalPostId, setCommentModalPostId] = useState<number | null>(null);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -89,18 +82,6 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
         }
     });
 
-    const handleCommentAdded = useCallback((postId: number) => {
-        setPosts(currentPosts => 
-            currentPosts.map(p => {
-                if (p.id === postId) {
-                    const newCommentCount = (p.comments[0]?.count ?? 0) + 1;
-                    return { ...p, comments: [{ count: newCommentCount }] };
-                }
-                return p;
-            })
-        );
-    }, []);
-
     useEffect(() => {
         const fetchProfile = async () => {
             if (!userId) return;
@@ -116,16 +97,15 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 const { data: profileData, error: profileError } = await supabase
                     .from('profiles')
                     .select(`
-                        id, cover_url, xp_balance, role, photo_url, name, username, bio, active_gif_id,
-                        profile_music ( music_url ),
-                        profile_gifs!active_gif_id ( gif_url )
+                        id, cover_url, xp_balance, role, photo_url, name, username, bio,
+                        profile_music ( music_url )
                     `)
                     .eq('id', userId)
                     .single();
                 
                 if (profileError || !profileData) throw new Error(profileError?.message || "Profile not found.");
                 
-                setProfile(profileData as ProfileData);
+                setProfile(profileData as unknown as ProfileData);
 
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
@@ -137,19 +117,9 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     setIsFollowing((isFollowingCount || 0) > 0);
                 }
                 
-                const { data: postData, error: postError } = await supabase
-                    .from('posts')
-                    .select(`
-                        id, created_at, caption, content_url, user_id, status,
-                        profiles (username, name, photo_url),
-                        likes (user_id),
-                        comments (count)
-                    `)
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false });
-
+                const { data: postData, error: postError } = await supabase.from('posts').select('id, content_url').eq('user_id', userId).order('created_at', { ascending: false });
                 if(postError) throw postError;
-                setPosts(postData || []);
+                if (postData) setPosts(postData as PostData[]);
 
             } catch (error: any) {
                 setError(error.message || "An error occurred.");
@@ -289,8 +259,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (originalFollowStatus) {
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: userId });
             } else {
-                const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: userId };
-                await supabase.from('follows').insert([newFollow] as any);
+                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: userId }] as any);
             }
         } catch (error: any) { 
             console.error("Failed to update follow status:", error.message);
@@ -318,7 +287,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as unknown as ProfileStub[]) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }
@@ -336,23 +305,20 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             {onBack && <Button onClick={onBack} variant="secondary" className="mt-4 w-auto px-6">Back</Button>}
         </div>
     );
-
-    const activeGifUrl = profile.profile_gifs?.gif_url;
-    const profileImageUrl = isPlaying && activeGifUrl ? activeGifUrl : (profile.photo_url || generateAvatar(profile.name || profile.username));
     
     return (
-        <div className="flex flex-col w-full bg-[var(--theme-bg)]">
+        <div className="flex flex-col w-full bg-gray-50">
              <header className="relative h-48 w-full">
                 {profile.cover_url ? (
                     <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover"/>
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-primary)]"></div>
+                    <div className="w-full h-full bg-gradient-to-br from-violet-300 to-purple-400"></div>
                 )}
                 <div className="absolute inset-0 bg-black/20"></div>
                  <div className="absolute top-2 left-2 right-2 flex justify-between items-center">
                     <button onClick={onBack} className={`text-white hover:bg-black/20 rounded-full p-2 transition-colors ${onBack ? 'visible' : 'invisible'}`}><BackArrowIcon /></button>
                     <div className="flex items-center gap-2 bg-black/20 text-white px-3 py-1.5 rounded-full">
-                        <CoinIcon className="w-5 h-5 text-[#FBBF24]"/>
+                        <CoinIcon className="w-5 h-5 text-yellow-300"/>
                         <span className="font-bold text-sm">{formatXp(profile.xp_balance)} XP</span>
                     </div>
                     <div className="flex items-center">
@@ -383,11 +349,11 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                             height="220"
                             className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
                         />
-                        <button onClick={handleAvatarClick} className="relative w-full h-full focus:outline-none rounded-full focus:ring-4 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg)] focus:ring-[var(--theme-ring)]">
-                            <img src={profileImageUrl} alt={profile.name || 'avatar'} className="relative z-10 w-24 h-24 rounded-full object-cover border-4 border-[var(--theme-card-bg)] shadow-md" />
-                            {isMyProfile && (profile.profile_music?.length ?? 0) > 0 && (
+                        <button onClick={handleAvatarClick} className="relative w-full h-full focus:outline-none rounded-full focus:ring-4 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-violet-400">
+                            <img src={profile.photo_url || generateAvatar(profile.name || profile.username)} alt={profile.name || 'avatar'} className="relative z-10 w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
+                            {isMyProfile && profile.profile_music && profile.profile_music.length > 0 && (
                                 <div className="absolute bottom-1 right-1 bg-white rounded-full p-1 shadow-md z-20">
-                                    <MusicNoteIcon className="text-[var(--theme-primary)]" />
+                                    <MusicNoteIcon className="text-violet-500" />
                                 </div>
                             )}
                         </button>
@@ -395,20 +361,20 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
 
                     <div className="flex-grow flex justify-around text-center pb-2">
                         <motion.div animate={isPlaying ? getDancingAnimation(0) : { y: 0 }}>
-                            <p className="font-bold text-lg text-[var(--theme-text)]">{posts.length}</p><p className="text-sm text-[var(--theme-text-secondary)]">Stories</p>
+                            <p className="font-bold text-lg">{posts.length}</p><p className="text-sm text-gray-500">Stories</p>
                         </motion.div>
                         <motion.button animate={isPlaying ? getDancingAnimation(0.15) : { y: 0 }} onClick={() => handleOpenFollowModal('followers')}>
-                            <p className="font-bold text-lg text-[var(--theme-text)]">{followerCount}</p><p className="text-sm text-[var(--theme-text-secondary)]">Followers</p>
+                            <p className="font-bold text-lg">{followerCount}</p><p className="text-sm text-gray-500">Followers</p>
                         </motion.button>
                         <motion.button animate={isPlaying ? getDancingAnimation(0.3) : { y: 0 }} onClick={() => handleOpenFollowModal('following')}>
-                            <p className="font-bold text-lg text-[var(--theme-text)]">{followingCount}</p><p className="text-sm text-[var(--theme-text-secondary)]">Following</p>
+                            <p className="font-bold text-lg">{followingCount}</p><p className="text-sm text-gray-500">Following</p>
                         </motion.button>
                     </div>
                 </div>
                 <div className="mt-4">
-                    <h2 className="font-bold text-xl text-[var(--theme-text)]">{profile.name}</h2>
-                    <p className="text-sm text-[var(--theme-text-secondary)] -mt-1">@{profile.username}</p>
-                    {profile.bio && <p className="text-sm mt-3 text-[var(--theme-text)]">{profile.bio}</p>}
+                    <h2 className="font-bold text-xl">{profile.name}</h2>
+                    <p className="text-sm text-gray-500 -mt-1">@{profile.username}</p>
+                    {profile.bio && <p className="text-sm mt-3">{profile.bio}</p>}
                 </div>
                 
                  <div className="flex items-center space-x-2 mt-4">
@@ -420,7 +386,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                             <motion.div className="flex-1" animate={isPlaying ? getDancingAnimation(0.5) : { y: 0 }}>
                                 <Button onClick={() => onMessage && onMessage({ id: profile.id, name: profile.name || 'Unknown', photo_url: profile.photo_url })} size="small" variant="secondary">Message</Button>
                             </motion.div>
-                            <motion.button className="p-2.5 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-full" animate={isPlaying ? getDancingAnimation(0.6) : { y: 0 }}>
+                            <motion.button className="p-2.5 bg-violet-500 text-white rounded-full" animate={isPlaying ? getDancingAnimation(0.6) : { y: 0 }}>
                                 <SendPlaneIcon />
                             </motion.button>
                         </>
@@ -429,22 +395,19 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             </div>
 
             {posts.length > 0 ? (
-                 <div className="space-y-6 pb-6 mt-[-32px] bg-[var(--theme-card-bg)]">
-                    {posts.map(post => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            session={session}
-                            onViewProfile={onViewProfile}
-                            onOpenComments={() => setCommentModalPostId(post.id)}
-                            hideFollowButton={true}
-                        />
-                    ))}
+                <div className="w-full mt-[-48px] bg-white">
+                    <div className="grid grid-cols-3 gap-0.5">
+                        {posts.map(post => (
+                            <div key={post.id} className="aspect-square bg-gray-200">
+                               {post.content_url && <img src={post.content_url} alt="User post" className="w-full h-full object-cover" loading="lazy" />}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             ) : (
-                 <div className="text-center py-16 px-4 bg-[var(--theme-card-bg)] rounded-2xl mt-[-32px]">
-                    <h2 className="text-xl font-semibold text-[var(--theme-text)]">No stories yet</h2>
-                    <p className="text-[var(--theme-text-secondary)] mt-2">{isMyProfile ? "Share your first memory!" : "This user hasn't shared any posts."}</p>
+                 <div className="text-center py-16 px-4 bg-white rounded-2xl mt-[-32px]">
+                    <h2 className="text-xl font-semibold text-gray-800">No stories yet</h2>
+                    <p className="text-gray-500 mt-2">This user hasn't shared any posts.</p>
                 </div>
             )}
             
@@ -459,15 +422,6 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     onViewProfile(id);
                 }}
             />
-
-            {commentModalPostId && (
-                <CommentModal
-                    postId={commentModalPostId}
-                    session={session}
-                    onClose={() => setCommentModalPostId(null)}
-                    onCommentAdded={handleCommentAdded}
-                />
-            )}
         </div>
     );
 };

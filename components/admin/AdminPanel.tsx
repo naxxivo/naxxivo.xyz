@@ -4,14 +4,13 @@ import AdminDashboard from './AdminDashboard';
 import UserManagementPage from './UserManagementPage';
 import PaymentQueuePage from './PaymentQueuePage';
 import StoreManagementPage from './StoreManagementPage';
-import AppSettingsPage from './AppSettingsPage';
 
 interface AdminPanelProps {
     session: Session;
     onExitAdminView: () => void;
 }
 
-type AdminView = 'dashboard' | 'users' | 'payments' | 'store' | 'settings';
+type AdminView = 'dashboard' | 'users' | 'payments' | 'store';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => {
     const [view, setView] = useState<AdminView>('dashboard');
@@ -21,7 +20,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
         { id: 'users', label: 'Users' },
         { id: 'payments', label: 'Payments' },
         { id: 'store', label: 'Store' },
-        { id: 'settings', label: 'App Settings' },
     ];
 
     let content;
@@ -38,15 +36,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
         case 'store':
             content = <StoreManagementPage session={session} />;
             break;
-        case 'settings':
-            content = <AppSettingsPage />;
-            break;
         default:
             content = <AdminDashboard />;
     }
 
     return (
-        <div className="min-h-screen flex bg-gray-100 dark:bg-gray-900 font-sans">
+        <div className="min-h-screen flex bg-gray-100 font-sans">
             {/* Sidebar */}
             <aside className="w-64 bg-gray-800 text-white flex flex-col">
                 <div className="p-6 text-2xl font-bold font-logo text-center border-b border-gray-700">
@@ -58,7 +53,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
                             key={item.id}
                             onClick={() => setView(item.id)}
                             className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-200 ${
-                                view === item.id ? 'bg-violet-600' : 'hover:bg-gray-700'
+                                view === item.id ? 'bg-gray-700' : 'hover:bg-gray-700/50'
                             }`}
                         >
                             {item.label}
@@ -74,8 +69,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col">
-                <header className="bg-white dark:bg-gray-800 shadow-sm p-4">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 capitalize">{view}</h1>
+                <header className="bg-white shadow-sm p-4">
+                    <h1 className="text-2xl font-bold text-gray-800 capitalize">{view}</h1>
                 </header>
                 <div className="flex-1 p-6 overflow-y-auto">
                     {content}

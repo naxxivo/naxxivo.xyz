@@ -6,7 +6,6 @@ interface ToolsPageProps {
     onBack: () => void;
     onNavigateToAnime: () => void;
     onNavigateToTopUp: () => void;
-    onNavigateToMusicLibrary: () => void;
 }
 
 const ToolCard = ({ title, description, icon, comingSoon, delay, onClick }: { title: string, description: string, icon: string, comingSoon?: boolean, delay: number, onClick?: () => void }) => (
@@ -16,25 +15,25 @@ const ToolCard = ({ title, description, icon, comingSoon, delay, onClick }: { ti
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', delay: delay * 0.1 }}
         disabled={comingSoon || !onClick}
-        className={`w-full text-left bg-[var(--theme-card-bg)] p-6 rounded-2xl shadow-md overflow-hidden relative ${comingSoon || !onClick ? 'cursor-not-allowed' : 'hover:bg-opacity-80 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]'}`}
+        className={`w-full text-left bg-white p-6 rounded-2xl shadow-md overflow-hidden relative ${comingSoon || !onClick ? 'cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500'}`}
     >
         {comingSoon && (
-            <div className="absolute top-2 right-2 bg-[var(--theme-text-secondary)]/20 text-[var(--theme-text-secondary)] text-xs font-semibold px-2 py-1 rounded-full">
+            <div className="absolute top-2 right-2 bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
                 SOON
             </div>
         )}
         <div className={`text-4xl mb-4 ${comingSoon ? 'opacity-40' : ''}`}>{icon}</div>
-        <h3 className={`font-bold text-lg text-[var(--theme-text)] ${comingSoon ? 'opacity-40' : ''}`}>{title}</h3>
-        <p className={`text-sm text-[var(--theme-text-secondary)] mt-1 ${comingSoon ? 'opacity-40' : ''}`}>{description}</p>
+        <h3 className={`font-bold text-lg text-gray-800 ${comingSoon ? 'opacity-40' : ''}`}>{title}</h3>
+        <p className={`text-sm text-gray-500 mt-1 ${comingSoon ? 'opacity-40' : ''}`}>{description}</p>
     </motion.button>
 );
 
-const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavigateToTopUp, onNavigateToMusicLibrary }) => {
+const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavigateToTopUp }) => {
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)]">
-            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Tools & Features</h1>
+        <div className="min-h-screen bg-gray-50">
+            <header className="flex items-center p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+                <button onClick={onBack} className="text-gray-600 hover:text-gray-900"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-gray-800 mx-auto">Tools & Features</h1>
                  {/* Placeholder for centering */}
                 <div className="w-6"></div>
             </header>
@@ -55,32 +54,25 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavi
                     onClick={onNavigateToTopUp}
                 />
                 <ToolCard
-                    title="Music Library"
-                    description="Browse and set your profile music."
-                    icon="🎵"
-                    delay={3}
-                    onClick={onNavigateToMusicLibrary}
-                />
-                <ToolCard
                     title="Album"
                     description="Organize your memories into albums."
                     icon="🖼️"
                     comingSoon
-                    delay={4}
+                    delay={3}
                 />
                 <ToolCard
                     title="Health Hub"
                     description="Track your wellness and fitness goals."
                     icon="❤️‍🩹"
                     comingSoon
-                    delay={5}
+                    delay={4}
                 />
                  <ToolCard
                     title="More Coming Soon"
                     description="We're always working on new features."
                     icon="🚀"
                     comingSoon
-                    delay={6}
+                    delay={5}
                 />
             </main>
         </div>

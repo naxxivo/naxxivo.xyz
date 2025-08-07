@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
@@ -88,14 +89,10 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                 .from(bucket)
                 .getPublicUrl(fileName);
             
-            let updatePayload: TablesUpdate<'profiles'>;
-            if (type === 'avatar') {
-                updatePayload = { photo_url: publicUrl };
-            } else {
-                updatePayload = { cover_url: publicUrl };
-            }
+            const updateField = type === 'avatar' ? 'photo_url' : 'cover_url';
+            const updateData = { [updateField]: publicUrl };
             
-            await supabase.from('profiles').update(updatePayload).eq('id', session.user.id);
+            await supabase.from('profiles').update(updateData as any).eq('id', session.user.id);
             
             if (type === 'avatar') setPhotoUrl(publicUrl);
             if (type === 'cover') setCoverUrl(publicUrl);
@@ -122,10 +119,10 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
 
         setIsSaving(true);
         try {
-            const profileUpdates: TablesUpdate<'profiles'> = { name, username, bio };
+            const profileUpdates = { name, username, bio };
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update(profileUpdates)
+                .update(profileUpdates as any)
                 .eq('id', session.user.id);
 
             if (updateError) throw updateError;
@@ -145,22 +142,21 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
     }
 
     return (
-        <div className="space-y-6 pb-6">
+        <div className="space-y-6">
              <header className="flex items-center p-4">
-                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Edit Profile</h1>
-                <div className="w-6"></div> {/* Placeholder */}
+                <button onClick={onBack} className="text-gray-600 hover:text-gray-900"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-gray-800 mx-auto">Edit Profile</h1>
              </header>
             
              <div className="px-4">
                  <div className="relative h-32 rounded-lg overflow-hidden bg-gray-200">
-                    {coverUrl ? <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-primary)]"></div>}
+                    {coverUrl ? <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-violet-200 to-purple-300"></div>}
                     {isUploading === 'cover' && <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"><LoadingSpinner/></div>}
                     <Button size="small" variant="secondary" onClick={() => coverInputRef.current?.click()} disabled={isUploading === 'cover'} className="absolute bottom-2 right-2 w-auto px-3 py-1 text-xs">Change Cover</Button>
                  </div>
                  <div className="flex flex-col items-center -mt-12">
                     <div className="relative">
-                        <img src={photoUrl || generateAvatar(name || username)} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-[var(--theme-bg)] shadow-md" />
+                        <img src={photoUrl || generateAvatar(name || username)} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
                         {isUploading === 'avatar' && <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center"><LoadingSpinner/></div>}
                     </div>
                      <input type="file" ref={avatarInputRef} onChange={(e) => handleFileChange(e, 'avatar')} className="hidden" accept="image/*" disabled={isUploading === 'avatar'} />
@@ -173,14 +169,14 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                  <Input id="name" label="Name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} required />
                  <Input id="username" label="Username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={isSaving} required />
                  <div>
-                    <label htmlFor="bio" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Bio</label>
+                    <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                     <textarea
                         id="bio"
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         placeholder="Tell us about yourself..."
                         rows={4}
-                        className="appearance-none block w-full px-4 py-3 bg-[var(--theme-card-bg-alt)] border-transparent border rounded-lg text-[var(--theme-text)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)] sm:text-sm"
+                        className="appearance-none block w-full px-4 py-3 bg-gray-100 border-gray-200 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:text-sm transition-all duration-300"
                         disabled={isSaving}
                     />
                 </div>

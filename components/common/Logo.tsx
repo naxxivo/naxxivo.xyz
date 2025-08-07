@@ -8,7 +8,7 @@ const Logo = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="font-logo text-5xl text-[var(--theme-text)]"
+          className="font-logo text-5xl text-gray-800"
           aria-label={text}
         >
           {text}
