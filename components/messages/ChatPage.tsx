@@ -35,14 +35,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         setLoading(true);
         setError(null);
         try {
-            const { data, error } = await supabase
-                .from('messages')
-                .select('*')
-                .or(`and(sender_id.eq.${myId},recipient_id.eq.${otherUser.id}),and(sender_id.eq.${otherUser.id},recipient_id.eq.${myId})`)
-                .order('created_at', { ascending: true });
+            const { data, error } = await supabase.rpc('get_chat_messages', {
+                user_a_id: myId,
+                user_b_id: otherUser.id
+            });
 
             if (error) throw error;
-            setMessages(data || []);
+            setMessages((data as Message[]) || []);
         } catch (err: any) {
             setError(err.message || 'Failed to load messages.');
         } finally {
@@ -96,7 +95,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
         setNewMessage('');
         setMessages(current => [...current, optimisticMessage as Message]);
 
-        const { error } = await supabase.from('messages').insert([messageData]);
+        const { error } = await supabase.from('messages').insert([messageData] as TablesInsert<'messages'>[]);
 
         if (error) {
             console.error('Failed to send message:', error);

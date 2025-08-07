@@ -49,7 +49,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                 
                 const { data: productData, error: productError } = productResponse;
                 if (productError) throw productError;
-                setProduct(productData as any);
+                setProduct(productData as Product | null);
 
                 const { data: settingsData, error: settingsError } = settingsResponse;
                 if (settingsError) throw new Error("Could not load payment instructions.");
@@ -111,7 +111,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                 status: 'pending'
             };
 
-            const { error: insertError } = await supabase.from('manual_payments').insert([newPayment]);
+            const { error: insertError } = await supabase.from('manual_payments').insert([newPayment] as TablesInsert<'manual_payments'>[]);
             if (insertError) throw insertError;
             
             alert('Your payment has been submitted for review. It may take up to 24 hours to process.');

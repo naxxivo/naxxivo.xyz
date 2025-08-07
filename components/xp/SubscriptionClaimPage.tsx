@@ -45,7 +45,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
             if (subError) {
                 if (subError.code !== 'PGRST116') throw subError;
             }
-            setSubscription(subData as any);
+            setSubscription(subData as SubscriptionWithProduct | null);
             
             if(subData) {
                 const { data: claimData, error: claimError } = await supabase
@@ -54,7 +54,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
                     .eq('user_subscription_id', subData.id);
                 
                 if (claimError) throw claimError;
-                setClaims(claimData || []);
+                setClaims((claimData as Claim[]) || []);
             }
 
         } catch (err: any) {
@@ -101,7 +101,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
 
             const { error: insertError } = await supabase
                 .from('daily_claims')
-                .insert([newClaim]);
+                .insert([newClaim] as TablesInsert<'daily_claims'>[]);
             
             if (insertError) {
                 throw new Error(`Failed to record your claim. Please try again. Details: ${insertError.message}`);

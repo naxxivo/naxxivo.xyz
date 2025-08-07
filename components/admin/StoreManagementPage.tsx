@@ -55,7 +55,7 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
             };
             
             // `upsert` handles both creating (if id is missing) and updating
-            const { error } = await supabase.from('products').upsert(payload).select();
+            const { error } = await supabase.from('products').upsert(payload as any).select();
             
             if (error) throw error;
             

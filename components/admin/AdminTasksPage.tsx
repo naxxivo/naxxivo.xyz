@@ -39,7 +39,7 @@ const AdminTasksPage: React.FC = () => {
     
     const handleSaveTask = async (taskData: Partial<Task>) => {
         try {
-            const { error } = await supabase.from('tasks').upsert(taskData).select();
+            const { error } = await supabase.from('tasks').upsert(taskData as any).select();
             if (error) throw error;
             setIsModalOpen(false);
             await fetchTasks();

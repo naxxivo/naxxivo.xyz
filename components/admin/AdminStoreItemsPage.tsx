@@ -47,7 +47,7 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
         try {
             const payload = { ...itemData, price: Number(itemData.price) || 0 };
             
-            const { error } = await supabase.from('store_items').upsert(payload).select();
+            const { error } = await supabase.from('store_items').upsert(payload as any).select();
             
             if (error) throw error;
             

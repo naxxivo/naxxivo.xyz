@@ -41,7 +41,7 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                         end_date: endDate.toISOString(),
                         is_active: true,
                     };
-                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription]);
+                    const { error: subError } = await supabase.from('user_subscriptions').insert([newSubscription] as TablesInsert<'user_subscriptions'>[]);
                     if (subError) throw new Error(`Failed to create subscription: ${subError.message}`);
                 }
                 
@@ -58,14 +58,14 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                 }
                 
                 const finalNotes = notes || `Approved and awarded: ${product.name}`;
-                const { error } = await supabase.from('manual_payments').update({ status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: finalNotes }).eq('id', payment.id);
+                const { error } = await supabase.from('manual_payments').update({ status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: finalNotes } as TablesUpdate<'manual_payments'>).eq('id', payment.id);
                 if (error) {
                     // This is a critical state. User got the item, but payment is still pending. Alert admin to fix manually.
                     throw new Error(`CRITICAL: User ${userId} was awarded product ${product.id}, but failed to update payment status. Please manually set payment ${payment.id} to 'approved'.`);
                 }
 
             } else { // Logic for 'rejected'
-                const { error } = await supabase.from('manual_payments').update({ status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: notes || 'Rejected without notes.'}).eq('id', payment.id);
+                const { error } = await supabase.from('manual_payments').update({ status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: notes || 'Rejected without notes.'} as TablesUpdate<'manual_payments'>).eq('id', payment.id);
                 if (error) throw error;
             }
 

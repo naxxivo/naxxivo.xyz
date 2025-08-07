@@ -48,7 +48,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments((data as any) || []);
+            setComments((data as CommentWithProfile[]) || []);
         }
         setLoading(false);
     }, [postId]);
@@ -72,7 +72,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                 user_id: session.user.id,
                 content: newComment.trim(),
             };
-            const { error } = await supabase.from('comments').insert([commentData]);
+            const { error } = await supabase.from('comments').insert([commentData] as TablesInsert<'comments'>[]);
             if (error) throw error;
             
             setNewComment('');

@@ -54,7 +54,7 @@ const App: React.FC = () => {
 
                 if (profile && !profile.has_seen_welcome_bonus) {
                     setShowWelcomeBonus(true);
-                    await supabase.from('profiles').update({ has_seen_welcome_bonus: true }).eq('id', session.user.id);
+                    await supabase.from('profiles').update({ has_seen_welcome_bonus: true } as TablesUpdate<'profiles'>).eq('id', session.user.id);
                 }
             };
             getProfileAndSetupListener();

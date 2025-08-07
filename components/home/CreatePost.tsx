@@ -32,7 +32,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostCreated 
             
             const { error: insertError } = await supabase
                 .from('posts')
-                .insert([newPost]);
+                .insert([newPost] as TablesInsert<'posts'>[]);
             
             if (insertError) throw insertError;
 

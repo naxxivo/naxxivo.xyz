@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
-import type { Tables, TablesInsert, Enums } from '../integrations/supabase/types';
+import type { Tables, TablesInsert, Enums, TablesUpdate } from '../integrations/supabase/types';
 import { generateAvatar, formatXp } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
@@ -133,7 +133,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     active_fx: activeFx,
                 };
 
-                setProfile(fullProfileData as any);
+                setProfile(fullProfileData as ProfileData);
 
                 // Step 4: Fetch counts and posts
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
@@ -159,7 +159,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
 
                 if(postError) throw postError;
                 if (postData) {
-                    setPosts(postData as any);
+                    setPosts(postData as PostWithDetails[]);
                 } else {
                     setPosts([]);
                 }
@@ -209,7 +209,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: userId });
             } else {
                 const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: userId };
-                await supabase.from('follows').insert([newFollow]);
+                await supabase.from('follows').insert([newFollow] as TablesInsert<'follows'>[]);
             }
         } catch (error: any) { 
             console.error("Failed to update follow status:", error.message);

@@ -618,6 +618,13 @@ export interface Database {
           activeSubscriptions: number
         }
       }
+      get_chat_messages: {
+        Args: {
+          user_a_id: string
+          user_b_id: string
+        }
+        Returns: Tables<'messages'>[]
+      }
       get_pending_payments_admin: {
         Args: Record<string, never>
         Returns: {

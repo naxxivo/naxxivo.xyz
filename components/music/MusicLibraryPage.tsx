@@ -93,7 +93,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
     
     const handleSelectTrack = async (trackId: number) => {
         try {
-            const { error } = await supabase.from('profiles').update({ selected_music_id: trackId }).eq('id', myId);
+            const { error } = await supabase.from('profiles').update({ selected_music_id: trackId } as TablesUpdate<'profiles'>).eq('id', myId);
             if (error) throw error;
             alert('Profile music updated!');
             onBack();
@@ -113,7 +113,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
             const { error: uploadError } = await supabase.storage.from('music').upload(fileName, file);
             if (uploadError) throw uploadError;
             const { data: { publicUrl } } = supabase.storage.from('music').getPublicUrl(fileName);
-            const { error: insertError } = await supabase.from('profile_music').insert([{ profile_id: myId, music_url: publicUrl, file_name: file.name }]);
+            const { error: insertError } = await supabase.from('profile_music').insert([{ profile_id: myId, music_url: publicUrl, file_name: file.name }] as TablesInsert<'profile_music'>[]);
             if (insertError) throw insertError;
             await fetchData();
         } catch (err: any) {
@@ -156,7 +156,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage.from('gifs').getPublicUrl(filePath);
-            const { error: insertError } = await supabase.from('profile_gifs').insert([{ user_id: myId, gif_url: publicUrl, storage_path: filePath }]);
+            const { error: insertError } = await supabase.from('profile_gifs').insert([{ user_id: myId, gif_url: publicUrl, storage_path: filePath }] as TablesInsert<'profile_gifs'>[]);
             if (insertError) throw insertError;
 
             await fetchData();
@@ -169,7 +169,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack }) 
     };
     
     const handleSetActiveGif = async (gifId: number) => {
-        const { error } = await supabase.from('profiles').update({ active_gif_id: gifId }).eq('id', myId);
+        const { error } = await supabase.from('profiles').update({ active_gif_id: gifId } as TablesUpdate<'profiles'>).eq('id', myId);
         if (error) {
             alert(`Error: ${error.message}`);
         } else {
