@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, Json, TablesUpdate } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Button from '../common/Button';
 
@@ -42,7 +42,7 @@ const AppSettingsPage: React.FC = () => {
     };
 
     const handleSave = async (key: string) => {
-        let parsedValue;
+        let parsedValue: Json;
         try {
             parsedValue = JSON.parse(editValue);
         } catch (e) {

@@ -14,23 +14,23 @@ export interface Database {
           action: string
           admin_user_id: string
           created_at: string
-          details: any | null
+          details: Json | null
           id: number
           target_id: string
         }
         Insert: {
           action: string
           admin_user_id: string
-          details?: any | null
+          details?: Json | null
           target_id: string
         }
         Update: {
           action?: string
           admin_user_id?: string
-          details?: any | null
+          details?: Json | null
           target_id?: string
         }
-      }
+      },
       anime_episodes: {
         Row: {
           created_at: string
@@ -52,7 +52,7 @@ export interface Database {
           title?: string | null
           video_url?: string
         }
-      }
+      },
       anime_series: {
         Row: {
           banner_url: string | null
@@ -77,7 +77,27 @@ export interface Database {
           title?: string
           user_id?: string
         }
-      }
+      },
+      app_settings: {
+        Row: {
+          key: string
+          value: Json
+          description: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          key: string
+          value: Json
+          description?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          key?: string
+          value?: Json
+          description?: string | null
+          updated_at?: string | null
+        }
+      },
       comments: {
         Row: {
           content: string
@@ -102,7 +122,7 @@ export interface Database {
           status?: Database["public"]["Enums"]["comment_status"]
           user_id?: string
         }
-      }
+      },
       daily_claims: {
         Row: {
           claim_date: string
@@ -124,7 +144,7 @@ export interface Database {
           user_id?: string
           user_subscription_id?: number
         }
-      }
+      },
       follows: {
         Row: {
           created_at: string
@@ -139,7 +159,7 @@ export interface Database {
           follower_id?: string
           following_id?: string
         }
-      }
+      },
       likes: {
         Row: {
           created_at: string
@@ -155,7 +175,7 @@ export interface Database {
           post_id?: number
           user_id?: string
         }
-      }
+      },
       manual_payments: {
         Row: {
           admin_notes: string | null
@@ -192,7 +212,7 @@ export interface Database {
           status?: Database["public"]["Enums"]["payment_status"]
           user_id?: string
         }
-      }
+      },
       messages: {
         Row: {
           content: string
@@ -217,7 +237,7 @@ export interface Database {
           sender_id?: string
           status?: string
         }
-      }
+      },
       posts: {
         Row: {
           caption: string | null
@@ -239,7 +259,7 @@ export interface Database {
           status?: Database["public"]["Enums"]["post_status"]
           user_id?: string
         }
-      }
+      },
       products: {
         Row: {
           created_at: string
@@ -279,7 +299,26 @@ export interface Database {
           subscription_initial_xp?: number | null
           xp_amount?: number | null
         }
-      }
+      },
+      profile_gifs: {
+        Row: {
+          id: number
+          user_id: string
+          gif_url: string
+          storage_path: string
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          gif_url: string
+          storage_path: string
+        }
+        Update: {
+          user_id?: string
+          gif_url?: string
+          storage_path?: string
+        }
+      },
       profile_music: {
         Row: {
           created_at: string
@@ -298,7 +337,7 @@ export interface Database {
           music_url?: string
           profile_id?: string
         }
-      }
+      },
       profiles: {
         Row: {
           bio: string | null
@@ -307,11 +346,15 @@ export interface Database {
           id: string
           name: string | null
           photo_url: string | null
-          role: Database["public"]["Enums"]["user_role"]
           selected_music_id: number | null
+          active_gif_id: number | null
           status: Database["public"]["Enums"]["profile_status"]
           username: string
           xp_balance: number
+          has_seen_welcome_bonus: boolean
+          active_fx_id: number | null
+          active_badge_id: number | null
+          is_admin: boolean | null
         }
         Insert: {
           bio?: string | null
@@ -319,11 +362,15 @@ export interface Database {
           id: string
           name?: string | null
           photo_url?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
           selected_music_id?: number | null
+          active_gif_id?: number | null
           status?: Database["public"]["Enums"]["profile_status"]
           username: string
           xp_balance?: number
+          has_seen_welcome_bonus?: boolean
+          active_fx_id?: number | null
+          active_badge_id?: number | null
+          is_admin?: boolean | null
         }
         Update: {
           bio?: string | null
@@ -331,13 +378,17 @@ export interface Database {
           id?: string
           name?: string | null
           photo_url?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
           selected_music_id?: number | null
+          active_gif_id?: number | null
           status?: Database["public"]["Enums"]["profile_status"]
           username?: string
           xp_balance?: number
+          has_seen_welcome_bonus?: boolean
+          active_fx_id?: number | null
+          active_badge_id?: number | null
+          is_admin?: boolean | null
         }
-      }
+      },
       user_subscriptions: {
         Row: {
           created_at: string
@@ -365,15 +416,237 @@ export interface Database {
           start_date?: string
           user_id?: string
         }
+      },
+      user_themes: {
+        Row: {
+          user_id: string
+          light_theme: Json
+          dark_theme: Json
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          light_theme: Json
+          dark_theme: Json
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          light_theme?: Json
+          dark_theme?: Json
+          updated_at?: string
+        }
+      },
+      tasks: {
+        Row: {
+          id: number;
+          title: string;
+          description: string | null;
+          xp_reward: number;
+          type: string;
+          required_count: number;
+          reset_interval: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          title: string;
+          description?: string | null;
+          xp_reward?: number;
+          type: string;
+          required_count?: number;
+          reset_interval?: string;
+          is_active?: boolean;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          xp_reward?: number;
+          type?: string;
+          required_count?: number;
+          reset_interval?: string;
+          is_active?: boolean;
+        };
+      },
+      user_task_progress: {
+        Row: {
+          id: number;
+          user_id: string;
+          task_id: number;
+          progress_count: number;
+          last_completed_at: string | null;
+          last_updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          task_id: number;
+          progress_count?: number;
+          last_completed_at?: string | null;
+        };
+        Update: {
+          progress_count?: number;
+          last_completed_at?: string | null;
+        };
+      },
+      gift_codes: {
+        Row: {
+          id: number;
+          code: string;
+          xp_reward: number;
+          max_uses: number | null;
+          uses_remaining: number | null;
+          max_uses_per_user: number;
+          expires_at: string | null;
+          created_by: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          code: string;
+          xp_reward: number;
+          max_uses?: number | null;
+          uses_remaining?: number | null;
+          max_uses_per_user?: number;
+          expires_at?: string | null;
+          created_by: string;
+          is_active?: boolean;
+        };
+        Update: {
+          code?: string;
+          xp_reward?: number;
+          max_uses?: number | null;
+          uses_remaining?: number | null;
+          max_uses_per_user?: number;
+          expires_at?: string | null;
+          is_active?: boolean;
+        };
+      },
+      user_gift_code_redemptions: {
+        Row: {
+          id: number;
+          user_id: string;
+          gift_code_id: number;
+          redeemed_at: string;
+        };
+        Insert: {
+          user_id: string;
+          gift_code_id: number;
+        };
+        Update: {};
+      },
+      store_items: {
+        Row: {
+          id: number;
+          name: string;
+          description: string | null;
+          category: Enums<'store_item_category'>;
+          price: number;
+          preview_url: string | null;
+          asset_details: Json | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          name: string;
+          description?: string | null;
+          category: Enums<'store_item_category'>;
+          price?: number;
+          preview_url?: string | null;
+          asset_details?: Json | null;
+          is_active?: boolean;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          category?: Enums<'store_item_category'>;
+          price?: number;
+          preview_url?: string | null;
+          asset_details?: Json | null;
+          is_active?: boolean;
+        };
+      },
+      user_inventory: {
+        Row: {
+          id: number;
+          user_id: string;
+          item_id: number;
+          purchased_at: string;
+        };
+        Insert: {
+          user_id: string;
+          item_id: number;
+        };
+        Update: {};
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      claim_daily_xp: {
+      add_xp_to_user: {
         Args: {
-          p_subscription_id: number
+          user_id_to_update: string
+          xp_to_add: number
+        }
+        Returns: undefined
+      }
+      buy_store_item: {
+        Args: {
+          p_item_id: number
+        }
+        Returns: string
+      }
+      deduct_xp_for_action: {
+        Args: {
+          p_user_id: string
+          p_cost: number
+        }
+        Returns: string
+      }
+      equip_inventory_item: {
+        Args: {
+          p_inventory_id: number
+        }
+        Returns: string
+      }
+      get_admin_dashboard_stats: {
+        Args: Record<string, never>
+        Returns: {
+          totalUsers: number
+          pendingPayments: number
+          totalRevenue: number
+          activeSubscriptions: number
+        }
+      }
+      get_pending_payments_admin: {
+        Args: Record<string, never>
+        Returns: {
+          id: number
+          created_at: string
+          user_id: string
+          product_id: number | null
+          amount: number
+          sender_details: string
+          screenshot_url: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          admin_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          profiles: Json
+          products: Json
+        }[]
+      }
+      redeem_gift_code: {
+        Args: {
+          p_code: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      update_task_progress: {
+        Args: {
+          p_user_id: string
+          p_task_type: string
         }
         Returns: undefined
       }
@@ -384,7 +657,7 @@ export interface Database {
       post_status: "live" | "suspended" | "under_review"
       product_type: "package" | "subscription"
       profile_status: "active" | "banned"
-      user_role: "user" | "admin"
+      store_item_category: "PROFILE_FX" | "THEME" | "BADGE"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -395,99 +668,24 @@ export interface Database {
 type PublicSchema = Database["public"]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+  T extends keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+> = (PublicSchema["Tables"] & PublicSchema["Views"])[T] extends {
+  Row: infer R
+}
+  ? R
+  : never
 
-export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+export type TablesInsert<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T]["Insert"]
 
-export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+export type TablesUpdate<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T]["Update"]
 
-export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][T]
 
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+export type CompositeTypes<T extends keyof PublicSchema["CompositeTypes"]> =
+  PublicSchema["CompositeTypes"][T]
+
 
 export const Constants = {
   public: {
@@ -514,9 +712,10 @@ export const Constants = {
         Active: "active",
         Banned: "banned",
       },
-      user_role: {
-        User: "user",
-        Admin: "admin",
+      store_item_category: {
+        ProfileFx: "PROFILE_FX",
+        Theme: "THEME",
+        Badge: "BADGE",
       },
     },
   },

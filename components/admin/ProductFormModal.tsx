@@ -71,9 +71,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                     onClick={onClose}
                 >
                     <motion.div
-                        initial={{ opacity: 0, y: -50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 50 }}
+                        {...{
+                            initial: { opacity: 0, y: -50 },
+                            animate: { opacity: 1, y: 0 },
+                            exit: { opacity: 0, y: 50 },
+                        } as any}
                         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full"
                         onClick={e => e.stopPropagation()}
                     >

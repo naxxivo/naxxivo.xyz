@@ -4,27 +4,27 @@ import type { Tables, Enums } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
 
-type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'status' | 'xp_balance' | 'role'>;
+type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'status' | 'xp_balance' | 'is_admin'>;
 
 interface UserEditModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: { role: Enums<'user_role'>; status: Enums<'profile_status'>; xpAdjustment: number }, notes: string) => Promise<void>;
+    onSave: (data: { isAdmin: boolean; status: Enums<'profile_status'>; xpAdjustment: number }, notes: string) => Promise<void>;
     userToEdit: Profile;
 }
 
 const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, userToEdit }) => {
-    const [role, setRole] = useState<Enums<'user_role'>>(userToEdit.role);
+    const [isAdmin, setIsAdmin] = useState(!!userToEdit.is_admin);
     const [status, setStatus] = useState<Enums<'profile_status'>>(userToEdit.status);
     const [xpAdjustment, setXpAdjustment] = useState(0);
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     
-    const hasChanges = role !== userToEdit.role || status !== userToEdit.status || xpAdjustment !== 0;
+    const hasChanges = isAdmin !== !!userToEdit.is_admin || status !== userToEdit.status || xpAdjustment !== 0;
 
     useEffect(() => {
         // Reset form state when a new user is selected to be edited
-        setRole(userToEdit.role);
+        setIsAdmin(!!userToEdit.is_admin);
         setStatus(userToEdit.status);
         setXpAdjustment(0);
         setNotes('');
@@ -37,7 +37,7 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
             return;
         }
         setIsSaving(true);
-        await onSave({ role, status, xpAdjustment }, notes);
+        await onSave({ isAdmin, status, xpAdjustment }, notes);
         setIsSaving(false);
     };
 
@@ -49,9 +49,11 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
                     onClick={onClose}
                 >
                     <motion.div
-                        initial={{ opacity: 0, y: -50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 50 }}
+                        {...{
+                            initial: { opacity: 0, y: -50 },
+                            animate: { opacity: 1, y: 0 },
+                            exit: { opacity: 0, y: 50 },
+                        } as any}
                         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full"
                         onClick={e => e.stopPropagation()}
                     >
@@ -64,7 +66,7 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
-                                        <select id="role" value={role} onChange={(e) => setRole(e.target.value as Enums<'user_role'>)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                        <select id="role" value={isAdmin ? 'admin' : 'user'} onChange={(e) => setIsAdmin(e.target.value === 'admin')} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                             <option value="user">User</option>
                                             <option value="admin">Admin</option>
                                         </select>

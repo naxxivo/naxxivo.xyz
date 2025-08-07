@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { PostWithDetails } from './HomePage';
 import { generateAvatar } from '../../utils/helpers';
@@ -18,9 +16,11 @@ type CommentWithProfile = Tables<'comments'> & {
 
 interface PostCardProps {
     post: PostWithDetails;
-    session: Session;
+    session: any;
     onViewProfile: (userId: string) => void;
     onOpenComments: () => void;
+    isInitiallyFollowing?: boolean;
+    hideFollowButton?: boolean;
 }
 
 const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct'; id: string } | null => {
@@ -50,148 +50,171 @@ const getVideoDetails = (url: string): { platform: 'youtube' | 'vimeo' | 'direct
 };
 
 
-const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpenComments }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpenComments, isInitiallyFollowing = false, hideFollowButton = false }) => {
     const { profiles: profile, caption, content_url, created_at, id: postId, user_id } = post;
     const timeAgo = new Date(created_at).toLocaleDateString();
 
     const [likeCount, setLikeCount] = useState(post.likes.length);
     const [userHasLiked, setUserHasLiked] = useState(post.likes.some(like => like.user_id === session.user.id));
-    const commentCount = post.comments[0]?.count ?? 0;
-    
+    const [isLiking, setIsLiking] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(isInitiallyFollowing);
+    const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
+
     const videoDetails = content_url ? getVideoDetails(content_url) : null;
+    const commentCount = post.comments[0]?.count || 0;
 
     const handleLikeToggle = async () => {
-        const originalLikeStatus = userHasLiked;
-        const originalLikeCount = likeCount;
+        if (isLiking) return;
+        setIsLiking(true);
 
-        setUserHasLiked(!originalLikeStatus);
-        setLikeCount(prev => originalLikeStatus ? prev - 1 : prev + 1);
+        const originallyLiked = userHasLiked;
+        setLikeCount(c => originallyLiked ? c - 1 : c + 1);
+        setUserHasLiked(!originallyLiked);
 
         try {
-            if (originalLikeStatus) {
+            if (originallyLiked) {
                 await supabase.from('likes').delete().match({ user_id: session.user.id, post_id: postId });
             } else {
-                const like: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
-                await supabase.from('likes').insert([like] as any);
+                const newLike: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
+                await supabase.from('likes').insert([newLike]);
             }
-        } catch (error) {
-            setUserHasLiked(originalLikeStatus);
-            setLikeCount(originalLikeCount);
+        } catch (error: any) {
+            console.error("Failed to update like status:", error.message);
+            // Revert optimistic update on failure
+            setLikeCount(c => originallyLiked ? c + 1 : c - 1);
+            setUserHasLiked(originallyLiked);
+        } finally {
+            setIsLiking(false);
         }
     };
 
-    const handleShare = async () => {
-        const shareData = {
-            title: `Post from ${profile?.name || 'a user'} on NAXXIVO`,
-            text: caption || 'Check out this memory!',
-            url: window.location.origin, // Generic link to the app home
-        };
-        
-        // Use Web Share API if available
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-                return; // Exit after successful share
-            } catch (error: any) {
-                 if (error.name === 'AbortError') {
-                    return; // User cancelled, do nothing.
-                }
-                // Fall through to clipboard if native share fails for other reasons
-            }
-        }
+    const handleFollowToggle = async () => {
+        if (isUpdatingFollow || user_id === session.user.id) return;
+        setIsUpdatingFollow(true);
+        const originalFollowStatus = isFollowing;
+        setIsFollowing(!originalFollowStatus);
 
-        // Fallback to clipboard
         try {
-            const fallbackText = `${shareData.text}\n\nFrom: ${shareData.title}\n${shareData.url}`;
-            await navigator.clipboard.writeText(fallbackText);
-            alert('Link to post copied to clipboard!');
-        } catch (error) {
-            console.error('Error sharing post:', error);
-            alert('Could not share or copy post. This feature may not be supported on your browser.');
+            if (originalFollowStatus) {
+                await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: user_id });
+            } else {
+                const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: user_id };
+                await supabase.from('follows').insert([newFollow]);
+            }
+        } catch (error: any) {
+            console.error("Failed to update follow status:", error.message);
+            setIsFollowing(originalFollowStatus); // Revert on failure
+        } finally {
+            setIsUpdatingFollow(false);
         }
     };
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ type: 'spring', duration: 0.8 }}
-            className="bg-white rounded-2xl shadow-sm flex flex-col"
+            className="bg-[var(--theme-card-bg)] rounded-2xl shadow-sm"
+            {...{
+                initial: { opacity: 0, y: 30 },
+                whileInView: { opacity: 1, y: 0 },
+                viewport: { once: true, amount: 0.3 },
+                transition: { type: 'spring', duration: 0.8 },
+            } as any}
         >
-            <div className="flex items-center p-4">
-                <button onClick={() => onViewProfile(user_id)} className="flex items-center text-left focus:outline-none rounded-full focus:ring-2 focus:ring-violet-500">
-                    <img 
-                      src={profile?.photo_url || generateAvatar(profile?.name || profile?.username || user_id)} 
-                      alt={profile?.name || ''} 
-                      className="w-10 h-10 rounded-full object-cover" 
+            {/* Card Header */}
+            <div className="flex items-center justify-between p-3">
+                <button onClick={() => onViewProfile(user_id)} className="flex items-center space-x-3 group">
+                    <img
+                        src={profile?.photo_url || generateAvatar(profile?.name || '')}
+                        alt={profile?.name || 'User avatar'}
+                        className="w-10 h-10 rounded-full object-cover group-hover:opacity-80 transition-opacity"
                     />
-                    <div className="ml-3">
-                        <p className="font-bold text-gray-800 text-sm">{profile?.name || 'Anonymous'}</p>
-                        <p className="text-xs text-gray-500">{timeAgo}</p>
+                    <div>
+                        <p className="font-bold text-sm text-[var(--theme-text)]">{profile?.name || profile?.username}</p>
+                        <p className="text-xs text-[var(--theme-text-secondary)]">{timeAgo}</p>
                     </div>
                 </button>
-                <button className="ml-auto text-gray-500 hover:text-gray-800">
-                    <OptionsIcon />
-                </button>
+                <div className="flex items-center space-x-2">
+                    {!hideFollowButton && user_id !== session.user.id && (
+                        <button
+                            onClick={handleFollowToggle}
+                            disabled={isUpdatingFollow}
+                            className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                                isFollowing
+                                    ? 'bg-transparent text-[var(--theme-text-secondary)] border border-[var(--theme-text-secondary)]/50 hover:bg-black/5 dark:hover:bg-white/5'
+                                    : 'bg-[var(--theme-primary)] text-[var(--theme-primary-text)] hover:bg-[var(--theme-primary-hover)]'
+                            }`}
+                        >
+                            {isUpdatingFollow ? '...' : isFollowing ? 'Following' : 'Follow'}
+                        </button>
+                    )}
+                    <button className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
+                        <OptionsIcon />
+                    </button>
+                </div>
             </div>
 
+            {/* Post Content */}
             {content_url && (
-                <div className="w-full bg-black aspect-video">
-                    {videoDetails?.platform === 'youtube' ? (
-                        <iframe
-                            className="w-full h-full"
-                            src={`https://www.youtube.com/embed/${videoDetails.id}`}
-                            title={`YouTube video player for ${caption || 'post'}`}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                        ></iframe>
-                    ) : videoDetails?.platform === 'vimeo' ? (
-                        <iframe
-                            className="w-full h-full"
-                            src={`https://player.vimeo.com/video/${videoDetails.id}`}
-                            title={`Vimeo video player for ${caption || 'post'}`}
-                            frameBorder="0"
-                            allow="autoplay; fullscreen; picture-in-picture"
-                            allowFullScreen
-                        ></iframe>
-                    ) : videoDetails?.platform === 'direct' ? (
-                        <video 
-                            src={videoDetails.id} 
-                            controls 
-                            playsInline
-                            className="w-full h-full object-contain"
-                            preload="metadata"
-                        />
+                <div className="w-full aspect-video bg-[var(--theme-card-bg-alt)]">
+                    {videoDetails ? (
+                        <>
+                            {videoDetails.platform === 'youtube' && (
+                                <iframe
+                                    className="w-full h-full"
+                                    src={`https://www.youtube.com/embed/${videoDetails.id}`}
+                                    title="YouTube video player"
+                                    frameBorder="0"
+                                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen
+                                ></iframe>
+                            )}
+                            {videoDetails.platform === 'vimeo' && (
+                                <iframe
+                                    className="w-full h-full"
+                                    src={`https://player.vimeo.com/video/${videoDetails.id}`}
+                                    title="Vimeo video player"
+                                    frameBorder="0"
+                                    allow="fullscreen; picture-in-picture"
+                                    allowFullScreen
+                                ></iframe>
+                            )}
+                            {videoDetails.platform === 'direct' && (
+                                <video key={content_url} src={videoDetails.id} controls playsInline className="w-full h-full object-cover" />
+                            )}
+                        </>
                     ) : (
-                        <img src={content_url} alt="Post content" className="w-full h-full object-cover" loading="lazy" />
+                        <img src={content_url} alt="Post content" className="w-full h-full object-cover" />
                     )}
                 </div>
             )}
-            
-            <div className="p-4">
-                <div className="flex items-center space-x-5 text-gray-600">
-                    <motion.button
-                        onClick={handleLikeToggle}
-                        className={`flex items-center space-x-2 hover:text-violet-500 transition-colors ${userHasLiked ? 'text-violet-500' : ''}`}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                         <motion.div initial={false} animate={{ scale: userHasLiked ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
-                            <HeartIcon filled={userHasLiked} />
+
+
+            {/* Post Actions */}
+            <div className="flex justify-between items-center p-3">
+                <div className="flex items-center space-x-4 text-[var(--theme-text-secondary)]">
+                    <button onClick={handleLikeToggle} className="flex items-center space-x-1.5 group">
+                        <motion.div {...{ whileTap: { scale: 1.2 } } as any}>
+                           <HeartIcon filled={userHasLiked} />
                         </motion.div>
-                        <span className="font-semibold text-sm">{likeCount}</span>
-                    </motion.button>
-                    <button onClick={onOpenComments} className="flex items-center space-x-2 hover:text-violet-500 transition-colors">
-                        <CommentIcon />
-                        <span className="font-semibold text-sm">{commentCount}</span>
+                        <span className="text-sm font-medium group-hover:text-[var(--theme-primary)]">{likeCount}</span>
                     </button>
-                     <button onClick={handleShare} className="flex items-center space-x-2 hover:text-violet-500 transition-colors ml-auto">
+                    <button onClick={onOpenComments} className="flex items-center space-x-1.5 group">
+                        <CommentIcon />
+                        <span className="text-sm font-medium group-hover:text-[var(--theme-primary)]">{commentCount}</span>
+                    </button>
+                    <button className="group">
                         <ShareIcon />
                     </button>
                 </div>
+            </div>
 
-                {caption && <p className="mt-3 text-sm text-gray-700">{caption}</p>}
+            {/* Post Caption & Comments */}
+            <div className="px-4 pb-4 text-sm">
+                {caption && <p><span className="font-bold text-[var(--theme-text)] mr-1.5">{profile?.username}</span><span className="text-[var(--theme-text)]">{caption}</span></p>}
+                {commentCount > 0 && (
+                    <button onClick={onOpenComments} className="text-[var(--theme-text-secondary)] mt-1.5">
+                        View all {commentCount} comments
+                    </button>
+                )}
             </div>
         </motion.div>
     );

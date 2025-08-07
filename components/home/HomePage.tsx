@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../integrations/supabase/client';
 import PostCard from './PostCard';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -8,9 +7,10 @@ import { SearchIcon } from '../common/AppIcons';
 import CommentModal from './CommentModal';
 import QuickPostInput from './QuickPostInput';
 import type { Tables } from '../../integrations/supabase/types';
+import { generateAvatar } from '../../utils/helpers';
 
 interface HomePageProps {
-    session: Session;
+    session: any;
     onViewProfile: (userId: string) => void;
     refreshKey: number;
     onOpenSearch: () => void;
@@ -32,42 +32,46 @@ export type PostWithDetails = {
     comments: Array<{ count: number }>;
 };
 
-const Stories: React.FC<{onViewProfile: (id: string) => void}> = ({onViewProfile}) => {
-    // Dummy data for stories
-    const stories = [
-        { id: 'add', name: 'Add Story' },
-        { id: '1', name: 'Mo Chun', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
-        { id: '2', name: 'Bansilal', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704e' },
-        { id: '3', name: 'Yahiro', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704f' },
-        { id: '4', name: 'Miriam', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704a' },
-        { id: '5', name: 'Ashish', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704b' },
-    ];
+const SuggestedUsers: React.FC<{ onViewProfile: (userId: string) => void }> = ({ onViewProfile }) => {
+    const [users, setUsers] = useState<Pick<Tables<'profiles'>, 'id' | 'name' | 'photo_url' | 'username'>[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, name, photo_url, username')
+                .order('xp_balance', { ascending: false })
+                .limit(10);
+            if (data) setUsers(data);
+            setLoading(false);
+        };
+        fetchUsers();
+    }, []);
+
+    if (loading) return null;
 
     return (
         <div className="mb-4">
+            <h2 className="font-bold text-[var(--theme-text)] mb-2">Top Travelers</h2>
             <div className="flex space-x-4 overflow-x-auto pb-3 -mx-4 px-4 hide-scrollbar">
-                {stories.map(story => (
-                    <button key={story.id} onClick={() => story.id !== 'add' && onViewProfile(story.id)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-20">
-                        <div className={`w-16 h-16 rounded-full p-0.5 flex items-center justify-center ${story.id === 'add' ? 'bg-gray-200' : 'bg-gradient-to-tr from-yellow-400 to-fuchsia-600'}`}>
-                            <div className="w-full h-full bg-white rounded-full p-0.5">
-                                {story.id === 'add' ? (
-                                    <div className="w-full h-full rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-2xl">+</div>
-                                ) : (
-                                    <img src={story.avatar} alt={story.name} className="w-full h-full object-cover rounded-full" />
-                                )}
-                            </div>
+                {users.map(user => (
+                    <button key={user.id} onClick={() => onViewProfile(user.id)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-20">
+                        <div className="w-16 h-16 rounded-full p-0.5 flex items-center justify-center bg-gradient-to-tr from-[var(--theme-primary)] to-[var(--theme-secondary)]">
+                            <img src={user.photo_url || generateAvatar(user.username)} alt={user.name || ''} className="w-full h-full object-cover rounded-full p-0.5 bg-[var(--theme-card-bg)]" />
                         </div>
-                        <p className="text-xs text-gray-700 truncate w-full">{story.name}</p>
+                        <p className="text-xs text-[var(--theme-text-secondary)] truncate w-full">{user.name || user.username}</p>
                     </button>
                 ))}
             </div>
         </div>
-    )
-}
+    );
+};
 
 
 const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey, onOpenSearch }) => {
     const [posts, setPosts] = useState<PostWithDetails[]>([]);
+    const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [commentModalPostId, setCommentModalPostId] = useState<number | null>(null);
@@ -77,34 +81,45 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
         setLoading(true);
         setError(null);
         try {
-            const { data: postData, error: postsError } = await supabase
-                .from('posts')
-                .select(`
-                    id,
-                    created_at,
-                    caption,
-                    content_url,
-                    user_id,
-                    status,
-                    profiles (
-                        username,
-                        name,
-                        photo_url
-                    ),
-                    likes ( user_id ),
-                    comments ( count )
-                `)
-                .order('created_at', { ascending: false });
+            const [postsPromise, followsPromise] = await Promise.all([
+                 supabase
+                    .from('posts')
+                    .select(`
+                        id,
+                        created_at,
+                        caption,
+                        content_url,
+                        user_id,
+                        status,
+                        profiles (
+                            username,
+                            name,
+                            photo_url
+                        ),
+                        likes ( user_id ),
+                        comments ( count )
+                    `)
+                    .order('created_at', { ascending: false }),
+                supabase.from('follows').select('following_id').eq('follower_id', myId)
+            ]);
             
+            const { data: postData, error: postsError } = postsPromise;
             if (postsError) throw postsError;
-            if (postData) setPosts(postData as unknown as PostWithDetails[]);
+            if (postData) setPosts(postData as any);
+
+            const { data: followsData, error: followsError } = followsPromise;
+            if (followsError) throw followsError;
+            if (followsData) {
+                setFollowingSet(new Set(followsData.map(f => f.following_id)));
+            }
+
 
         } catch (error: any) {
             setError(error.message || "Failed to fetch posts.");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [myId]);
 
     useEffect(() => {
         fetchPosts();
@@ -115,7 +130,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
             currentPosts.map(p => {
                 if (p.id === postId) {
                     const newCommentCount = (p.comments[0]?.count ?? 0) + 1;
-                    return { ...p, comments: [{ count: newCommentCount }] };
+                    return { ...p, comments: [{ count: newCommentCount }] } as PostWithDetails;
                 }
                 return p;
             })
@@ -144,12 +159,12 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                 <div className="text-3xl">
                   <Logo/>
                 </div>
-                <button onClick={onOpenSearch} className="text-gray-600 hover:text-gray-900">
+                <button onClick={onOpenSearch} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
                     <SearchIcon />
                 </button>
             </header>
 
-            <Stories onViewProfile={onViewProfile} />
+            <SuggestedUsers onViewProfile={onViewProfile} />
 
              <QuickPostInput session={session} onPostCreated={fetchPosts} />
             
@@ -162,11 +177,12 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                             session={session}
                             onViewProfile={onViewProfile}
                             onOpenComments={() => setCommentModalPostId(post.id)}
+                            isInitiallyFollowing={followingSet.has(post.user_id)}
                         />)
                 ) : (
-                    <div className="text-center py-16 px-4 bg-gray-50 rounded-2xl">
-                        <h2 className="text-xl font-semibold text-gray-800">The feed is empty!</h2>
-                        <p className="text-gray-500 mt-2">Be the first to share something with the community.</p>
+                    <div className="text-center py-16 px-4 bg-[var(--theme-card-bg-alt)] rounded-2xl">
+                        <h2 className="text-xl font-semibold text-[var(--theme-text)]">The feed is empty!</h2>
+                        <p className="text-[var(--theme-text-secondary)] mt-2">Be the first to share something with the community.</p>
                     </div>
                 )}
             </div>

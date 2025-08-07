@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 import { supabase } from '../integrations/supabase/client';
 import AuthPage from './auth/AuthPage';
 import AuthForm from './auth/AuthForm';
@@ -22,12 +22,18 @@ import CreateEpisodePage from './anime/CreateEpisodePage';
 import TopUpPage from './xp/TopUpPage';
 import SubscriptionClaimPage from './xp/SubscriptionClaimPage';
 import ManualPaymentPage from './xp/ManualPaymentPage';
-import { motion, AnimatePresence, type Transition } from 'framer-motion';
+import StorePage from './store/StorePage';
+import CollectionPage from './store/CollectionPage';
+import InfoPage from './info/InfoPage';
+import EarnXpPage from './xp/EarnXpPage';
+import PasswordModal from './common/PasswordModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
-type AuthView =
+export type AuthView =
     'home' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
-    'top-up' | 'subscriptions' | 'manual-payment';
+    'top-up' | 'subscriptions' | 'manual-payment' |
+    'store' | 'collection' | 'info' | 'earn-xp';
 
 const pageVariants = {
     initial: { opacity: 0, x: "100%" },
@@ -35,21 +41,22 @@ const pageVariants = {
     out: { opacity: 0, x: "-100%" },
 };
 
-const pageTransition: Transition = {
-    type: "tween",
-    ease: "anticipate",
+const pageTransition = {
+    type: "tween" as const,
+    ease: "anticipate" as const,
     duration: 0.5
 };
 
 interface UserAppProps {
     session: Session;
-    onEnterAdminView?: () => void;
+    onEnterAdminView: () => void;
 }
 
 const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [authView, setAuthView] = useState<AuthView>('home');
     const [isCreatePostOpen, setCreatePostOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
     const [viewingSeriesId, setViewingSeriesId] = useState<number | null>(null);
     const [paymentProductId, setPaymentProductId] = useState<number | null>(null);
@@ -118,11 +125,10 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         setAuthView('manual-payment');
     }
 
-    const handleNavigateToAdminPanel = () => {
-        if (onEnterAdminView) {
-            onEnterAdminView();
-        }
-    };
+    const handleNavigateToStore = () => setAuthView('store');
+    const handleNavigateToCollection = () => setAuthView('collection');
+    const handleNavigateToInfo = () => setAuthView('info');
+    const handleNavigateToEarnXp = () => setAuthView('earn-xp');
 
     const handleViewProfile = (userId: string) => {
         setIsSearchOpen(false);
@@ -153,13 +159,13 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         onNavigateToSettings={handleNavigateToSettings}
                         onNavigateToTools={handleNavigateToTools}
                         onViewProfile={handleViewProfile}
-                        onNavigateToAdminPanel={handleNavigateToAdminPanel}
                      />,
             settings: <SettingsPage 
                         onBack={() => setAuthView('profile')} 
                         onNavigateToEditProfile={handleNavigateToEditProfile}
                         onNavigateToMusicLibrary={handleNavigateToMusicLibrary}
                         onLogout={handleLogout}
+                        onNavigateToAdminPanel={() => setIsPasswordModalOpen(true)}
                       />,
             'edit-profile': <EditProfilePage 
                                 session={session} 
@@ -172,9 +178,18 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                             />,
             'music-library': <MusicLibraryPage
                                 session={session}
-                                onBack={() => setAuthView('settings')}
+                                onBack={() => setAuthView('profile')}
                             />,
-            tools: <ToolsPage onBack={() => setAuthView('profile')} onNavigateToAnime={handleNavigateToAnime} onNavigateToTopUp={handleNavigateToTopUp} />,
+            tools: <ToolsPage 
+                        onBack={() => setAuthView('profile')} 
+                        onNavigateToAnime={handleNavigateToAnime} 
+                        onNavigateToTopUp={handleNavigateToTopUp} 
+                        onNavigateToMusicLibrary={handleNavigateToMusicLibrary} 
+                        onNavigateToStore={handleNavigateToStore} 
+                        onNavigateToCollection={handleNavigateToCollection} 
+                        onNavigateToInfo={handleNavigateToInfo} 
+                        onNavigateToEarnXp={handleNavigateToEarnXp}
+                   />,
             anime: <AnimePage 
                         key={refreshAnimeKey}
                         onBack={() => setAuthView('tools')}
@@ -190,12 +205,17 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
             'create-episode': <CreateEpisodePage onBack={() => setAuthView('anime')} onEpisodeCreated={() => setAuthView('anime')} />,
             'top-up': <TopUpPage onBack={() => setAuthView('tools')} onPurchase={handleNavigateToManualPayment} onManageSubscriptions={handleNavigateToSubscriptions} />,
             'subscriptions': <SubscriptionClaimPage onBack={() => setAuthView('top-up')} session={session} />,
-            'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} />
+            'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} />,
+            store: <StorePage onBack={() => setAuthView('tools')} session={session} />,
+            collection: <CollectionPage onBack={() => setAuthView('tools')} session={session} />,
+            info: <InfoPage onBack={() => setAuthView('tools')} />,
+            'earn-xp': <EarnXpPage onBack={() => setAuthView('tools')} session={session} />,
         }[authView];
 
         const isFullScreenPage = [
             'profile', 'music-library', 'tools', 'anime', 'anime-series', 'create-series', 'create-episode',
-            'top-up', 'subscriptions', 'manual-payment'
+            'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile',
+            'store', 'collection', 'info', 'earn-xp'
         ].includes(authView);
 
         pageContent = (
@@ -204,11 +224,13 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={authView + (viewingProfileId || '') + (viewingSeriesId || '')}
-                            variants={pageVariants}
-                            initial="initial"
-                            animate="in"
-                            exit="out"
-                            transition={pageTransition}
+                            {...{
+                                variants: pageVariants,
+                                initial: "initial",
+                                animate: "in",
+                                exit: "out",
+                                transition: pageTransition,
+                            } as any}
                         >
                             {CurrentPage}
                         </motion.div>
@@ -227,20 +249,30 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                 <AnimatePresence>
                   {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} onViewProfile={handleViewProfile} />}
                 </AnimatePresence>
+                 <PasswordModal
+                    isOpen={isPasswordModalOpen}
+                    onClose={() => setIsPasswordModalOpen(false)}
+                    onSuccess={() => {
+                        setIsPasswordModalOpen(false);
+                        onEnterAdminView();
+                    }}
+                />
             </>
         )
     }
 
     return (
-        <div className="w-full min-h-screen bg-gray-200 flex justify-center">
-            <div className="w-full max-w-sm bg-white min-h-screen shadow-2xl relative overflow-x-hidden">
+        <div className="w-full min-h-screen bg-gray-200 dark:bg-black flex justify-center">
+            <div className="w-full max-w-sm bg-[var(--theme-bg)] min-h-screen shadow-2xl relative overflow-x-hidden">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={chattingWith ? 'chat' : 'main'}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        {...{
+                            initial: { opacity: 0 },
+                            animate: { opacity: 1 },
+                            exit: { opacity: 0 },
+                            transition: { duration: 0.3 },
+                        } as any}
                     >
                         {pageContent}
                     </motion.div>

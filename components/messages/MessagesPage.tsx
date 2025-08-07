@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { SearchIcon as SearchIconSVG } from '../common/AppIcons';
+import { SearchIcon as SearchIconSVG, MenuIcon } from '../common/AppIcons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 // --- Local Types --- //
@@ -39,6 +40,7 @@ interface MessagesPageProps {
 
 const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<ProfileStub[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -49,6 +51,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
             setLoading(true);
             setError(null);
             try {
+                // Fetch recent messages
                 const { data: typedMessages, error: messagesError } = await supabase
                     .from('messages')
                     .select('content, created_at, is_read, sender_id, recipient_id')
@@ -76,12 +79,21 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                     }
                 }
                 
+                // Fetch some users for the "online" list (dummy data for now)
+                const { data: onlineUsersData, error: onlineUsersError } = await supabase
+                    .from('profiles')
+                    .select('id, name, username, photo_url')
+                    .limit(10);
+                if(onlineUsersError) throw onlineUsersError;
+                setOnlineUsers(onlineUsersData || []);
+
                 if (otherUserIds.size === 0) {
                     setConversations([]);
                     setLoading(false);
                     return;
                 }
-
+                
+                // Fetch profiles for the conversations
                 const { data: typedProfiles, error: profilesError } = await supabase
                     .from('profiles')
                     .select('id, name, username, photo_url')
@@ -121,77 +133,100 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
     }, [conversations, searchTerm]);
     
     return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800">Messages</h1>
-            
-            <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <SearchIconSVG />
+        <div className="bg-[var(--theme-bg)] min-h-screen">
+            <header className="bg-[var(--theme-header-bg)] p-4 rounded-b-[2.5rem] text-[var(--theme-header-text)] shadow-lg border-b-2 border-[var(--theme-primary)]">
+                <div className="flex justify-between items-center">
+                    <button><MenuIcon/></button>
+                    <h1 className="text-xl font-bold">Messages</h1>
+                    <img src={session.user.user_metadata.avatar_url || generateAvatar(session.user.id)} alt="My Avatar" className="w-8 h-8 rounded-full" />
                 </div>
-                <input
-                    type="text"
-                    placeholder="Search messages..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-gray-100 border-transparent rounded-full text-gray-800 placeholder-gray-500 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                />
-            </div>
-            
-            {loading && (
-                 <div className="flex justify-center pt-20">
-                    <LoadingSpinner />
+                 <div className="relative mt-4">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--theme-text-secondary)]">
+                        <SearchIconSVG />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-[var(--theme-secondary)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-2.5 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
+                    />
                 </div>
-            )}
-            
-            {error && (
-                <div className="text-center pt-20 text-red-500" role="alert">
-                    <p>Error loading messages: {error}</p>
+                <div className="mt-4">
+                    <div className="flex space-x-4 overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
+                         {onlineUsers.map(user => (
+                            <button key={user.id} onClick={() => onStartChat({ id: user.id, name: user.name || 'Unknown', photo_url: user.photo_url })} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-16">
+                                <img src={user.photo_url || generateAvatar(user.username)} alt={user.name || ''} className="w-14 h-14 object-cover rounded-full border-2 border-[var(--theme-primary)]/50" />
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            )}
+            </header>
+            
+            <main className="bg-[var(--theme-card-bg)] rounded-t-[2.5rem] -mt-8 pt-6">
+                {loading && (
+                     <div className="flex justify-center pt-20">
+                        <LoadingSpinner />
+                    </div>
+                )}
+                
+                {error && (
+                    <div className="text-center pt-20 px-4 text-red-500" role="alert">
+                        <p>Error loading messages: {error}</p>
+                    </div>
+                )}
 
-            {!loading && !error && filteredConversations.length === 0 && (
-                <div className="text-center py-16 px-4 bg-gray-50 rounded-2xl">
-                    <h2 className="text-xl font-semibold text-gray-800">No conversations yet</h2>
-                    <p className="text-gray-500 mt-2">Find users on the Discover page to start a chat.</p>
-                </div>
-            )}
+                {!loading && !error && filteredConversations.length === 0 && (
+                    <div className="text-center py-16 px-4">
+                        <h2 className="text-xl font-semibold text-[var(--theme-text)]">No conversations yet</h2>
+                        <p className="text-[var(--theme-text-secondary)] mt-2">Find users on the Discover page to start a chat.</p>
+                    </div>
+                )}
 
-            {!loading && filteredConversations.length > 0 && (
-                <div className="space-y-3">
-                    {filteredConversations.map(({ other_user, last_message, unread_count }) => {
-                        const isUnread = unread_count > 0;
-                        return (
-                         <button 
-                            key={other_user.id} 
-                            onClick={() => onStartChat({ id: other_user.id, name: other_user.name || 'Unknown', photo_url: other_user.photo_url })}
-                            className="w-full flex items-center p-3 bg-white rounded-2xl hover:bg-gray-50 transition-colors text-left shadow-sm"
-                        >
-                            <div className="relative flex-shrink-0">
-                                <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200">
-                                    <img 
-                                        src={other_user.photo_url || generateAvatar(other_user.name || other_user.username)} 
-                                        alt={other_user.name || ''} 
-                                        className="w-full h-full object-cover" 
-                                    />
-                                </div>
-                                {isUnread && (
-                                     <span className="absolute bottom-0 right-0 block h-3.5 w-3.5 rounded-full bg-violet-500 ring-2 ring-white" />
-                                )}
-                            </div>
-                            <div className="ml-4 flex-grow overflow-hidden">
-                                <p className={`truncate ${isUnread ? 'font-bold text-gray-900' : 'font-semibold text-gray-800'}`}>{other_user.name || other_user.username}</p>
-                                <p className={`text-sm truncate ${isUnread ? 'text-gray-700' : 'text-gray-500'}`}>{last_message.content}</p>
-                            </div>
-                            <div className="flex flex-col items-end ml-2 text-xs text-gray-400 self-start pt-1">
-                                <span>{new Date(last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                {isUnread && (
-                                    <span className="mt-1.5 h-5 w-5 bg-violet-500 text-white text-xs flex items-center justify-center rounded-full font-bold">{unread_count}</span>
-                                )}
-                            </div>
-                        </button>
-                    )})}
-                </div>
-            )}
+                {!loading && filteredConversations.length > 0 && (
+                    <div className="space-y-1 px-3">
+                         <AnimatePresence>
+                            {filteredConversations.map(({ other_user, last_message, unread_count }, index) => {
+                                const isUnread = unread_count > 0;
+                                return (
+                                 <motion.button 
+                                    key={other_user.id} 
+                                    {...{
+                                        initial: { opacity: 0, y: 20 },
+                                        animate: { opacity: 1, y: 0 },
+                                        exit: { opacity: 0, y: -20 },
+                                        transition: { delay: index * 0.05 }
+                                    } as any}
+                                    onClick={() => onStartChat({ id: other_user.id, name: other_user.name || 'Unknown', photo_url: other_user.photo_url })}
+                                    className="w-full flex items-center p-3 rounded-2xl hover:bg-[var(--theme-card-bg-alt)] transition-colors text-left"
+                                >
+                                    <div className="relative flex-shrink-0">
+                                        <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200">
+                                            <img 
+                                                src={other_user.photo_url || generateAvatar(other_user.name || other_user.username)} 
+                                                alt={other_user.name || ''} 
+                                                className="w-full h-full object-cover" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="ml-4 flex-grow overflow-hidden">
+                                        <div className="flex justify-between items-start">
+                                            <p className={`truncate ${isUnread ? 'font-bold text-[var(--theme-text)]' : 'font-semibold text-[var(--theme-text)]'}`}>{other_user.name || other_user.username}</p>
+                                            <span className="text-xs text-[var(--theme-text-secondary)] flex-shrink-0 ml-2">{new Date(last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start mt-1">
+                                            <p className={`text-sm truncate ${isUnread ? 'text-[var(--theme-text)]' : 'text-[var(--theme-text-secondary)]'}`}>{last_message.content}</p>
+                                            {isUnread && (
+                                                <span className="h-5 w-5 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] text-xs flex items-center justify-center rounded-full font-bold flex-shrink-0 ml-2">{unread_count}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </motion.button>
+                            )})}
+                        </AnimatePresence>
+                    </div>
+                )}
+            </main>
         </div>
     );
 };

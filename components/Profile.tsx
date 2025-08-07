@@ -1,16 +1,34 @@
-
-
-
-import React, { useState, useEffect, useRef } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type { Session } from '@supabase/auth-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
 import type { Tables, TablesInsert, Enums } from '../integrations/supabase/types';
 import { generateAvatar, formatXp } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
-import { BackArrowIcon, SettingsIcon, SendPlaneIcon, MusicNoteIcon, ToolsIcon, CoinIcon, AdminIcon } from './common/AppIcons';
+import { BackArrowIcon, SettingsIcon, MusicNoteIcon, ToolsIcon, CoinIcon, AdminIcon, WebsiteIcon, YouTubeIcon, FacebookIcon } from './common/AppIcons';
 import { motion } from 'framer-motion';
+import PostCard from './home/PostCard';
+import CommentModal from './home/CommentModal';
+
+// --- Types --- //
+type PostWithDetails = {
+    id: number;
+    created_at: string;
+    caption: string | null;
+    content_url: string | null;
+    user_id: string;
+    status: Tables<'posts'>['status'];
+    profiles: {
+        username: string | null;
+        name: string | null;
+        photo_url: string | null;
+    } | null;
+    likes: Array<{ user_id: string }>;
+    comments: Array<{ count: number }>;
+};
+
+type StoreItem = Pick<Tables<'store_items'>, 'id' | 'asset_details' | 'preview_url'>;
 
 // --- Profile Component --- //
 interface ProfileProps {
@@ -20,26 +38,16 @@ interface ProfileProps {
     onMessage?: (user: { id:string; name: string; photo_url: string | null }) => void;
     onNavigateToSettings: () => void;
     onNavigateToTools: () => void;
-    onNavigateToAdminPanel?: () => void;
     onViewProfile: (userId: string) => void;
 }
 
-type ProfileData = {
-    id: string;
-    cover_url: string | null;
-    xp_balance: number;
-    role: Enums<'user_role'>;
-    photo_url: string | null;
-    name: string | null;
-    username: string;
-    bio: string | null;
-} & {
+type ProfileData = Tables<'profiles'> & {
     profile_music: { music_url: string }[] | null;
+    profile_gifs: { gif_url: string } | null;
+    active_badge?: StoreItem | null;
+    active_fx?: StoreItem | null;
 };
-interface PostData {
-    id: number;
-    content_url: string | null;
-}
+
 type ProfileStub = {
     id: string;
     name: string | null;
@@ -47,9 +55,9 @@ type ProfileStub = {
     photo_url: string | null;
 };
 
-const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, onNavigateToSettings, onNavigateToTools, onNavigateToAdminPanel, onViewProfile }) => {
+const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, onNavigateToSettings, onNavigateToTools, onViewProfile }) => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
-    const [posts, setPosts] = useState<PostData[]>([]);
+    const [posts, setPosts] = useState<PostWithDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [followerCount, setFollowerCount] = useState(0);
@@ -57,30 +65,25 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     const [isFollowing, setIsFollowing] = useState(false);
     const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
     const [modalState, setModalState] = useState<{ type: 'followers' | 'following' | null; users: ProfileStub[]; loading: boolean; title: string }>({ type: null, users: [], loading: false, title: '' });
+    const [commentModalPostId, setCommentModalPostId] = useState<number | null>(null);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
-
-    // Refs for Audio Visualizer
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const audioContextRef = useRef<AudioContext | null>(null);
-    const analyserRef = useRef<AnalyserNode | null>(null);
-    const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-    const animationFrameIdRef = useRef<number | null>(null);
-
-
-    const isMyProfile = userId === session.user.id;
     
-    const getDancingAnimation = (delay: number) => ({
-        y: ["0%", "-10%", "0%"],
-        transition: {
-            delay,
-            duration: 0.8,
-            repeat: Infinity,
-            repeatType: 'mirror' as const,
-            ease: "easeInOut" as const,
-        }
-    });
+    const isMyProfile = userId === session.user.id;
+
+    const handleCommentAdded = useCallback((postId: number) => {
+        setPosts(currentPosts => 
+            currentPosts.map(p => {
+                if (p.id === postId) {
+                    const newCommentCount = (p.comments[0]?.count ?? 0) + 1;
+                    return { ...p, comments: [{ count: newCommentCount }] } as PostWithDetails;
+                }
+                return p;
+            })
+        );
+    }, []);
+    
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -94,19 +97,45 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             }
 
             try {
-                const { data: profileData, error: profileError } = await supabase
+                // Step 1: Fetch base profile data
+                const { data: profileBase, error: profileError } = await supabase
                     .from('profiles')
-                    .select(`
-                        id, cover_url, xp_balance, role, photo_url, name, username, bio,
-                        profile_music ( music_url )
-                    `)
+                    .select('*, profile_music(music_url)')
                     .eq('id', userId)
                     .single();
-                
-                if (profileError || !profileData) throw new Error(profileError?.message || "Profile not found.");
-                
-                setProfile(profileData as unknown as ProfileData);
 
+                if (profileError || !profileBase) throw new Error(profileError?.message || "Profile not found.");
+
+                // Step 2: Fetch related items in separate queries
+                let activeGif: { gif_url: string } | null = null;
+                if (profileBase.active_gif_id) {
+                    const { data: gifData } = await supabase.from('profile_gifs').select('gif_url').eq('id', profileBase.active_gif_id).single();
+                    activeGif = gifData;
+                }
+                
+                let activeBadge: StoreItem | null = null;
+                if (profileBase.active_badge_id) {
+                    const { data: badgeData } = await supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_badge_id).single();
+                    activeBadge = badgeData as StoreItem | null;
+                }
+
+                let activeFx: StoreItem | null = null;
+                if (profileBase.active_fx_id) {
+                    const { data: fxData } = await supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_fx_id).single();
+                    activeFx = fxData as StoreItem | null;
+                }
+
+                // Step 3: Combine all data
+                const fullProfileData = {
+                    ...profileBase,
+                    profile_gifs: activeGif,
+                    active_badge: activeBadge,
+                    active_fx: activeFx,
+                };
+
+                setProfile(fullProfileData as any);
+
+                // Step 4: Fetch counts and posts
                 const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
                 const { count: following } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
                 setFollowerCount(followers || 0);
@@ -117,9 +146,23 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     setIsFollowing((isFollowingCount || 0) > 0);
                 }
                 
-                const { data: postData, error: postError } = await supabase.from('posts').select('id, content_url').eq('user_id', userId).order('created_at', { ascending: false });
+                const { data: postData, error: postError } = await supabase
+                    .from('posts')
+                    .select(`
+                        id, created_at, caption, content_url, user_id, status,
+                        profiles (username, name, photo_url),
+                        likes (user_id),
+                        comments (count)
+                    `)
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+
                 if(postError) throw postError;
-                if (postData) setPosts(postData as PostData[]);
+                if (postData) {
+                    setPosts(postData as any);
+                } else {
+                    setPosts([]);
+                }
 
             } catch (error: any) {
                 setError(error.message || "An error occurred.");
@@ -130,79 +173,12 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
 
         fetchProfile();
         
-        // Cleanup audio on component unmount
         return () => {
             audioRef.current?.pause();
             audioRef.current = null;
-            audioContextRef.current?.close();
         }
     }, [userId, session.user.id, isMyProfile]);
 
-    useEffect(() => {
-        if (isPlaying && analyserRef.current && canvasRef.current) {
-            const analyser = analyserRef.current;
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            
-            let hue = 0; // For color animation
-
-            const draw = () => {
-                animationFrameIdRef.current = requestAnimationFrame(draw);
-                analyser.getByteFrequencyData(dataArray);
-
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const radius = 60; // Inner radius, leaving space for avatar
-                const bars = 128; // How many bars to draw
-
-                for (let i = 0; i < bars; i++) {
-                    // Scale bar height, with a minimum value to show something on silence
-                    const barHeight = (dataArray[i] / 2.5) + 1; 
-                    const angle = (i / bars) * 2 * Math.PI;
-
-                    const startX = centerX + radius * Math.cos(angle);
-                    const startY = centerY + radius * Math.sin(angle);
-                    const endX = centerX + (radius + barHeight) * Math.cos(angle);
-                    const endY = centerY + (radius + barHeight) * Math.sin(angle);
-
-                    ctx.beginPath();
-                    // Create a rainbow effect by cycling through hues
-                    ctx.strokeStyle = `hsl(${(hue + i * 2.5) % 360}, 100%, 50%)`;
-                    ctx.lineWidth = 2.5;
-                    ctx.moveTo(startX, startY);
-                    ctx.lineTo(endX, endY);
-                    ctx.stroke();
-                }
-                
-                hue += 0.5; // Slowly shift the colors
-            };
-
-            draw();
-
-        } else {
-            if (animationFrameIdRef.current) {
-                cancelAnimationFrame(animationFrameIdRef.current);
-            }
-            const canvas = canvasRef.current;
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx?.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        }
-
-        return () => {
-            if (animationFrameIdRef.current) {
-                cancelAnimationFrame(animationFrameIdRef.current);
-            }
-        };
-    }, [isPlaying]);
-    
     const handleAvatarClick = async () => {
         const musicUrl = profile?.profile_music?.[0]?.music_url;
         if (!musicUrl) return;
@@ -210,41 +186,14 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
         if (isPlaying && audioRef.current) {
             audioRef.current.pause();
             setIsPlaying(false);
-            return;
-        }
-    
-        try {
+        } else {
             if (!audioRef.current) {
                 audioRef.current = new Audio(musicUrl);
-                audioRef.current.crossOrigin = "anonymous"; // Needed for AudioContext
+                audioRef.current.crossOrigin = "anonymous";
                 audioRef.current.addEventListener('ended', () => setIsPlaying(false));
-    
-                if (!audioContextRef.current) {
-                    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-                    audioContextRef.current = new AudioContext();
-                }
-    
-                const context = audioContextRef.current;
-                
-                if (!sourceRef.current || sourceRef.current.mediaElement !== audioRef.current) {
-                    sourceRef.current = context.createMediaElementSource(audioRef.current);
-                    analyserRef.current = context.createAnalyser();
-                    analyserRef.current.fftSize = 256;
-                    
-                    sourceRef.current.connect(analyserRef.current);
-                    analyserRef.current.connect(context.destination);
-                }
             }
-    
-            if (audioContextRef.current?.state === 'suspended') {
-                await audioContextRef.current.resume();
-            }
-    
             await audioRef.current.play();
             setIsPlaying(true);
-        } catch (error) {
-            console.error("Audio playback failed:", error);
-            setIsPlaying(false);
         }
     };
 
@@ -259,7 +208,8 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (originalFollowStatus) {
                 await supabase.from('follows').delete().match({ follower_id: session.user.id, following_id: userId });
             } else {
-                await supabase.from('follows').insert([{ follower_id: session.user.id, following_id: userId }] as any);
+                const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: userId };
+                await supabase.from('follows').insert([newFollow]);
             }
         } catch (error: any) { 
             console.error("Failed to update follow status:", error.message);
@@ -287,7 +237,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             if (userIds.length > 0) {
                 const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: (profiles as unknown as ProfileStub[]) || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }
@@ -305,123 +255,135 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             {onBack && <Button onClick={onBack} variant="secondary" className="mt-4 w-auto px-6">Back</Button>}
         </div>
     );
+
+    const activeGifUrl = profile.profile_gifs?.gif_url;
+    const profileImageUrl = isPlaying && activeGifUrl ? activeGifUrl : (profile.photo_url || generateAvatar(profile.name || profile.username));
     
+    const activeFxUrl = profile.active_fx?.preview_url;
+    const activeBadgeUrl = profile.active_badge?.preview_url;
+
+    const statItem = (value: string | number, label: string) => (
+        <div>
+            <p className="text-xl font-bold text-[var(--theme-text)]">{value}</p>
+            <p className="text-xs tracking-wide text-[var(--theme-text-secondary)] uppercase">{label}</p>
+        </div>
+    );
+
     return (
-        <div className="flex flex-col w-full bg-gray-50">
-             <header className="relative h-48 w-full">
-                {profile.cover_url ? (
-                    <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover"/>
-                ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-violet-300 to-purple-400"></div>
-                )}
-                <div className="absolute inset-0 bg-black/20"></div>
-                 <div className="absolute top-2 left-2 right-2 flex justify-between items-center">
-                    <button onClick={onBack} className={`text-white hover:bg-black/20 rounded-full p-2 transition-colors ${onBack ? 'visible' : 'invisible'}`}><BackArrowIcon /></button>
-                    <div className="flex items-center gap-2 bg-black/20 text-white px-3 py-1.5 rounded-full">
-                        <CoinIcon className="w-5 h-5 text-yellow-300"/>
-                        <span className="font-bold text-sm">{formatXp(profile.xp_balance)} XP</span>
+        <div className="bg-[var(--theme-bg)] min-h-screen">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                {/* --- HEADER --- */}
+                <div className="relative h-48">
+                     <div className="absolute inset-0">
+                        <svg viewBox="0 0 375 190" preserveAspectRatio="none" className="w-full h-full">
+                            {profile.cover_url ? (
+                                <defs>
+                                    <pattern id="cover-pattern" patternUnits="userSpaceOnUse" width="100%" height="100%">
+                                        <image href={profile.cover_url} x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+                                    </pattern>
+                                </defs>
+                            ) : null}
+                            <path d="M0 0 H375 V130 C250 190, 125 190, 0 130 Z" fill={profile.cover_url ? 'url(#cover-pattern)' : 'var(--theme-primary)'} />
+                            <path d="M0 0 H375 V130 C250 190, 125 190, 0 130 Z" fill="black" fillOpacity="0.25" />
+                        </svg>
                     </div>
-                    <div className="flex items-center">
-                        {isMyProfile && profile.role === 'admin' && (
-                            <button onClick={onNavigateToAdminPanel} className="text-white hover:bg-black/20 rounded-full p-2 transition-colors">
-                                <AdminIcon />
+                     <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                        <button onClick={onBack} className={`text-white p-2 rounded-full transition-colors hover:bg-black/20 ${onBack ? 'visible' : 'invisible'}`}><BackArrowIcon /></button>
+                        <div className="flex items-center gap-1">
+                            {isMyProfile && <button onClick={onNavigateToTools} className="text-white p-2 rounded-full transition-colors hover:bg-black/20"><ToolsIcon /></button>}
+                            {isMyProfile && <button onClick={onNavigateToSettings} className="text-white p-2 rounded-full transition-colors hover:bg-black/20"><SettingsIcon /></button>}
+                        </div>
+                     </div>
+                </div>
+
+                {/* --- CONTENT --- */}
+                <div className="relative -mt-20 z-0">
+                    <div className="relative bg-[var(--theme-card-bg)] rounded-t-3xl pt-20 p-6 text-center">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                             <button onClick={handleAvatarClick} className="relative w-32 h-32 block group focus:outline-none rounded-full focus:ring-4 focus:ring-offset-2 focus:ring-offset-[var(--theme-card-bg)] focus:ring-[var(--theme-ring)]">
+                                {activeFxUrl && <img src={activeFxUrl} alt="Profile Effect" className="absolute inset-[-16px] w-44 h-44 pointer-events-none" />}
+                                <img src={profileImageUrl} alt="avatar" className="relative w-32 h-32 rounded-full object-cover border-4 border-[var(--theme-card-bg)] shadow-lg" />
+                                {isMyProfile && (profile.profile_music?.length ?? 0) > 0 && (
+                                    <div className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-md z-20">
+                                        <MusicNoteIcon className="text-[var(--theme-primary)]" />
+                                    </div>
+                                )}
                             </button>
-                        )}
-                        {isMyProfile && (
-                            <button onClick={onNavigateToTools} className="text-white hover:bg-black/20 rounded-full p-2 transition-colors">
-                                <ToolsIcon />
-                            </button>
-                        )}
-                        <button onClick={isMyProfile ? onNavigateToSettings : () => {}} className={`text-white hover:bg-black/20 rounded-full p-2 transition-colors ${isMyProfile ? '' : 'invisible'}`}>
-                            {isMyProfile && <SettingsIcon />}
-                        </button>
-                    </div>
-                </div>
-             </header>
+                        </div>
+                        
+                        <h1 className="text-2xl font-bold text-[var(--theme-text)] flex items-center justify-center gap-2">
+                           {profile.name}
+                           {activeBadgeUrl && <img src={activeBadgeUrl} alt="Badge" title="Equipped Badge" className="w-6 h-6" />}
+                        </h1>
+                        <p className="text-[var(--theme-text-secondary)]">@{profile.username}</p>
+                        {profile.bio && <p className="text-sm text-[var(--theme-text)] mt-3 max-w-md mx-auto">{profile.bio}</p>}
 
+                        <div className="flex justify-center gap-4 my-6">
+                            <a href="#" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><WebsiteIcon/></a>
+                            <a href="#" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><YouTubeIcon/></a>
+                            <a href="#" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><FacebookIcon className="w-6 h-6"/></a>
+                        </div>
+                        
+                        <div className="flex justify-around items-center border-t border-b border-gray-200 dark:border-gray-700 py-4 my-6">
+                            {statItem(posts.length, 'Post')}
+                            <button onClick={() => handleOpenFollowModal('followers')}>{statItem(followerCount, 'Followers')}</button>
+                            <button onClick={() => handleOpenFollowModal('following')}>{statItem(followingCount, 'Following')}</button>
+                        </div>
 
-            <div className="p-4 transform -translate-y-12">
-                <div className="flex items-end">
-                    <div className="relative w-24 h-24 flex-shrink-0">
-                        <canvas
-                            ref={canvasRef}
-                            width="220"
-                            height="220"
-                            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
-                        />
-                        <button onClick={handleAvatarClick} className="relative w-full h-full focus:outline-none rounded-full focus:ring-4 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-violet-400">
-                            <img src={profile.photo_url || generateAvatar(profile.name || profile.username)} alt={profile.name || 'avatar'} className="relative z-10 w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
-                            {isMyProfile && profile.profile_music && profile.profile_music.length > 0 && (
-                                <div className="absolute bottom-1 right-1 bg-white rounded-full p-1 shadow-md z-20">
-                                    <MusicNoteIcon className="text-violet-500" />
-                                </div>
-                            )}
-                        </button>
-                    </div>
-
-                    <div className="flex-grow flex justify-around text-center pb-2">
-                        <motion.div animate={isPlaying ? getDancingAnimation(0) : { y: 0 }}>
-                            <p className="font-bold text-lg">{posts.length}</p><p className="text-sm text-gray-500">Stories</p>
-                        </motion.div>
-                        <motion.button animate={isPlaying ? getDancingAnimation(0.15) : { y: 0 }} onClick={() => handleOpenFollowModal('followers')}>
-                            <p className="font-bold text-lg">{followerCount}</p><p className="text-sm text-gray-500">Followers</p>
-                        </motion.button>
-                        <motion.button animate={isPlaying ? getDancingAnimation(0.3) : { y: 0 }} onClick={() => handleOpenFollowModal('following')}>
-                            <p className="font-bold text-lg">{followingCount}</p><p className="text-sm text-gray-500">Following</p>
-                        </motion.button>
-                    </div>
-                </div>
-                <div className="mt-4">
-                    <h2 className="font-bold text-xl">{profile.name}</h2>
-                    <p className="text-sm text-gray-500 -mt-1">@{profile.username}</p>
-                    {profile.bio && <p className="text-sm mt-3">{profile.bio}</p>}
-                </div>
-                
-                 <div className="flex items-center space-x-2 mt-4">
-                    {!isMyProfile && (
-                        <>
-                            <motion.div className="flex-1" animate={isPlaying ? getDancingAnimation(0.4) : { y: 0 }}>
-                                <Button onClick={handleFollowToggle} size="small" disabled={isUpdatingFollow} variant={isFollowing ? 'secondary' : 'primary'}>{isUpdatingFollow ? '...' : (isFollowing ? 'Unfollow' : 'Follow')}</Button>
-                            </motion.div>
-                            <motion.div className="flex-1" animate={isPlaying ? getDancingAnimation(0.5) : { y: 0 }}>
-                                <Button onClick={() => onMessage && onMessage({ id: profile.id, name: profile.name || 'Unknown', photo_url: profile.photo_url })} size="small" variant="secondary">Message</Button>
-                            </motion.div>
-                            <motion.button className="p-2.5 bg-violet-500 text-white rounded-full" animate={isPlaying ? getDancingAnimation(0.6) : { y: 0 }}>
-                                <SendPlaneIcon />
-                            </motion.button>
-                        </>
-                    )}
-                </div>
-            </div>
-
-            {posts.length > 0 ? (
-                <div className="w-full mt-[-48px] bg-white">
-                    <div className="grid grid-cols-3 gap-0.5">
-                        {posts.map(post => (
-                            <div key={post.id} className="aspect-square bg-gray-200">
-                               {post.content_url && <img src={post.content_url} alt="User post" className="w-full h-full object-cover" loading="lazy" />}
+                        {!isMyProfile && (
+                            <div className="px-4">
+                                <Button
+                                    onClick={handleFollowToggle}
+                                    disabled={isUpdatingFollow}
+                                >
+                                    {isUpdatingFollow ? '...' : (isFollowing ? 'Unfollow' : 'Follow')}
+                                </Button>
                             </div>
+                        )}
+                    </div>
+                </div>
+
+                 {posts.length > 0 ? (
+                    <div className="p-4 space-y-6 bg-[var(--theme-card-bg)]">
+                        {posts.map(post => (
+                            <PostCard
+                                key={post.id}
+                                post={post}
+                                session={session}
+                                onViewProfile={onViewProfile}
+                                onOpenComments={() => setCommentModalPostId(post.id)}
+                                hideFollowButton={true}
+                            />
                         ))}
                     </div>
-                </div>
-            ) : (
-                 <div className="text-center py-16 px-4 bg-white rounded-2xl mt-[-32px]">
-                    <h2 className="text-xl font-semibold text-gray-800">No stories yet</h2>
-                    <p className="text-gray-500 mt-2">This user hasn't shared any posts.</p>
-                </div>
-            )}
-            
-            <FollowListModal
-                isOpen={!!modalState.type}
-                onClose={() => setModalState({ type: null, users: [], loading: false, title: ''})}
-                title={modalState.title}
-                users={modalState.users}
-                loading={modalState.loading}
-                onViewProfile={(id) => {
-                    setModalState({ type: null, users: [], loading: false, title: ''});
-                    onViewProfile(id);
-                }}
-            />
+                ) : (
+                    <div className="text-center py-16 px-4 bg-[var(--theme-card-bg)]">
+                        <h2 className="text-xl font-semibold text-[var(--theme-text)]">No stories yet</h2>
+                        <p className="text-[var(--theme-text-secondary)] mt-2">{isMyProfile ? "Share your first memory!" : "This user hasn't shared any posts."}</p>
+                    </div>
+                )}
+                
+                <FollowListModal
+                    isOpen={!!modalState.type}
+                    onClose={() => setModalState({ type: null, users: [], loading: false, title: ''})}
+                    title={modalState.title}
+                    users={modalState.users}
+                    loading={modalState.loading}
+                    onViewProfile={(id) => {
+                        setModalState({ type: null, users: [], loading: false, title: ''});
+                        onViewProfile(id);
+                    }}
+                />
+
+                {commentModalPostId && (
+                    <CommentModal
+                        postId={commentModalPostId}
+                        session={session}
+                        onClose={() => setCommentModalPostId(null)}
+                        onCommentAdded={handleCommentAdded}
+                    />
+                )}
+            </motion.div>
         </div>
     );
 };

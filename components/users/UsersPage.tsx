@@ -1,49 +1,74 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
 import LoadingSpinner from '../common/LoadingSpinner';
-import UserCard from './UserCard';
 import type { Tables } from '../../integrations/supabase/types';
-import { SearchIcon } from '../common/AppIcons';
+import { SearchIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon } from '../common/AppIcons';
+import { generateAvatar, formatXp } from '../../utils/helpers';
+import { motion } from 'framer-motion';
 
 interface UsersPageProps {
     session: Session;
     onViewProfile: (userId: string) => void;
 }
 
-type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'xp_balance' | 'created_at'>;
+type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'xp_balance'>;
+
+const UserRow: React.FC<{ user: Profile, rank: number, onViewProfile: (userId: string) => void }> = ({ user, rank, onViewProfile }) => {
+    const isTopThree = rank <= 3;
+    const rankIcon = [
+        <GoldMedalIcon className="w-8 h-8" />,
+        <SilverMedalIcon className="w-8 h-8" />,
+        <BronzeMedalIcon className="w-8 h-8" />
+    ][rank - 1];
+    
+    const cardBgClass = isTopThree ? 'bg-gradient-to-r from-purple-500/10 to-indigo-500/10' : 'bg-[var(--theme-card-bg)]';
+
+    return (
+        <motion.button
+            onClick={() => onViewProfile(user.id)}
+            className={`w-full flex items-center p-3 rounded-xl hover:bg-opacity-80 transition-all text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] shadow-sm ${cardBgClass}`}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        >
+            <div className="font-bold text-lg w-10 text-center text-[var(--theme-text-secondary)] flex items-center justify-center">
+                 {isTopThree ? rankIcon : <span className="text-xl">{rank}</span>}
+            </div>
+            <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 ml-2">
+                <img src={user.photo_url || generateAvatar(user.username)} alt={user.name || ''} className="w-full h-full object-cover" />
+            </div>
+            <div className="ml-4 flex-grow overflow-hidden">
+                <p className="truncate font-bold text-[var(--theme-text)]">{user.name || user.username}</p>
+                <p className="text-sm truncate text-[var(--theme-text-secondary)]">@{user.username}</p>
+            </div>
+            <div className="ml-2 text-right">
+                <p className="font-bold text-lg text-[var(--theme-primary)]">{formatXp(user.xp_balance)}</p>
+                <p className="text-xs text-[var(--theme-text-secondary)]">Score</p>
+            </div>
+        </motion.button>
+    );
+};
+
 
 const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
-    const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const myId = session.user.id;
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError(null);
             try {
-                const [profilesPromise, followsPromise] = await Promise.all([
-                    supabase
+                const { data: profilesData, error: profilesError } = await supabase
                         .from('profiles')
-                        .select('id, name, username, photo_url, xp_balance, created_at')
-                        .order('created_at', { ascending: false }),
-                    supabase.from('follows').select('following_id').eq('follower_id', myId)
-                ]);
+                        .select('id, name, username, photo_url, xp_balance')
+                        .order('xp_balance', { ascending: false });
 
-                const { data: profilesData, error: profilesError } = profilesPromise;
                 if (profilesError) throw profilesError;
-                if (profilesData) setProfiles(profilesData.filter(p => p.id !== myId));
-
-                const { data: followsData, error: followsError } = followsPromise;
-                if (followsError) throw followsError;
-                if (followsData) {
-                    const followingIds = new Set(followsData.map(f => f.following_id));
-                    setFollowingSet(followingIds);
-                }
+                setProfiles(profilesData || []);
 
             } catch (err: any) {
                 setError(err.message || 'Failed to load users.');
@@ -52,9 +77,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
             }
         };
         fetchData();
-    }, [myId]);
+    }, []);
 
-    const filteredProfiles = useMemo(() => {
+    const filteredUsers = useMemo(() => {
         if (!searchTerm) return profiles;
         const lowercasedTerm = searchTerm.toLowerCase();
         return profiles.filter(p =>
@@ -63,55 +88,51 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
         );
     }, [profiles, searchTerm]);
     
+    if (loading) {
+        return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+    }
+    
+    if (error) {
+        return <div className="text-center pt-20 text-red-500" role="alert"><p>Error loading users: {error}</p></div>;
+    }
+
     return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800">Discover</h1>
-
-            <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <SearchIcon />
+        <div className="bg-[var(--theme-bg)] min-h-screen">
+            <div className="relative bg-[var(--theme-header-bg)] p-4 pb-8 rounded-b-[2.5rem] text-[var(--theme-header-text)] shadow-xl border-b-2 border-[var(--theme-primary)]">
+                <div className="pt-2 text-center">
+                    <h1 className="text-2xl font-bold">Leaderboard</h1>
                 </div>
-                <input
-                    type="text"
-                    placeholder="Search for travelers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-gray-100 border-transparent rounded-full text-gray-800 placeholder-gray-500 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                />
+                <div className="relative mt-4">
+                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--theme-text-secondary)]">
+                        <SearchIcon />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search Users"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-[var(--theme-secondary)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
+                    />
+                </div>
             </div>
-            
-            {loading && (
-                 <div className="flex justify-center pt-20">
-                    <LoadingSpinner />
-                </div>
-            )}
-            
-            {error && (
-                <div className="text-center pt-20 text-red-500" role="alert">
-                    <p>Error loading users: {error}</p>
-                </div>
-            )}
 
-            {!loading && !error && (
-                <div className="space-y-4">
-                    {filteredProfiles.length > 0 ? (
-                        filteredProfiles.map(profile => (
-                            <UserCard
-                                key={profile.id}
-                                profile={profile}
-                                session={session}
-                                isInitiallyFollowing={followingSet.has(profile.id)}
-                                onViewProfile={onViewProfile}
-                            />
-                        ))
-                    ) : (
-                         <div className="text-center py-16 px-4 bg-gray-50 rounded-2xl">
-                            <h2 className="text-xl font-semibold text-gray-800">No users found</h2>
-                            <p className="text-gray-500 mt-2">Try adjusting your search or check back later!</p>
-                        </div>
-                    )}
-                </div>
-            )}
+            <div className="p-4 space-y-3">
+                {filteredUsers.length > 0 ? (
+                    filteredUsers.map((profile, index) => (
+                        <UserRow
+                            key={profile.id}
+                            user={profile}
+                            rank={index + 1} // Ranks start from 1
+                            onViewProfile={onViewProfile}
+                        />
+                    ))
+                ) : (
+                     <div className="text-center py-16 px-4 bg-[var(--theme-card-bg-alt)] rounded-2xl">
+                        <h2 className="text-xl font-semibold text-[var(--theme-text)]">No users found</h2>
+                        <p className="text-[var(--theme-text-secondary)] mt-2">Try adjusting your search!</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
