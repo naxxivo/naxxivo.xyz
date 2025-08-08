@@ -192,6 +192,28 @@ export interface Database {
           following_id?: string
         }
       },
+      game_invites: {
+        Row: {
+          id: number
+          inviter_id: string
+          invitee_id: string
+          status: Database["public"]["Enums"]["game_invite_status"]
+          bet_amount: number
+          game_id: number | null
+          created_at: string
+        }
+        Insert: {
+          inviter_id: string
+          invitee_id: string
+          status?: Database["public"]["Enums"]["game_invite_status"]
+          bet_amount: number
+          game_id?: number | null
+        }
+        Update: {
+          status?: Database["public"]["Enums"]["game_invite_status"]
+          game_id?: number | null
+        }
+      },
       likes: {
         Row: {
           created_at: string
@@ -668,6 +690,13 @@ export interface Database {
         }
         Returns: string
       }
+      create_game_invite: {
+        Args: {
+          p_invitee_id: string
+          p_bet_amount: number
+        }
+        Returns: Json
+      }
       create_user_profile_cover: {
         Args: {
           p_name: string
@@ -736,6 +765,13 @@ export interface Database {
         }
         Returns: string
       }
+      respond_to_game_invite: {
+        Args: {
+          p_invite_id: number
+          p_response: Enums<'game_invite_status'>
+        }
+        Returns: Json
+      }
       update_task_progress: {
         Args: {
           p_user_id: string
@@ -746,6 +782,7 @@ export interface Database {
     }
     Enums: {
       comment_status: "live" | "hidden"
+      game_invite_status: "pending" | "accepted" | "declined" | "expired"
       game_status: "waiting" | "active" | "finished" | "abandoned"
       notification_type:
         | "NEW_FOLLOWER"

@@ -3,11 +3,12 @@ import { supabase } from '../../integrations/supabase/client';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Logo from '../common/Logo';
 import { SearchIcon, BellIcon, CoinIcon, GameIcon } from '../common/AppIcons';
-import type { Tables, Json } from '../../integrations/supabase/types';
+import type { Tables, Json, Enums } from '../../integrations/supabase/types';
 import Avatar from '../common/Avatar';
 import Button from '../common/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import CarromBoard from './CarromBoard';
+import InviteFriendModal from './InviteFriendModal';
 
 interface GamePageProps {
     session: any;
@@ -15,14 +16,17 @@ interface GamePageProps {
     onOpenSearch: () => void;
     onOpenNotifications: () => void;
     unreadNotificationCount: number;
+    initialGame: CarromGame | null;
+    onGameEnd: () => void;
 }
 
-type GameState = 'lobby' | 'searching' | 'in-game';
+type GameState = 'lobby' | 'searching' | 'in-game' | 'waiting-for-invite-response';
 type CarromGame = Tables<'carrom_games'>;
+type GameInvite = Tables<'game_invites'>;
 type Profile = Tables<'profiles'> & { active_cover: { preview_url: string | null, asset_details: Json } | null };
 
 
-const GameLobby: React.FC<{ onPlayRandom: () => void; profile: Profile | null }> = ({ onPlayRandom, profile }) => {
+const GameLobby: React.FC<{ onPlayRandom: () => void; profile: Profile | null; onInvite: () => void; }> = ({ onPlayRandom, profile, onInvite }) => {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center p-4">
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', delay: 0.2 }}>
@@ -44,7 +48,7 @@ const GameLobby: React.FC<{ onPlayRandom: () => void; profile: Profile | null }>
                     <GameIcon className="mr-3" />
                     Play (100 Coins)
                 </Button>
-                <Button variant="secondary" size="large" className="w-full !h-14" disabled>
+                <Button onClick={onInvite} variant="secondary" size="large" className="w-full !h-14">
                     Invite a Friend
                 </Button>
             </motion.div>
@@ -53,12 +57,15 @@ const GameLobby: React.FC<{ onPlayRandom: () => void; profile: Profile | null }>
 };
 
 
-const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearch, onOpenNotifications, unreadNotificationCount }) => {
+const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearch, onOpenNotifications, unreadNotificationCount, initialGame, onGameEnd }) => {
     const [gameState, setGameState] = useState<GameState>('lobby');
     const [profile, setProfile] = useState<Profile | null>(null);
     const [currentGame, setCurrentGame] = useState<CarromGame | null>(null);
+    const [sentInvite, setSentInvite] = useState<GameInvite | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isInviteModalOpen, setInviteModalOpen] = useState(false);
+
     const myId = session.user.id;
     const gameChannelRef = useRef<any>(null);
 
@@ -84,6 +91,13 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
     useEffect(() => {
         fetchProfile();
     }, [fetchProfile]);
+    
+    useEffect(() => {
+        if (initialGame) {
+            setCurrentGame(initialGame);
+            setGameState('in-game');
+        }
+    }, [initialGame]);
 
     const cleanupGame = useCallback(() => {
         if (gameChannelRef.current) {
@@ -91,8 +105,10 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
             gameChannelRef.current = null;
         }
         setCurrentGame(null);
+        setSentInvite(null);
         setGameState('lobby');
-    }, []);
+        onGameEnd();
+    }, [onGameEnd]);
 
     useEffect(() => {
         if (gameChannelRef.current) {
@@ -100,17 +116,13 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
             gameChannelRef.current = null;
         }
 
-        if (currentGame?.id && (gameState === 'searching' || gameState === 'in-game')) {
+        const gameId = currentGame?.id;
+        if (gameId && (gameState === 'searching' || gameState === 'in-game')) {
             gameChannelRef.current = supabase
-                .channel(`carrom_game_${currentGame.id}`)
+                .channel(`carrom_game_${gameId}`)
                 .on<CarromGame>(
                     'postgres_changes',
-                    {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'carrom_games',
-                        filter: `id=eq.${currentGame.id}`,
-                    },
+                    { event: 'UPDATE', schema: 'public', table: 'carrom_games', filter: `id=eq.${gameId}` },
                     (payload) => {
                         const updatedGame = payload.new;
                         setCurrentGame(updatedGame);
@@ -126,13 +138,43 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                 )
                 .subscribe();
         }
+        
+        const inviteId = sentInvite?.id;
+        if (inviteId && gameState === 'waiting-for-invite-response') {
+             gameChannelRef.current = supabase
+                .channel(`game_invite_${inviteId}`)
+                .on<GameInvite>(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'game_invites', filter: `id=eq.${inviteId}` },
+                    async (payload) => {
+                        const updatedInvite = payload.new;
+                        setSentInvite(updatedInvite);
+                        if(updatedInvite.status === 'accepted' && updatedInvite.game_id) {
+                             const { data: gameData, error: gameError } = await supabase
+                                .from('carrom_games')
+                                .select('*')
+                                .eq('id', updatedInvite.game_id)
+                                .single();
+                            if (gameData) {
+                                setCurrentGame(gameData);
+                                setGameState('in-game');
+                            }
+                        } else if (updatedInvite.status === 'declined') {
+                            setError("Your invitation was declined.");
+                            cleanupGame();
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
 
         return () => {
             if (gameChannelRef.current) {
                 supabase.removeChannel(gameChannelRef.current);
             }
         };
-    }, [currentGame?.id, gameState, cleanupGame, fetchProfile]);
+    }, [currentGame?.id, sentInvite?.id, gameState, cleanupGame, fetchProfile]);
 
     const handlePlayRandom = async () => {
         setGameState('searching');
@@ -161,12 +203,12 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
         if (responseData.error) {
             setError(responseData.error);
             setGameState('lobby');
-            await fetchProfile(); // Re-fetch profile in case coins were deducted then refunded
+            await fetchProfile();
             return;
         }
 
         setCurrentGame(responseData.game);
-        await fetchProfile(); // Re-fetch profile to show updated coin balance
+        await fetchProfile(); 
 
         if (responseData.status === 'joined' || responseData.game.status === 'active') {
             setGameState('in-game');
@@ -176,7 +218,6 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
     const handleCancelSearch = async () => {
         if (!currentGame || currentGame.status !== 'waiting') return;
         
-        // Disable the button to prevent multiple clicks
         setGameState('lobby');
 
         const { data, error: rpcError } = await supabase.rpc('cancel_carrom_matchmaking', {
@@ -185,7 +226,7 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
         
         if (rpcError || (data && data.startsWith('Error'))) {
             setError(data || rpcError?.message || 'Failed to cancel search.');
-            setGameState('searching'); // Re-enable cancel button if failed
+            setGameState('searching');
         } else {
             cleanupGame();
             await fetchProfile();
@@ -216,7 +257,7 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                 <AnimatePresence mode="wait">
                     {gameState === 'lobby' && (
                          <motion.div key="lobby" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                            <GameLobby onPlayRandom={handlePlayRandom} profile={profile} />
+                            <GameLobby onPlayRandom={handlePlayRandom} profile={profile} onInvite={() => setInviteModalOpen(true)} />
                         </motion.div>
                     )}
                     {gameState === 'searching' && (
@@ -228,6 +269,13 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                             </Button>
                         </motion.div>
                     )}
+                     {gameState === 'waiting-for-invite-response' && (
+                        <motion.div key="waiting-invite" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full flex flex-col items-center justify-center">
+                            <LoadingSpinner />
+                            <p className="mt-4 text-[var(--theme-text-secondary)]">Waiting for response...</p>
+                            {/* TODO: Add a cancel invite button */}
+                        </motion.div>
+                    )}
                     {gameState === 'in-game' && currentGame && (
                         <motion.div key="game" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="h-full p-4">
                             <CarromBoard game={currentGame} myId={myId} />
@@ -235,6 +283,17 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                     )}
                 </AnimatePresence>
             </main>
+             {isInviteModalOpen && (
+                <InviteFriendModal
+                    isOpen={isInviteModalOpen}
+                    onClose={() => setInviteModalOpen(false)}
+                    session={session}
+                    onInviteSent={(invite) => {
+                        setSentInvite(invite);
+                        setGameState('waiting-for-invite-response');
+                    }}
+                />
+            )}
         </div>
     );
 };

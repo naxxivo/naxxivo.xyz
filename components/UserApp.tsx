@@ -32,7 +32,8 @@ import NotificationsPage from './notifications/NotificationsPage';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationPopup, { type NotificationDetails } from './common/NotificationPopup';
 import Button from './common/Button';
-import type { Json } from '../integrations/supabase/types';
+import type { Tables, Json, Enums } from '../integrations/supabase/types';
+import GameInviteModal from './home/GameInviteModal';
 
 export type AuthView =
     'home' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
@@ -57,6 +58,13 @@ interface UserAppProps {
     onEnterAdminView: () => void;
 }
 
+type GameInviteWithProfile = Tables<'game_invites'> & {
+    profiles: Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'> & {
+        active_cover: { preview_url: string | null; asset_details: Json } | null;
+    } | null;
+};
+type CarromGame = Tables<'carrom_games'>;
+
 const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [authView, setAuthView] = useState<AuthView>('home');
     const [isCreatePostOpen, setCreatePostOpen] = useState(false);
@@ -69,6 +77,9 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [refreshFeedKey, setRefreshFeedKey] = useState(0);
     const [refreshAnimeKey, setRefreshAnimeKey] = useState(0);
     const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+    const [incomingInvite, setIncomingInvite] = useState<GameInviteWithProfile | null>(null);
+    const [gameToStart, setGameToStart] = useState<CarromGame | null>(null);
+
 
     const [notification, setNotification] = useState<NotificationDetails | null>(null);
     const [showPermissionBanner, setShowPermissionBanner] = useState(false);
@@ -87,7 +98,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         fetchUnreadCount();
 
         // Listen for new notifications in real-time
-        const channel = supabase
+        const notificationsChannel = supabase
             .channel('public:notifications')
             .on('postgres_changes', { 
                 event: 'INSERT', 
@@ -99,8 +110,35 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
             })
             .subscribe();
 
+        // Listen for new game invites
+        const invitesChannel = supabase
+            .channel('public:game_invites')
+            .on<Tables<'game_invites'>>(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'game_invites',
+                    filter: `invitee_id=eq.${session.user.id}`,
+                },
+                async (payload) => {
+                    const invite = payload.new;
+                    // Fetch inviter's profile
+                     const { data: profile, error } = await supabase
+                        .from('profiles')
+                        .select('id, name, username, photo_url, active_cover:active_cover_id(preview_url, asset_details)')
+                        .eq('id', invite.inviter_id)
+                        .single();
+                    if (profile && invite.status === 'pending') {
+                       setIncomingInvite({ ...invite, profiles: profile as any });
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(notificationsChannel);
+            supabase.removeChannel(invitesChannel);
         };
     }, [session.user.id]);
     
@@ -131,6 +169,25 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         });
     };
     
+    const handleRespondToInvite = async (inviteId: number, response: 'accepted' | 'declined') => {
+        const { data, error } = await supabase.rpc('respond_to_game_invite', {
+            p_invite_id: inviteId,
+            p_response: response,
+        });
+
+        if (error) {
+            showNotification({ type: 'error', title: 'Error', message: error.message });
+        } else {
+            const responseData = data as { status: 'accepted' | 'declined' | 'error'; game?: CarromGame; error?: string };
+            if (responseData.status === 'accepted' && responseData.game) {
+                setGameToStart(responseData.game);
+                handleSetAuthView('home');
+            } else if (responseData.error) {
+                 showNotification({ type: 'error', title: 'Could not join', message: responseData.error });
+            }
+        }
+        setIncomingInvite(null);
+    };
 
     const handleLogout = async () => {
         await (supabase.auth as any).signOut();
@@ -145,6 +202,11 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     };
     
     const handleSetAuthView = (view: 'home' | 'discover' | 'profile' | 'messages') => {
+        if (view === 'home') {
+            // This is a bit of a trick to ensure the GamePage gets the game prop
+        } else {
+            setGameToStart(null);
+        }
         setViewingProfileId(null);
         setChattingWith(null);
         setViewingSeriesId(null);
@@ -219,7 +281,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         );
     } else {
         const CurrentPage = {
-            home: <GamePage session={session} onViewProfile={handleViewProfile} onOpenSearch={() => setIsSearchOpen(true)} onOpenNotifications={handleNavigateToNotifications} unreadNotificationCount={unreadNotificationCount} />,
+            home: <GamePage session={session} onViewProfile={handleViewProfile} onOpenSearch={() => setIsSearchOpen(true)} onOpenNotifications={handleNavigateToNotifications} unreadNotificationCount={unreadNotificationCount} initialGame={gameToStart} onGameEnd={() => setGameToStart(null)} />,
             discover: <UsersPage session={session} onViewProfile={handleViewProfile} />,
             messages: <MessagesPage session={session} onStartChat={setChattingWith} />,
             profile: <Profile 
@@ -363,6 +425,13 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         {pageContent}
                     </motion.div>
                 </AnimatePresence>
+                {incomingInvite && (
+                    <GameInviteModal
+                        invite={incomingInvite}
+                        onClose={() => setIncomingInvite(null)}
+                        onRespond={handleRespondToInvite}
+                    />
+                )}
                 <NotificationPopup notification={notification} onClose={() => setNotification(null)} />
             </div>
         </div>
