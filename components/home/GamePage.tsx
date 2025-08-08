@@ -67,10 +67,11 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
     const [isInviteModalOpen, setInviteModalOpen] = useState(false);
 
     const myId = session.user.id;
-    const gameChannelRef = useRef<any>(null);
+    const realtimeChannelRef = useRef<any>(null);
 
     const fetchProfile = useCallback(async () => {
-        setLoading(true);
+        // Don't set loading if it's just a refresh
+        // setLoading(true); 
         setError(null);
         try {
             const { data, error } = await supabase
@@ -99,26 +100,30 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
         }
     }, [initialGame]);
 
-    const cleanupGame = useCallback(() => {
-        if (gameChannelRef.current) {
-            supabase.removeChannel(gameChannelRef.current);
-            gameChannelRef.current = null;
+    const cleanupRealtime = useCallback(() => {
+        if (realtimeChannelRef.current) {
+            supabase.removeChannel(realtimeChannelRef.current);
+            realtimeChannelRef.current = null;
         }
+    }, []);
+    
+    const cleanupGame = useCallback(() => {
+        cleanupRealtime();
         setCurrentGame(null);
         setSentInvite(null);
         setGameState('lobby');
         onGameEnd();
-    }, [onGameEnd]);
+    }, [onGameEnd, cleanupRealtime]);
 
     useEffect(() => {
-        if (gameChannelRef.current) {
-            supabase.removeChannel(gameChannelRef.current);
-            gameChannelRef.current = null;
-        }
+        // Clean up previous channel before creating a new one
+        cleanupRealtime();
 
         const gameId = currentGame?.id;
+        const inviteId = sentInvite?.id;
+        
         if (gameId && (gameState === 'searching' || gameState === 'in-game')) {
-            gameChannelRef.current = supabase
+            realtimeChannelRef.current = supabase
                 .channel(`carrom_game_${gameId}`)
                 .on<CarromGame>(
                     'postgres_changes',
@@ -137,11 +142,8 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                     }
                 )
                 .subscribe();
-        }
-        
-        const inviteId = sentInvite?.id;
-        if (inviteId && gameState === 'waiting-for-invite-response') {
-             gameChannelRef.current = supabase
+        } else if (inviteId && gameState === 'waiting-for-invite-response') {
+             realtimeChannelRef.current = supabase
                 .channel(`game_invite_${inviteId}`)
                 .on<GameInvite>(
                     'postgres_changes',
@@ -168,13 +170,10 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                 .subscribe();
         }
 
-
         return () => {
-            if (gameChannelRef.current) {
-                supabase.removeChannel(gameChannelRef.current);
-            }
+            cleanupRealtime();
         };
-    }, [currentGame?.id, sentInvite?.id, gameState, cleanupGame, fetchProfile]);
+    }, [currentGame?.id, sentInvite?.id, gameState, cleanupGame, fetchProfile, cleanupRealtime]);
 
     const handlePlayRandom = async () => {
         setGameState('searching');
@@ -218,18 +217,19 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
     const handleCancelSearch = async () => {
         if (!currentGame || currentGame.status !== 'waiting') return;
         
-        setGameState('lobby');
+        const gameIdToCancel = currentGame.id;
+        
+        // Optimistically update UI
+        cleanupGame();
+        await fetchProfile();
 
         const { data, error: rpcError } = await supabase.rpc('cancel_carrom_matchmaking', {
-            game_id_to_cancel: currentGame.id,
+            game_id_to_cancel: gameIdToCancel,
         });
         
         if (rpcError || (data && data.startsWith('Error'))) {
-            setError(data || rpcError?.message || 'Failed to cancel search.');
-            setGameState('searching');
-        } else {
-            cleanupGame();
-            await fetchProfile();
+             // Handle error case if needed, but UI has already been reset
+            console.error(data || rpcError?.message || 'Failed to cancel search on the server.');
         }
     };
 
@@ -277,7 +277,7 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                         </motion.div>
                     )}
                     {gameState === 'in-game' && currentGame && (
-                        <motion.div key="game" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="h-full p-4">
+                        <motion.div key="game" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="h-full p-2">
                             <CarromBoard game={currentGame} myId={myId} />
                         </motion.div>
                     )}

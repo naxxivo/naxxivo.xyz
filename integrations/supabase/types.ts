@@ -6,6 +6,21 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type GamePiece = {
+  id: string;
+  x: number;
+  y: number;
+  color: 'white' | 'black' | 'red';
+  isPocketed: boolean;
+};
+
+export type GameState = {
+  pieces: GamePiece[];
+  striker: { x: number; y: number };
+  score: { player1: number; player2: number };
+};
+
+
 export interface Database {
   public: {
     Tables: {
@@ -771,6 +786,13 @@ export interface Database {
           p_response: Enums<'game_invite_status'>
         }
         Returns: Json
+      }
+      submit_carrom_turn: {
+        Args: {
+          p_game_id: number
+          p_new_game_state: Json
+        }
+        Returns: string
       }
       update_task_progress: {
         Args: {
