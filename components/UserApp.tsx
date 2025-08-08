@@ -4,7 +4,7 @@ import { supabase } from '../integrations/supabase/client';
 import AuthPage from './auth/AuthPage';
 import AuthForm from './auth/AuthForm';
 import Profile from './Profile';
-import HomePage from './home/HomePage';
+import GamePage from './home/GamePage';
 import BottomNav from './layout/BottomNav';
 import CreatePost from './home/CreatePost';
 import MessagesPage from './messages/MessagesPage';
@@ -219,7 +219,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         );
     } else {
         const CurrentPage = {
-            home: <HomePage session={session} onViewProfile={handleViewProfile} refreshKey={refreshFeedKey} onOpenSearch={() => setIsSearchOpen(true)} onOpenNotifications={handleNavigateToNotifications} unreadNotificationCount={unreadNotificationCount} />,
+            home: <GamePage session={session} onViewProfile={handleViewProfile} onOpenSearch={() => setIsSearchOpen(true)} onOpenNotifications={handleNavigateToNotifications} unreadNotificationCount={unreadNotificationCount} />,
             discover: <UsersPage session={session} onViewProfile={handleViewProfile} />,
             messages: <MessagesPage session={session} onStartChat={setChattingWith} />,
             profile: <Profile 
@@ -290,7 +290,8 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         const isFullScreenPage = [
             'profile', 'music-library', 'tools', 'anime', 'anime-series', 'create-series', 'create-episode',
             'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile',
-            'store', 'collection', 'info', 'earn-xp', 'upload-cover', 'notifications'
+            'store', 'collection', 'info', 'earn-xp', 'upload-cover', 'notifications',
+            'home' // GamePage is also full screen
         ].includes(authView);
 
         pageContent = (

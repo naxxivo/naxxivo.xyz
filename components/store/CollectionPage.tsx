@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { CheckCircleIcon } from '../common/AppIcons';
+import { BackArrowIcon, CheckCircleIcon } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -125,7 +125,13 @@ const CollectionPage: React.FC<CollectionPageProps> = ({ onBack, session, showNo
     }
 
     return (
-        <div className="min-h-full flex flex-col">
+        <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col">
+            <header className="flex-shrink-0 flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">My Satchel</h1>
+                <div className="w-6"></div>
+            </header>
+
             <div className="p-2 flex-shrink-0">
                 <div className="flex bg-[var(--theme-card-bg-alt)] p-1 rounded-full w-full">
                     {(['All', 'Profile FX', 'Profile Covers', 'Themes', 'Badges'] as CollectionCategory[]).map(tab => (
@@ -151,10 +157,10 @@ const CollectionPage: React.FC<CollectionPageProps> = ({ onBack, session, showNo
                 </div>
             </div>
 
-            <main className="flex-grow overflow-y-auto pt-4">
+            <main className="flex-grow overflow-y-auto p-4">
                 {loading ? <div className="flex justify-center pt-20"><LoadingSpinner /></div> : 
                  filteredItems.length > 0 ? (
-                    <motion.div {...{layout:true} as any} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <motion.div {...{layout:true} as any} className="grid grid-cols-2 gap-4">
                         <AnimatePresence>
                             {filteredItems.map(item => (
                                 <InventoryCard 

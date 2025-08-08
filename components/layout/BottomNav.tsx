@@ -1,6 +1,6 @@
 import React from 'react';
-import { HomeIcon, DiscoverIcon, AddIcon, MessageIcon, ProfileIcon } from '../common/AppIcons';
 import { motion } from 'framer-motion';
+import { GameIcon, MessageIcon, AddIcon, DiscoverIcon, ProfileIcon } from '../common/AppIcons';
 import type { AuthView } from '../UserApp';
 
 interface BottomNavProps {
@@ -9,47 +9,59 @@ interface BottomNavProps {
     onAddPost: () => void;
 }
 
-const NavItem = ({ icon: Icon, view, label, isActive, onClick }: { icon: React.FC<any>, view: string, label: string, isActive: boolean, onClick: () => void }) => (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center w-full transition-colors duration-300 ${isActive ? 'text-[var(--theme-primary)]' : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]'}`}>
-        <Icon isActive={isActive} />
-        <span className="text-xs mt-1">{label}</span>
-    </button>
-);
-
 const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPost }) => {
-    
-    const mainViews: AuthView[] = ['home', 'discover', 'messages', 'profile'];
-    const isMainView = mainViews.includes(activeView);
+    const navItems = [
+        { view: 'home', label: 'Game', icon: GameIcon },
+        { view: 'messages', label: 'Messages', icon: MessageIcon },
+        { view: 'add', label: 'Create Post', icon: AddIcon },
+        { view: 'discover', label: 'Discover', icon: DiscoverIcon },
+        { view: 'profile', label: 'Profile', icon: ProfileIcon },
+    ];
 
-    // This component is only for main views, it will be hidden on sub-pages.
-    const shouldRender = [
-        'home', 'discover', 'messages', 'profile'
-    ].includes(activeView);
-
-    if (!shouldRender) {
-        return null; // Don't render the nav bar on detail pages etc.
-    }
-
+    const profileSubPages: AuthView[] = [
+        'settings', 'edit-profile', 'music-library', 'tools', 
+        'anime', 'anime-series', 'create-series', 'create-episode',
+        'top-up', 'subscriptions', 'manual-payment',
+        'store', 'collection', 'info', 'earn-xp', 'upload-cover',
+        'notifications'
+    ];
 
     return (
-        <footer className="fixed bottom-0 left-0 right-0 h-16 bg-[var(--theme-card-bg)] shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.1)] z-50 max-w-sm mx-auto rounded-t-2xl">
-            <div className="flex items-center justify-around h-full">
-                <NavItem icon={HomeIcon} view="home" label="Home" isActive={activeView === 'home'} onClick={() => setAuthView('home')} />
-                <NavItem icon={DiscoverIcon} view="discover" label="Discover" isActive={activeView === 'discover'} onClick={() => setAuthView('discover')} />
-                
-                <motion.button
-                    onClick={onAddPost}
-                    className="w-14 h-14 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-full flex items-center justify-center shadow-lg -mt-8"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                >
-                    <AddIcon />
-                </motion.button>
-
-                <NavItem icon={MessageIcon} view="messages" label="Messages" isActive={activeView === 'messages'} onClick={() => setAuthView('messages')} />
-                <NavItem icon={ProfileIcon} view="profile" label="Profile" isActive={activeView === 'profile'} onClick={() => setAuthView('profile')} />
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-20 bg-[var(--theme-header-bg)]/80 backdrop-blur-lg border-t border-t-[var(--theme-secondary)]/30 z-50">
+            <div className="h-full flex justify-around items-center">
+                {navItems.map((item) => {
+                    if (item.view === 'add') {
+                        return (
+                             <motion.button
+                                key={item.view}
+                                onClick={onAddPost}
+                                className="p-3 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-2xl shadow-lg -translate-y-4 hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
+                                aria-label={item.label}
+                                {...{
+                                    whileHover: { scale: 1.1, rotate: 90 },
+                                    whileTap: { scale: 0.9 },
+                                } as any}
+                            >
+                               <AddIcon />
+                            </motion.button>
+                        )
+                    }
+                    const isActive = activeView === item.view || (item.view === 'profile' && profileSubPages.includes(activeView));
+                    const Icon = item.icon;
+                    return (
+                        <button
+                            key={item.view}
+                            onClick={() => setAuthView(item.view as 'home' | 'discover' | 'profile' | 'messages')}
+                            className={`transition-colors duration-200 relative ${isActive ? 'text-[var(--theme-primary)]' : 'text-[var(--theme-header-text)]/70 hover:text-[var(--theme-header-text)]'}`}
+                            aria-label={item.label}
+                        >
+                            <Icon isActive={isActive} />
+                            {isActive && <motion.div {...{layoutId: "active-nav-dot"} as any} className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[var(--theme-primary)] rounded-full" />}
+                        </button>
+                    )
+                })}
             </div>
-        </footer>
+        </nav>
     );
 };
 

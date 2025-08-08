@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/auth-js';
 import type { Tables } from '../../integrations/supabase/types';
-import { TrophyIcon, CheckCircleIcon } from '../common/AppIcons';
+import { BackArrowIcon, TrophyIcon, CheckCircleIcon } from '../common/AppIcons';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { motion } from 'framer-motion';
 
@@ -114,8 +114,16 @@ const EarnXpPage: React.FC<EarnXpPageProps> = ({ session, onBack }) => {
     }, [fetchData]);
 
     return (
-        <div className="min-h-full">
-            <main className="space-y-4">
+        <div className="min-h-screen bg-[var(--theme-bg)]">
+            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto flex items-center gap-2">
+                    <TrophyIcon /> Earn XP
+                </h1>
+                <div className="w-6"></div> {/* Placeholder */}
+            </header>
+
+            <main className="p-4 space-y-4">
                 {loading ? (
                     <div className="flex justify-center pt-20"><LoadingSpinner /></div>
                 ) : error ? (

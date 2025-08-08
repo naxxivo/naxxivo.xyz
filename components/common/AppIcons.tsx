@@ -5,6 +5,14 @@ interface IconProps {
     className?: string;
 }
 
+export const GameIcon: React.FC<IconProps> = ({ isActive, className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={`h-7 w-7 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={isActive ? 2.5 : 2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+
 export const HomeIcon: React.FC<IconProps> = ({ isActive, className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={`h-7 w-7 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={isActive ? 2.5 : 2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -130,7 +138,8 @@ export const PauseIcon = ({ className }: {className?: string}) => (
 
 export const CoinIcon = ({ className }: {className?: string}) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${className}`} viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clipRule="evenodd" />
+        <path d="M10 18a8 8 0 100-16 8 8 0 000 16z" />
+        <path fill="#FFF" d="M11.913 5.488c.03.03.05.064.081.095l.001.001a1 1 0 01.127 1.225l-2.02 4.041a.5.5 0 00.895.447l2.02-4.041a1 1 0 011.667.833l-2.02 4.041a.5.5 0 00.894.447l2.02-4.04a1 1 0 011.667.832l-3.334 6.667a1 1 0 01-1.333 0l-4.5-9a1 1 0 011.24-1.548l.002.001z" />
     </svg>
 );
 
@@ -356,5 +365,11 @@ export const ServerIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3V7.5a3 3 0 013-3h13.5a3 3 0 013 3v3.75a3 3 0 01-3 3m-13.5 0v3.75a3 3 0 003 3h7.5a3 3 0 003-3V14.25" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9.75h.008v.008H12V9.75z" />
+    </svg>
+);
+
+export const PencilSquareIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
     </svg>
 );

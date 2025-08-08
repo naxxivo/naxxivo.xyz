@@ -98,6 +98,35 @@ export interface Database {
           updated_at?: string | null
         }
       },
+      carrom_games: {
+        Row: {
+          id: number
+          player1_id: string
+          player2_id: string | null
+          status: Database["public"]["Enums"]["game_status"]
+          current_turn: string
+          game_state: Json | null
+          pot_amount: number
+          winner_id: string | null
+          created_at: string
+        }
+        Insert: {
+          player1_id: string
+          player2_id?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          current_turn: string
+          game_state?: Json | null
+          pot_amount: number
+          winner_id?: string | null
+        }
+        Update: {
+          player2_id?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          current_turn?: string
+          game_state?: Json | null
+          winner_id?: string | null
+        }
+      },
       comments: {
         Row: {
           content: string
@@ -365,6 +394,7 @@ export interface Database {
           status: Database["public"]["Enums"]["profile_status"]
           username: string
           xp_balance: number
+          gold_coins: number
           has_seen_welcome_bonus: boolean
           active_fx_id: number | null
           active_badge_id: number | null
@@ -385,6 +415,7 @@ export interface Database {
           active_gif_id?: number | null
           status?: Database["public"]["Enums"]["profile_status"]
           xp_balance?: number
+          gold_coins?: number
           has_seen_welcome_bonus?: boolean
           active_fx_id?: number | null
           active_badge_id?: number | null
@@ -404,6 +435,7 @@ export interface Database {
           status?: Database["public"]["Enums"]["profile_status"]
           username?: string
           xp_balance?: number
+          gold_coins?: number
           has_seen_welcome_bonus?: boolean
           active_fx_id?: number | null
           active_badge_id?: number | null
@@ -699,6 +731,7 @@ export interface Database {
     }
     Enums: {
       comment_status: "live" | "hidden"
+      game_status: "waiting" | "active" | "finished" | "abandoned"
       notification_type:
         | "NEW_FOLLOWER"
         | "POST_LIKE"

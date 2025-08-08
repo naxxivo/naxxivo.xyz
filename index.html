@@ -24,72 +24,60 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-/* New Gaming UI Theme */
+/* New Binance-Inspired Yellow/White Theme */
 :root {
-    --theme-bg: #0a0f1e; /* Deep space blue */
-    --theme-text: #e0e0e0; /* Light grey */
-    --theme-text-secondary: #8899a6; /* Muted blue-grey */
-    --theme-primary: #00f2ff; /* Electric cyan */
-    --theme-primary-hover: #6cffff;
-    --theme-primary-text: #0a0f1e; /* Dark text on primary bg */
-    --theme-secondary: #1a2238; /* Slightly lighter bg */
-    --theme-secondary-hover: #263152;
-    --theme-secondary-text: #e0e0e0;
-    --theme-card-bg: #161d31; /* Card background */
-    --theme-card-bg-alt: #1a2238;
-    --theme-header-bg: #161d31;
-    --theme-header-text: #e0e0e0;
-    --theme-ring: #00f2ff;
-    --theme-input-border: #263152;
-    --theme-button-shadow: rgba(0, 242, 255, 0.3);
+    --theme-bg: #ffffff;
+    --theme-text: #2c3e50;
+    --theme-text-secondary: #7f8c8d;
+    --theme-primary: #f0b90b;
+    --theme-primary-hover: #f8d33a;
+    --theme-primary-text: #000000;
+    --theme-secondary: #e8e8e8;
+    --theme-secondary-hover: #d0d0d0;
+    --theme-secondary-text: #2c3e50;
+    --theme-card-bg: #f9f9f9;
+    --theme-card-bg-alt: #ffffff;
+    --theme-header-bg: #ffffff;
+    --theme-header-text: #2c3e50;
+    --theme-ring: #f0b90b;
+    --theme-input-border: #d0d0d0;
+    --theme-button-shadow: rgba(240, 185, 11, 0.4);
 }
 
-#rotate-device-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background-color: var(--theme-bg);
-    color: var(--theme-text);
-    z-index: 9999;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-family: 'Orbitron', sans-serif;
-    padding: 2rem;
-}
-
-@media (orientation: portrait) {
-    #root {
-        display: none;
-    }
-    #rotate-device-overlay {
-        display: flex;
-    }
+@keyframes rotate {
+    from { transform: rotate(0deg) translate(-50%, -50%); }
+    to { transform: rotate(360deg) translate(-50%, -50%); }
 }
 
 /* Base styles */
 html {
-    background-color: var(--theme-bg);
+    background-color: transparent;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--theme-bg);
     color: var(--theme-text);
-    overflow: hidden; /* Prevent scrolling on the body */
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 200vw;
+    height: 200vh;
+    z-index: -1;
+    background: conic-gradient(from 0deg, var(--theme-primary), var(--theme-secondary), var(--theme-primary));
+    animation: rotate 40s linear infinite;
 }
 
 .font-logo {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-shadow: 0 0 5px var(--theme-primary), 0 0 10px var(--theme-primary);
+    font-family: 'Pacifico', cursive;
 }
 .hide-scrollbar::-webkit-scrollbar {
    display: none;
@@ -119,11 +107,6 @@ body {
 </head>
 <body class="antialiased">
     <div id="root"></div>
-    <div id="rotate-device-overlay">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.996 13.125A9.011 9.011 0 0 0 12 21a9 9 0 0 0 9-9h-2a7 7 0 0 1-7 7 7.01 7.01 0 0 1-6.175-3.626L8 15h5V9l-2.031 2.031A5.008 5.008 0 0 0 12 7a5 5 0 0 0-5 5H3a7 7 0 0 1 7-7 7.01 7.01 0 0 1 5.65 2.626L18 3v6h-5l2.121-2.121A9.01 9.01 0 0 0 12 3a9.011 9.011 0 0 0-9.004 10.125z"/></svg>
-        <h2 class="mt-4 text-2xl">Please Rotate Your Device</h2>
-        <p class="mt-2 text-lg text-[var(--theme-text-secondary)]">This experience is designed for landscape mode.</p>
-    </div>
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>

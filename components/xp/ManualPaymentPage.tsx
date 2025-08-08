@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
-import { UploadIcon } from '../common/AppIcons';
+import { BackArrowIcon, UploadIcon } from '../common/AppIcons';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -34,7 +34,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -113,7 +113,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                 status: 'pending'
             };
 
-            const { error: insertError } = await supabase.from('manual_payments').insert(newPayment as any);
+            const { error: insertError } = await supabase.from('manual_payments').insert(newPayment);
             if (insertError) throw insertError;
             
             showNotification({
@@ -136,28 +136,34 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
     if (!product || !instructions) return <div className="p-4 text-center">Payment details not available.</div>;
 
     return (
-        <div className="min-h-full">
-            <main className="space-y-6 max-w-lg mx-auto">
-                <div className="bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm">
-                    <h2 className="text-lg font-bold text-center text-[var(--theme-text)]">Pay <span className="text-[var(--theme-primary)]">${product.price.toFixed(2)}</span> for {product.name}</h2>
-                    <div className="mt-4 text-sm text-center text-[var(--theme-text-secondary)]">
+        <div className="min-h-screen bg-[#DAF1DE] dark:bg-[#0A1916]">
+            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-white dark:bg-[#102A27] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[#235347] dark:text-[#8EB69B] hover:text-[#0E2B26] dark:hover:text-white"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[#333333] dark:text-[#E0F0E9] mx-auto">Manual Payment</h1>
+                <div className="w-6"></div>
+            </header>
+
+            <main className="p-4 space-y-6">
+                <div className="bg-white dark:bg-[#102A27] p-6 rounded-lg shadow-sm">
+                    <h2 className="text-lg font-bold text-center text-[#333333] dark:text-[#E0F0E9]">Pay <span className="text-[#16A832]">${product.price.toFixed(2)}</span> for {product.name}</h2>
+                    <div className="mt-4 text-sm text-center text-[#235347] dark:text-[#8EB69B]">
                         <p>Please send the exact amount to the following address and submit your transaction proof below.</p>
                     </div>
-                    <div className="mt-4 bg-[var(--theme-secondary)] p-4 rounded-md space-y-2 text-[var(--theme-text)]">
+                    <div className="mt-4 bg-[#DAF1DE] dark:bg-[#0A1916] p-4 rounded-md space-y-2 text-[#333333] dark:text-[#E0F0E9]">
                         <p><strong>Recipient:</strong> {instructions.recipient_name}</p>
                         <p><strong>Binance Pay ID:</strong> {instructions.binance_pay_id}</p>
                         <p><strong>Network:</strong> {instructions.network} ({instructions.currency})</p>
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm space-y-4">
+                <form onSubmit={handleSubmit} className="bg-white dark:bg-[#102A27] p-6 rounded-lg shadow-sm space-y-4">
                     <Input id="senderDetails" label="Your Binance Pay ID or Email" value={senderDetails} onChange={e => setSenderDetails(e.target.value)} required disabled={isSubmitting} />
                     
                     <div>
-                        <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Payment Screenshot</label>
+                        <label className="block text-sm font-medium text-[#235347] dark:text-[#8EB69B] mb-1">Payment Screenshot</label>
                         <div
                             onClick={() => fileInputRef.current?.click()} 
-                            className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[var(--theme-secondary)]/50 border-dashed rounded-md cursor-pointer hover:border-[var(--theme-primary)]"
+                            className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[#8EB69B]/50 dark:border-[#8EB69B]/30 border-dashed rounded-md cursor-pointer hover:border-[#235347] dark:hover:border-[#8EB69B]"
                         >
                             <div className="space-y-1 text-center">
                                 {screenshotPreview ? (
@@ -165,7 +171,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                                 ) : (
                                     <UploadIcon />
                                 )}
-                                <div className="flex text-sm text-[var(--theme-text-secondary)]">
+                                <div className="flex text-sm text-[#235347] dark:text-[#8EB69B]">
                                     <p className="pl-1">{screenshotFile ? screenshotFile.name : "Click to upload proof"}</p>
                                 </div>
                             </div>

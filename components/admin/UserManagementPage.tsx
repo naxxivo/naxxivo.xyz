@@ -88,7 +88,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
         try {
             // Update the profile first
             if (Object.keys(profileUpdatePayload).length > 0) {
-                 const { error: profileError } = await supabase.from('profiles').update(profileUpdatePayload as any).eq('id', targetId);
+                 const { error: profileError } = await supabase.from('profiles').update(profileUpdatePayload).eq('id', targetId);
                  if (profileError) throw profileError;
             }
 
@@ -100,7 +100,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
                 details: change.details,
             }));
             
-            const { error: logError } = await supabase.from('admin_audit_log').insert(auditLogPayloads as any);
+            const { error: logError } = await supabase.from('admin_audit_log').insert(auditLogPayloads);
             if (logError) throw logError;
             
             alert("User updated successfully!");

@@ -52,7 +52,7 @@ const AppSettingsPage: React.FC = () => {
 
         const { error: updateError } = await supabase
             .from('app_settings')
-            .update({ value: parsedValue } as any)
+            .update({ value: parsedValue })
             .eq('key', key);
         
         if (updateError) {

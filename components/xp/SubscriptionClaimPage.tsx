@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
+import { BackArrowIcon } from '../common/AppIcons';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Button from '../common/Button';
 import { motion } from 'framer-motion';
@@ -97,7 +98,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
                 claim_date: today,
             };
 
-            const { error: insertError } = await supabase.from('daily_claims').insert(newClaim as any);
+            const { error: insertError } = await supabase.from('daily_claims').insert(newClaim);
             if (insertError) throw new Error(`Failed to record your claim. Please try again. Details: ${insertError.message}`);
 
             const { error: rpcError } = await supabase.rpc('add_xp_to_user', {
@@ -112,7 +113,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
                 type: 'XP_REWARD',
                 content: { amount: dailyXp, reason: `Daily claim for ${subscription.products.name}.` }
             };
-            await supabase.from('notifications').insert(notification as any);
+            await supabase.from('notifications').insert(notification);
 
             const successMessage = `You've claimed your daily ${dailyXp} XP!`;
             showNotification({ type: 'success', title: 'Claim Successful!', message: successMessage });
@@ -137,7 +138,7 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
         const startDate = new Date(subscription.start_date);
         
         return (
-            <div className="grid grid-cols-5 md:grid-cols-7 lg:grid-cols-10 gap-3">
+            <div className="grid grid-cols-5 gap-3">
                 {Array.from({ length: totalDays }).map((_, i) => {
                     const dayDate = new Date(startDate);
                     dayDate.setDate(startDate.getDate() + i);
@@ -176,8 +177,14 @@ const SubscriptionClaimPage: React.FC<SubscriptionClaimPageProps> = ({ onBack, s
     };
     
     return (
-        <div className="min-h-full">
-            <main className="space-y-6">
+        <div className="min-h-screen bg-[var(--theme-bg)]">
+            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Subscriptions & Claims</h1>
+                <div className="w-6"></div>
+            </header>
+
+            <main className="p-4 space-y-6">
                 {loading ? <div className="flex justify-center pt-20"><LoadingSpinner /></div> : 
                  error ? <p className="text-red-500 text-center">{error}</p> :
                  !subscription ? (

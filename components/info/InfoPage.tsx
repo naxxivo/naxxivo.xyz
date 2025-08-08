@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRightIcon } from '../common/AppIcons';
+import { BackArrowIcon, ChevronRightIcon } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface InfoPageProps {
@@ -54,8 +54,14 @@ const AccordionItem = ({ title, children, i }: { title: string, children: React.
 
 const InfoPage: React.FC<InfoPageProps> = ({ onBack }) => {
     return (
-        <div className="min-h-full flex flex-col">
-            <main className="flex-grow overflow-y-auto space-y-3">
+        <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col">
+            <header className="flex-shrink-0 flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">The Guidebook</h1>
+                <div className="w-6"></div>
+            </header>
+
+            <main className="flex-grow overflow-y-auto p-4 space-y-3">
                 <AccordionItem title="Getting Started" i={0}>
                     <p>Welcome to NAXXIVO! Here's how to get started:</p>
                     <ul>

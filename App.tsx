@@ -111,7 +111,7 @@ const App: React.FC = () => {
                 if (profile && !profile.has_seen_welcome_bonus) {
                     setShowWelcomeBonus(true);
                     const updatePayload: TablesUpdate<'profiles'> = { has_seen_welcome_bonus: true };
-                    await supabase.from('profiles').update(updatePayload as any).eq('id', session.user.id);
+                    await supabase.from('profiles').update(updatePayload).eq('id', session.user.id);
                 }
             };
             getProfileAndSetupListener();
@@ -132,7 +132,7 @@ const App: React.FC = () => {
     }
     
     return (
-        <div className="w-screen h-screen bg-[var(--theme-bg)]">
+        <>
             <ConnectivityStatusOverlay isOffline={isOffline} isServerDown={!isOffline && isServerDown} />
             
             {!session ? (
@@ -172,7 +172,7 @@ const App: React.FC = () => {
                     />
                 </>
             )}
-        </div>
+        </>
     );
 };
 

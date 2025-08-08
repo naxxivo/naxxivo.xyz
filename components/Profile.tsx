@@ -6,7 +6,7 @@ import type { Tables, TablesInsert, Enums, TablesUpdate, Json } from '../integra
 import { generateAvatar, formatXp } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
-import { MusicNoteIcon, WebsiteIcon, YouTubeIcon, FacebookIcon } from './common/AppIcons';
+import { BackArrowIcon, SettingsIcon, MusicNoteIcon, ToolsIcon, CoinIcon, AdminIcon, WebsiteIcon, YouTubeIcon, FacebookIcon } from './common/AppIcons';
 import { motion } from 'framer-motion';
 import PostCard from './home/PostCard';
 import CommentModal from './home/CommentModal';
@@ -256,10 +256,10 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
         }
     };
 
-    if (loading) return <div className="flex items-center justify-center h-full"><LoadingSpinner /></div>;
+    if (loading) return <div className="flex items-center justify-center pt-20"><LoadingSpinner /></div>;
     
     if (error || !profile) return (
-        <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+        <div className="flex flex-col items-center justify-center p-4 pt-20 text-center">
             <p className="text-red-500">{error || "Could not load profile."}</p>
             {onBack && <Button onClick={onBack} variant="secondary" className="mt-4 w-auto px-6">Back</Button>}
         </div>
@@ -282,21 +282,44 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     };
 
     const statItem = (value: string | number, label: string) => (
-        <div className="text-center">
+        <div>
             <p className="text-xl font-bold text-[var(--theme-text)]">{value}</p>
             <p className="text-xs tracking-wide text-[var(--theme-text-secondary)] uppercase">{label}</p>
         </div>
     );
 
     return (
-        <div className="min-h-full">
+        <div className="bg-[var(--theme-bg)] min-h-screen">
             <motion.div {...{ initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.5 } } as any}>
                 {/* --- HEADER --- */}
-                <div className="relative h-48 md:h-64 bg-cover bg-center" style={{ backgroundImage: `url(${profile.cover_url || ''})`, backgroundColor: 'var(--theme-secondary)' }}>
-                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-                     <div className="absolute inset-0 p-6 flex items-end">
-                        <div className="flex items-center gap-6">
-                            <button onClick={handleAvatarClick} className="relative w-32 h-32 block group focus:outline-none rounded-full flex-shrink-0 focus:ring-4 focus:ring-offset-2 focus:ring-offset-[var(--theme-card-bg)] focus:ring-[var(--theme-ring)]">
+                <div className="relative h-48">
+                     <div className="absolute inset-0">
+                        <svg viewBox="0 0 375 190" preserveAspectRatio="none" className="w-full h-full">
+                            {profile.cover_url ? (
+                                <defs>
+                                    <pattern id="cover-pattern" patternUnits="userSpaceOnUse" width="100%" height="100%">
+                                        <image href={profile.cover_url} x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+                                    </pattern>
+                                </defs>
+                            ) : null}
+                            <path d="M0 0 H375 V130 C250 190, 125 190, 0 130 Z" fill={profile.cover_url ? 'url(#cover-pattern)' : 'var(--theme-primary)'} />
+                            <path d="M0 0 H375 V130 C250 190, 125 190, 0 130 Z" fill="black" fillOpacity="0.25" />
+                        </svg>
+                    </div>
+                     <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                        <button onClick={onBack} className={`text-white p-2 rounded-full transition-colors hover:bg-black/20 ${onBack ? 'visible' : 'invisible'}`}><BackArrowIcon /></button>
+                        <div className="flex items-center gap-1">
+                            {isMyProfile && <button onClick={onNavigateToTools} className="text-white p-2 rounded-full transition-colors hover:bg-black/20"><ToolsIcon /></button>}
+                            {isMyProfile && <button onClick={onNavigateToSettings} className="text-white p-2 rounded-full transition-colors hover:bg-black/20"><SettingsIcon /></button>}
+                        </div>
+                     </div>
+                </div>
+
+                {/* --- CONTENT --- */}
+                <div className="relative -mt-20 z-0">
+                    <div className="relative bg-[var(--theme-card-bg)] rounded-t-3xl pt-20 p-6 text-center">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                             <button onClick={handleAvatarClick} className="relative w-32 h-32 block group focus:outline-none rounded-full focus:ring-4 focus:ring-offset-2 focus:ring-offset-[var(--theme-card-bg)] focus:ring-[var(--theme-ring)]">
                                 {activeFxUrl && !activeCoverUrl && <img src={activeFxUrl} alt="Profile Effect" className="absolute inset-[-16px] w-44 h-44 pointer-events-none" />}
                                 <img src={profileImageUrl} alt="avatar" className="relative w-32 h-32 rounded-full object-cover border-4 border-[var(--theme-card-bg)] shadow-lg" />
                                 {activeCoverUrl && <img src={activeCoverUrl} alt="Profile Cover" className="absolute top-1/2 left-1/2 pointer-events-none" style={transformStyle} />}
@@ -306,88 +329,79 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                                     </div>
                                 )}
                             </button>
-                            <div className="text-white">
-                                <h1 className="text-3xl font-bold flex items-center gap-2">
-                                   {profile.name}
-                                   {activeBadgeUrl && <img src={activeBadgeUrl} alt="Badge" title="Equipped Badge" className="w-6 h-6" />}
-                                </h1>
-                                <p className="text-white/80">@{profile.username}</p>
-                                <div className="flex items-center gap-4 mt-2">
-                                     {profile.website_url && (
-                                        <a href={ensureProtocol(profile.website_url)} target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-white transition-colors"><WebsiteIcon/></a>
-                                    )}
-                                     {profile.youtube_url && (
-                                        <a href={ensureProtocol(profile.youtube_url)} target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-white transition-colors"><YouTubeIcon/></a>
-                                    )}
-                                     {profile.facebook_url && (
-                                        <a href={ensureProtocol(profile.facebook_url)} target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-white transition-colors"><FacebookIcon className="w-6 h-6"/></a>
-                                    )}
-                                </div>
-                            </div>
                         </div>
-                     </div>
-                </div>
+                        
+                        <h1 className="text-2xl font-bold text-[var(--theme-text)] flex items-center justify-center gap-2">
+                           {profile.name}
+                           {activeBadgeUrl && <img src={activeBadgeUrl} alt="Badge" title="Equipped Badge" className="w-6 h-6" />}
+                        </h1>
+                        <p className="text-[var(--theme-text-secondary)]">@{profile.username}</p>
+                        {profile.bio && <p className="text-sm text-[var(--theme-text)] mt-3 max-w-md mx-auto">{profile.bio}</p>}
 
-                {/* --- CONTENT --- */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column (Info) */}
-                    <div className="lg:col-span-1 space-y-6">
-                         <div className="bg-[var(--theme-card-bg)] rounded-xl p-6">
-                            {profile.bio && <p className="text-sm text-[var(--theme-text-secondary)]">{profile.bio}</p>}
-                            <div className="flex justify-around items-center border-t border-b border-[var(--theme-secondary)] py-4 my-4">
-                                {statItem(posts.length, 'Posts')}
-                                <button onClick={() => handleOpenFollowModal('followers')}>{statItem(followerCount, 'Followers')}</button>
-                                <button onClick={() => handleOpenFollowModal('following')}>{statItem(followingCount, 'Following')}</button>
-                            </div>
-
-                             {!isMyProfile && (
-                                <div className="flex items-center gap-3">
-                                    <Button
-                                        onClick={handleFollowToggle}
-                                        disabled={isUpdatingFollow}
-                                        variant={isFollowing ? 'secondary' : 'primary'}
-                                        className="flex-1"
-                                    >
-                                        {isUpdatingFollow ? '...' : (isFollowing ? 'Unfollow' : 'Follow')}
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        className="flex-1"
-                                        onClick={() => onMessage && profile && onMessage({
-                                            id: profile.id,
-                                            name: profile.name || profile.username,
-                                            photo_url: profile.photo_url,
-                                            active_cover: profile.active_cover || null
-                                        })}
-                                    >
-                                        Message
-                                    </Button>
-                                </div>
+                        <div className="flex justify-center gap-4 my-6">
+                            {profile.website_url && (
+                                <a href={ensureProtocol(profile.website_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><WebsiteIcon/></a>
                             )}
-                         </div>
-                    </div>
+                             {profile.youtube_url && (
+                                <a href={ensureProtocol(profile.youtube_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><YouTubeIcon/></a>
+                            )}
+                             {profile.facebook_url && (
+                                <a href={ensureProtocol(profile.facebook_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><FacebookIcon className="w-6 h-6"/></a>
+                            )}
+                        </div>
+                        
+                        <div className="flex justify-around items-center border-t border-b border-gray-200 dark:border-gray-700 py-4 my-6">
+                            {statItem(posts.length, 'Post')}
+                            <button onClick={() => handleOpenFollowModal('followers')}>{statItem(followerCount, 'Followers')}</button>
+                            <button onClick={() => handleOpenFollowModal('following')}>{statItem(followingCount, 'Following')}</button>
+                        </div>
 
-                    {/* Right Column (Posts) */}
-                    <div className="lg:col-span-2 space-y-6">
-                         {posts.length > 0 ? (
-                            posts.map(post => (
-                                <PostCard
-                                    key={post.id}
-                                    post={post}
-                                    session={session}
-                                    onViewProfile={onViewProfile}
-                                    onOpenComments={() => setCommentModalPost(post)}
-                                    hideFollowButton={true}
-                                />
-                            ))
-                        ) : (
-                            <div className="text-center py-16 px-4 bg-[var(--theme-card-bg)] rounded-xl">
-                                <h2 className="text-xl font-semibold text-[var(--theme-text)]">No stories yet</h2>
-                                <p className="text-[var(--theme-text-secondary)] mt-2">{isMyProfile ? "Share your first memory!" : "This user hasn't shared any posts."}</p>
+                        {!isMyProfile && (
+                            <div className="px-4 flex items-center gap-3">
+                                <Button
+                                    onClick={handleFollowToggle}
+                                    disabled={isUpdatingFollow}
+                                    variant={isFollowing ? 'secondary' : 'primary'}
+                                    className="flex-1"
+                                >
+                                    {isUpdatingFollow ? '...' : (isFollowing ? 'Unfollow' : 'Follow')}
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    className="flex-1"
+                                    onClick={() => onMessage && profile && onMessage({
+                                        id: profile.id,
+                                        name: profile.name || profile.username,
+                                        photo_url: profile.photo_url,
+                                        active_cover: profile.active_cover || null
+                                    })}
+                                >
+                                    Message
+                                </Button>
                             </div>
                         )}
                     </div>
                 </div>
+
+                 {posts.length > 0 ? (
+                    <div className="p-4 space-y-6 bg-[var(--theme-card-bg)]">
+                        {posts.map(post => (
+                            <PostCard
+                                key={post.id}
+                                post={post}
+                                session={session}
+                                onViewProfile={onViewProfile}
+                                onOpenComments={() => setCommentModalPost(post)}
+                                hideFollowButton={true}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 px-4 bg-[var(--theme-card-bg)]">
+                        <h2 className="text-xl font-semibold text-[var(--theme-text)]">No stories yet</h2>
+                        <p className="text-[var(--theme-text-secondary)] mt-2">{isMyProfile ? "Share your first memory!" : "This user hasn't shared any posts."}</p>
+                    </div>
+                )}
                 
                 <FollowListModal
                     isOpen={!!modalState.type}

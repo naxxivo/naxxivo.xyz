@@ -4,6 +4,7 @@ import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { BackArrowIcon } from '../common/AppIcons';
 
 interface CreateEpisodePageProps {
     onBack: () => void;
@@ -62,12 +63,18 @@ const CreateEpisodePage: React.FC<CreateEpisodePageProps> = ({ onBack, onEpisode
     };
     
     return (
-        <div className="min-h-full">
-            <main>
+        <div className="min-h-screen bg-[var(--theme-bg)]">
+            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Add New Episode</h1>
+                <div className="w-6"></div>
+            </header>
+
+            <main className="p-4">
                  {seriesList.length === 0 ? (
                     <div className="flex justify-center pt-20"><LoadingSpinner/></div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4 bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm max-w-lg mx-auto">
+                    <form onSubmit={handleSubmit} className="space-y-4 bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm">
                         <div>
                             <label htmlFor="series" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Series</label>
                             <select

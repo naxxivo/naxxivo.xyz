@@ -43,7 +43,7 @@ const AdminCoverApprovalPage: React.FC<{ session: Session }> = ({ session }) => 
             if (shouldApprove) {
                 const { error } = await supabase
                     .from('store_items')
-                    .update({ is_approved: true, is_active: true } as any)
+                    .update({ is_approved: true, is_active: true })
                     .eq('id', itemId);
                 if (error) throw error;
             } else {
