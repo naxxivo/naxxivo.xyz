@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Tables, Enums } from '../../integrations/supabase/types';
+import type { Tables, Enums, Json } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -20,10 +20,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
         description: '',
         price: 0,
         product_type: 'package',
-        xp_amount: 0,
-        subscription_initial_xp: 0,
-        subscription_daily_xp: 0,
-        subscription_duration_days: 0,
+        details: { xp_amount: 0 },
         is_active: true,
         icon: '💎'
     });
@@ -36,20 +33,44 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
             // Reset to default for new product
             setFormData({
                 name: '', description: '', price: 0, product_type: 'package',
-                xp_amount: 0, subscription_initial_xp: 0, subscription_daily_xp: 0,
-                subscription_duration_days: 0, is_active: true, icon: '💎'
+                details: { xp_amount: 0 },
+                is_active: true, icon: '💎'
             });
         }
     }, [productToEdit, isOpen]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value, type } = e.target;
-        if (type === 'checkbox') {
-            const { checked } = e.target as HTMLInputElement;
-            setFormData(prev => ({ ...prev, [name]: checked }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
-        }
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleDetailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            details: {
+                ...(prev.details as object || {}),
+                [name]: Number(value)
+            }
+        }));
+    };
+
+    const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newType = e.target.value as Enums<'product_type'>;
+        setFormData(prev => {
+            const currentDetails = prev.details as any;
+            return {
+                ...prev,
+                product_type: newType,
+                details: newType === 'package' 
+                    ? { xp_amount: currentDetails?.xp_amount || 0 } 
+                    : { 
+                        initial_xp: currentDetails?.initial_xp || 0, 
+                        daily_xp: currentDetails?.daily_xp || 0, 
+                        duration_days: currentDetails?.duration_days || 30 
+                    }
+            };
+        });
     };
     
     const handleToggle = (name: keyof Product, value: boolean) => {
@@ -95,20 +116,20 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
-                                    <select name="product_type" value={formData.product_type} onChange={handleChange} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                    <select name="product_type" value={formData.product_type} onChange={handleTypeChange} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                         <option value="package">Package</option>
                                         <option value="subscription">Subscription</option>
                                     </select>
                                 </div>
                                 
                                 {formData.product_type === 'package' ? (
-                                    <Input id="xp_amount" label="XP Amount" name="xp_amount" type="number" value={formData.xp_amount || ''} onChange={handleChange} />
+                                    <Input id="xp_amount" label="XP Amount" name="xp_amount" type="number" value={(formData.details as any)?.xp_amount || ''} onChange={handleDetailChange} />
                                 ) : (
                                     <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md space-y-3">
                                         <h4 className="font-semibold text-gray-600 dark:text-gray-300">Subscription Details</h4>
-                                        <Input id="subscription_initial_xp" label="Initial XP on Purchase" name="subscription_initial_xp" type="number" value={formData.subscription_initial_xp || ''} onChange={handleChange} />
-                                        <Input id="subscription_daily_xp" label="Daily XP Claim" name="subscription_daily_xp" type="number" value={formData.subscription_daily_xp || ''} onChange={handleChange} />
-                                        <Input id="subscription_duration_days" label="Duration (days)" name="subscription_duration_days" type="number" value={formData.subscription_duration_days || ''} onChange={handleChange} />
+                                        <Input id="initial_xp" label="Initial XP on Purchase" name="initial_xp" type="number" value={(formData.details as any)?.initial_xp || ''} onChange={handleDetailChange} />
+                                        <Input id="daily_xp" label="Daily XP Claim" name="daily_xp" type="number" value={(formData.details as any)?.daily_xp || ''} onChange={handleDetailChange} />
+                                        <Input id="duration_days" label="Duration (days)" name="duration_days" type="number" value={(formData.details as any)?.duration_days || ''} onChange={handleDetailChange} />
                                     </div>
                                 )}
                                 <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md">

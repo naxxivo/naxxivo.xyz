@@ -6,12 +6,14 @@ import { BackArrowIcon, UploadIcon } from '../common/AppIcons';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import LoadingSpinner from '../common/LoadingSpinner';
+import type { NotificationDetails } from '../common/NotificationPopup';
 
 interface ManualPaymentPageProps {
     onBack: () => void;
     session: Session;
     productId: number;
     onSubmit: () => void;
+    showNotification: (details: NotificationDetails) => void;
 }
 
 type Product = Tables<'products'>;
@@ -23,7 +25,7 @@ interface PaymentInstructions {
     currency: string;
 }
 
-const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, productId, onSubmit }) => {
+const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, productId, onSubmit, showNotification }) => {
     const [product, setProduct] = useState<Product | null>(null);
     const [instructions, setInstructions] = useState<PaymentInstructions | null>(null);
     const [senderDetails, setSenderDetails] = useState('');
@@ -49,7 +51,7 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                 
                 const { data: productData, error: productError } = productResponse;
                 if (productError) throw productError;
-                setProduct(productData as any | null);
+                setProduct(productData as any);
 
                 const { data: settingsData, error: settingsError } = settingsResponse;
                 if (settingsError) throw new Error("Could not load payment instructions.");
@@ -111,10 +113,14 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
                 status: 'pending'
             };
 
-            const { error: insertError } = await supabase.from('manual_payments').insert(newPayment as any);
+            const { error: insertError } = await supabase.from('manual_payments').insert(newPayment);
             if (insertError) throw insertError;
             
-            alert('Your payment has been submitted for review. It may take up to 24 hours to process.');
+            showNotification({
+                type: 'success',
+                title: 'Submission Received',
+                message: 'Your payment is now under review. This can take up to 24 hours.'
+            });
             onSubmit();
 
         } catch(err: any) {

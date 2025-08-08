@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, Json, TablesInsert } from '../../integrations/supabase/types';
 import { BackArrowIcon, CoinIcon } from '../common/AppIcons';
 import Button from '../common/Button';
 import { motion } from 'framer-motion';
@@ -11,12 +11,12 @@ interface TopUpPageProps {
     onBack: () => void;
     onPurchase: (productId: number) => void;
     onManageSubscriptions: () => void;
+    showBrowserNotification: (title: string, body: string) => void;
 }
 
-// Use a specific type for products to improve performance and type safety
-type Product = Pick<Tables<'products'>, 'id' | 'product_type' | 'price' | 'icon' | 'name' | 'description' | 'xp_amount' | 'subscription_initial_xp' | 'subscription_daily_xp' | 'subscription_duration_days'>;
+type Product = Pick<Tables<'products'>, 'id' | 'product_type' | 'price' | 'icon' | 'name' | 'description' | 'details'>;
 
-const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubscriptions }) => {
+const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubscriptions, showBrowserNotification }) => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [giftCode, setGiftCode] = useState('');
@@ -26,17 +26,16 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
     useEffect(() => {
         const fetchProducts = async () => {
             setLoading(true);
-            // Select only required fields instead of '*'
             const { data, error } = await supabase
                 .from('products')
-                .select('id, product_type, price, icon, name, description, xp_amount, subscription_initial_xp, subscription_daily_xp, subscription_duration_days')
+                .select('id, product_type, price, icon, name, description, details')
                 .eq('is_active', true)
                 .order('price', { ascending: true });
             
             if (error) {
                 console.error("Failed to fetch products:", error);
             } else {
-                setProducts((data as any[]) || []);
+                setProducts((data as any) || []);
             }
             setLoading(false);
         };
@@ -60,7 +59,17 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
             
             if (typeof rpcData === 'string' && rpcData.startsWith('Success!')) {
                 setRedeemMessage({ type: 'success', text: rpcData });
+                const xpAmount = parseInt(rpcData.split(' ')[2] || '0');
+                if (xpAmount > 0) {
+                     const notification: TablesInsert<'notifications'> = {
+                        user_id: user.id,
+                        type: 'XP_REWARD',
+                        content: { amount: xpAmount, reason: `Gift code redemption.` }
+                    };
+                    await supabase.from('notifications').insert(notification as any);
+                }
                 setGiftCode('');
+                showBrowserNotification('Code Redeemed!', rpcData);
             } else {
                  setRedeemMessage({ type: 'error', text: (rpcData as string) || "An unknown error occurred." });
             }
@@ -153,28 +162,31 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
                         <section>
                             <h2 className="text-lg font-bold text-[var(--theme-text)] mb-3">XP Packages</h2>
                             <div className="grid grid-cols-2 gap-4">
-                                {xpPackages.map((pkg, index) => (
-                                    <motion.div
-                                        key={pkg.id}
-                                        {...{
-                                            initial: { opacity: 0, y: 20 },
-                                            animate: { opacity: 1, y: 0 },
-                                            transition: { type: 'spring', delay: index * 0.1 },
-                                        } as any}
-                                        className="bg-[var(--theme-card-bg)] p-4 rounded-xl shadow-md text-center flex flex-col justify-between"
-                                    >
-                                        <div className="text-3xl mb-2">{pkg.icon || '💎'}</div>
-                                        <p className="font-bold text-lg text-[var(--theme-text)]">{pkg.xp_amount} XP</p>
-                                        <p className="text-sm text-[var(--theme-text-secondary)]">${pkg.price.toFixed(2)}</p>
-                                        <Button 
-                                            size="small"
-                                            onClick={() => onPurchase(pkg.id)}
-                                            className="mt-3 w-full"
+                                {xpPackages.map((pkg, index) => {
+                                    const details = pkg.details as any;
+                                    return (
+                                        <motion.div
+                                            key={pkg.id}
+                                            {...{
+                                                initial: { opacity: 0, y: 20 },
+                                                animate: { opacity: 1, y: 0 },
+                                                transition: { type: 'spring', delay: index * 0.1 },
+                                            } as any}
+                                            className="bg-[var(--theme-card-bg)] p-4 rounded-xl shadow-md text-center flex flex-col justify-between"
                                         >
-                                            Purchase
-                                        </Button>
-                                    </motion.div>
-                                ))}
+                                            <div className="text-3xl mb-2">{pkg.icon || '💎'}</div>
+                                            <p className="font-bold text-lg text-[var(--theme-text)]">{details?.xp_amount?.toLocaleString() ?? '0'} XP</p>
+                                            <p className="text-sm text-[var(--theme-text-secondary)]">${pkg.price.toFixed(2)}</p>
+                                            <Button 
+                                                size="small"
+                                                onClick={() => onPurchase(pkg.id)}
+                                                className="mt-3 w-full"
+                                            >
+                                                Purchase
+                                            </Button>
+                                        </motion.div>
+                                    )
+                                })}
                             </div>
                         </section>
                     )}

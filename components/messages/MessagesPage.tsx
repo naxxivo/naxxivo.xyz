@@ -5,6 +5,8 @@ import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { SearchIcon as SearchIconSVG, MenuIcon } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Json } from '../../integrations/supabase/types';
+import Avatar from '../common/Avatar';
 
 
 // --- Local Types --- //
@@ -13,6 +15,7 @@ interface ProfileStub {
     name: string | null;
     username: string;
     photo_url: string | null;
+    active_cover: { preview_url: string | null; asset_details: Json } | null;
 }
 
 type FetchedMessage = {
@@ -34,7 +37,7 @@ interface Conversation {
 
 interface MessagesPageProps {
     session: Session;
-    onStartChat: (user: { id: string; name: string; photo_url: string | null }) => void;
+    onStartChat: (user: ProfileStub) => void;
 }
 
 
@@ -82,10 +85,10 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                 // Fetch some users for the "online" list (dummy data for now)
                 const { data: onlineUsersData, error: onlineUsersError } = await supabase
                     .from('profiles')
-                    .select('id, name, username, photo_url')
+                    .select('id, name, username, photo_url, active_cover:active_cover_id(preview_url, asset_details)')
                     .limit(10);
                 if(onlineUsersError) throw onlineUsersError;
-                setOnlineUsers(onlineUsersData || []);
+                setOnlineUsers((onlineUsersData as any[]) || []);
 
                 if (otherUserIds.size === 0) {
                     setConversations([]);
@@ -96,7 +99,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                 // Fetch profiles for the conversations
                 const { data: typedProfiles, error: profilesError } = await supabase
                     .from('profiles')
-                    .select('id, name, username, photo_url')
+                    .select('id, name, username, photo_url, active_cover:active_cover_id(preview_url, asset_details)')
                     .in('id', Array.from(otherUserIds));
 
                 if (profilesError) throw profilesError;
@@ -155,8 +158,14 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                 <div className="mt-4">
                     <div className="flex space-x-4 overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
                          {onlineUsers.map(user => (
-                            <button key={user.id} onClick={() => onStartChat({ id: user.id, name: user.name || 'Unknown', photo_url: user.photo_url })} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-16">
-                                <img src={user.photo_url || generateAvatar(user.username)} alt={user.name || ''} className="w-14 h-14 object-cover rounded-full border-2 border-[var(--theme-primary)]/50" />
+                            <button key={user.id} onClick={() => onStartChat(user)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-16">
+                                <Avatar 
+                                    photoUrl={user.photo_url}
+                                    name={user.username}
+                                    activeCover={user.active_cover}
+                                    size="lg"
+                                    imageClassName="border-2 border-[var(--theme-primary)]/50"
+                                />
                             </button>
                         ))}
                     </div>
@@ -197,17 +206,16 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                                         exit: { opacity: 0, y: -20 },
                                         transition: { delay: index * 0.05 }
                                     } as any}
-                                    onClick={() => onStartChat({ id: other_user.id, name: other_user.name || 'Unknown', photo_url: other_user.photo_url })}
+                                    onClick={() => onStartChat(other_user)}
                                     className="w-full flex items-center p-3 rounded-2xl hover:bg-[var(--theme-card-bg-alt)] transition-colors text-left"
                                 >
                                     <div className="relative flex-shrink-0">
-                                        <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200">
-                                            <img 
-                                                src={other_user.photo_url || generateAvatar(other_user.name || other_user.username)} 
-                                                alt={other_user.name || ''} 
-                                                className="w-full h-full object-cover" 
-                                            />
-                                        </div>
+                                        <Avatar
+                                            photoUrl={other_user.photo_url}
+                                            name={other_user.name || other_user.username}
+                                            activeCover={other_user.active_cover}
+                                            size="lg"
+                                        />
                                     </div>
                                     <div className="ml-4 flex-grow overflow-hidden">
                                         <div className="flex justify-between items-start">

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/auth-js';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, Json } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import PaymentReviewModal from './PaymentReviewModal';
 
 export type PaymentWithDetails = Tables<'manual_payments'> & {
     profiles: Pick<Tables<'profiles'>, 'name' | 'username'> | null;
-    products: Pick<Tables<'products'>, 'id' | 'name' | 'product_type' | 'price' | 'xp_amount' | 'subscription_initial_xp' | 'subscription_daily_xp' | 'subscription_duration_days'> | null;
+    products: Pick<Tables<'products'>, 'id' | 'name' | 'product_type' | 'price' | 'details'> | null;
 };
 
 const PaymentQueuePage: React.FC<{ session: Session }> = ({ session }) => {

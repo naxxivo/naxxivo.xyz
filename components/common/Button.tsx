@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+type ButtonProps = {
     children: React.ReactNode;
     variant?: 'primary' | 'secondary';
     size?: 'large' | 'small';
-}
+} & HTMLMotionProps<"button">;
 
 const Button: React.FC<ButtonProps> = ({ children, className, variant = 'primary', size = 'large', ...props }) => {
     const baseClasses = "w-full flex justify-center items-center font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] dark:focus:ring-offset-[var(--theme-bg)] transition-all duration-300 h-12";

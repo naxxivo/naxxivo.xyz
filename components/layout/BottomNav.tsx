@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { HomeIcon, MessageIcon, AddIcon, DiscoverIcon, ProfileIcon } from '../common/AppIcons';
+import { HomeIcon, MessageIcon, AddIcon, DiscoverIcon, ProfileIcon, BellIcon } from '../common/AppIcons';
 import type { AuthView } from '../UserApp';
 
 interface BottomNavProps {
@@ -22,7 +22,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPos
         'settings', 'edit-profile', 'music-library', 'tools', 
         'anime', 'anime-series', 'create-series', 'create-episode',
         'top-up', 'subscriptions', 'manual-payment',
-        'store', 'collection', 'info', 'earn-xp', 'upload-cover'
+        'store', 'collection', 'info', 'earn-xp', 'upload-cover',
+        'notifications'
     ];
 
     return (

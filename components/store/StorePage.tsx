@@ -7,11 +7,13 @@ import { formatXp } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
 import type { Tables, Enums, Json } from '../../integrations/supabase/types';
 import type { Session } from '@supabase/auth-js';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 interface StorePageProps {
     onBack: () => void;
     session: Session;
     onNavigateToUploadCover: () => void;
+    showNotification: (details: any) => void;
 }
 
 type StoreCategory = 'Featured' | 'Profile FX' | 'Profile Covers' | 'Themes' | 'Badges';
@@ -55,7 +57,7 @@ const ItemCard = ({ item, onPurchase, onPreview, isOwned, canAfford }: { item: S
     );
 };
 
-const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUploadCover }) => {
+const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUploadCover, showNotification }) => {
     const [activeTab, setActiveTab] = useState<StoreCategory>('Featured');
     const [previewItem, setPreviewItem] = useState<StoreItem | null>(null);
     const [isPurchasing, setIsPurchasing] = useState(false);
@@ -63,6 +65,8 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
     const [items, setItems] = useState<StoreItem[]>([]);
     const [ownedItemIds, setOwnedItemIds] = useState<Set<number>>(new Set());
     const [userXp, setUserXp] = useState(0);
+    const [confirmingPurchase, setConfirmingPurchase] = useState<StoreItem | null>(null);
+
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -74,7 +78,7 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
             ]);
 
             if (itemsRes.error) throw itemsRes.error;
-            setItems((itemsRes.data as any[]) || []);
+            setItems((itemsRes.data as any) || []);
 
             if (inventoryRes.error) throw inventoryRes.error;
             setOwnedItemIds(new Set(inventoryRes.data.map(i => i.item_id)));
@@ -83,31 +87,36 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
             setUserXp(profileRes.data.xp_balance);
 
         } catch (err: any) {
-            alert(`Error loading store: ${err.message}`);
+            showNotification({ type: 'error', title: 'Error', message: `Error loading store: ${err.message}` });
         } finally {
             setLoading(false);
         }
-    }, [session.user.id]);
+    }, [session.user.id, showNotification]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    const handlePurchase = async (item: StoreItem) => {
-        if(confirm(`Purchase "${item.name}" for ${item.price} XP?`)) {
-            setIsPurchasing(true);
-            const { data, error } = await supabase.rpc('buy_store_item', { p_item_id: item.id });
-            
-            if (error) {
-                alert(`Purchase failed: ${error.message}`);
-            } else if (data && data.startsWith('Error:')) {
-                alert(data);
-            } else {
-                alert(data || "Purchase successful!");
-                await fetchData(); // Refresh data after purchase
-            }
-            setIsPurchasing(false);
+    const handlePurchaseClick = (item: StoreItem) => {
+        setConfirmingPurchase(item);
+    };
+
+    const handleConfirmPurchase = async () => {
+        if (!confirmingPurchase) return;
+
+        setIsPurchasing(true);
+        const { data, error } = await supabase.rpc('buy_store_item', { p_item_id: confirmingPurchase.id });
+        
+        if (error) {
+            showNotification({ type: 'error', title: 'Purchase Failed', message: error.message });
+        } else if (data && data.startsWith('Error:')) {
+            showNotification({ type: 'error', title: 'Purchase Failed', message: data });
+        } else {
+            showNotification({ type: 'success', title: 'Purchase Successful!', message: data || `You now own ${confirmingPurchase.name}.` });
+            await fetchData(); // Refresh data after purchase
         }
+        setIsPurchasing(false);
+        setConfirmingPurchase(null);
     };
 
     const filteredItems = items.filter(item => {
@@ -177,7 +186,7 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
                                 <ItemCard 
                                     key={item.id} 
                                     item={item} 
-                                    onPurchase={handlePurchase} 
+                                    onPurchase={handlePurchaseClick} 
                                     onPreview={setPreviewItem} 
                                     isOwned={ownedItemIds.has(item.id)}
                                     canAfford={userXp >= item.price}
@@ -214,7 +223,17 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
                 )}
             </AnimatePresence>
             
-            {isPurchasing && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"><LoadingSpinner /></div>}
+            {confirmingPurchase && (
+                <ConfirmationModal
+                    isOpen={!!confirmingPurchase}
+                    onClose={() => setConfirmingPurchase(null)}
+                    onConfirm={handleConfirmPurchase}
+                    title="Confirm Purchase"
+                    message={`Are you sure you want to buy "${confirmingPurchase.name}" for ${confirmingPurchase.price} XP?`}
+                    confirmText="Yes, Buy Now"
+                    isConfirming={isPurchasing}
+                />
+            )}
         </div>
     );
 };

@@ -5,6 +5,7 @@ import { generateAvatar } from '../../utils/helpers';
 import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 import { motion } from 'framer-motion';
 import { HeartIcon, CommentIcon, OptionsIcon, ShareIcon } from '../common/AppIcons';
+import Avatar from '../common/Avatar';
 
 type CommentWithProfile = Tables<'comments'> & {
     profiles: {
@@ -77,6 +78,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
             } else {
                 const newLike: TablesInsert<'likes'> = { user_id: session.user.id, post_id: postId };
                 await supabase.from('likes').insert(newLike as any);
+                
+                // Send notification
+                if (user_id !== session.user.id) {
+                    const notification: TablesInsert<'notifications'> = {
+                        user_id: user_id,
+                        actor_id: session.user.id,
+                        type: 'POST_LIKE',
+                        entity_id: String(postId)
+                    };
+                    await supabase.from('notifications').insert(notification as any);
+                }
             }
         } catch (error: any) {
             console.error("Failed to update like status:", error.message);
@@ -100,6 +112,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
             } else {
                 const newFollow: TablesInsert<'follows'> = { follower_id: session.user.id, following_id: user_id };
                 await supabase.from('follows').insert(newFollow as any);
+
+                // Send notification
+                const notification: TablesInsert<'notifications'> = {
+                    user_id: user_id,
+                    actor_id: session.user.id,
+                    type: 'NEW_FOLLOWER',
+                    entity_id: session.user.id
+                };
+                await supabase.from('notifications').insert(notification as any);
             }
         } catch (error: any) {
             console.error("Failed to update follow status:", error.message);
@@ -122,10 +143,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, session, onViewProfile, onOpe
             {/* Card Header */}
             <div className="flex items-center justify-between p-3">
                 <button onClick={() => onViewProfile(user_id)} className="flex items-center space-x-3 group">
-                    <img
-                        src={profile?.photo_url || generateAvatar(profile?.name || '')}
-                        alt={profile?.name || 'User avatar'}
-                        className="w-10 h-10 rounded-full object-cover group-hover:opacity-80 transition-opacity"
+                    <Avatar
+                        photoUrl={profile?.photo_url}
+                        name={profile?.name}
+                        activeCover={profile?.active_cover}
+                        size="sm"
+                        containerClassName="group-hover:opacity-80 transition-opacity"
                     />
                     <div>
                         <p className="font-bold text-sm text-[var(--theme-text)]">{profile?.name || profile?.username}</p>

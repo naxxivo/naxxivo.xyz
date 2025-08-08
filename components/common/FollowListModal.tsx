@@ -1,10 +1,13 @@
 import React from 'react';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, Json } from '../../integrations/supabase/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
 import { generateAvatar } from '../../utils/helpers';
+import Avatar from './Avatar';
 
-type ProfileStub = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'>;
+type ProfileStub = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'> & {
+    active_cover: { preview_url: string | null; asset_details: Json } | null;
+};
 
 interface FollowListModalProps {
     isOpen: boolean;
@@ -57,13 +60,13 @@ const FollowListModal: React.FC<FollowListModalProps> = ({ isOpen, onClose, titl
                                         onClick={() => onViewProfile(user.id)}
                                         className="w-full flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-opacity-50 transition-colors"
                                     >
-                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                                            <img 
-                                                src={user.photo_url || generateAvatar(user.name || user.username)} 
-                                                alt={user.name || ''} 
-                                                className="w-full h-full object-cover" 
-                                            />
-                                        </div>
+                                        <Avatar
+                                            photoUrl={user.photo_url}
+                                            name={user.name || user.username}
+                                            activeCover={user.active_cover}
+                                            size="sm"
+                                            containerClassName="flex-shrink-0"
+                                        />
                                         <div className="ml-3 text-left">
                                             <p className="font-semibold text-[var(--theme-text)] truncate">{user.name || user.username}</p>
                                             <p className="text-sm text-[var(--theme-text-secondary)] truncate">@{user.username}</p>

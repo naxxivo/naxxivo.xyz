@@ -25,7 +25,7 @@ const AdminCoverApprovalPage: React.FC<{ session: Session }> = ({ session }) => 
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
-            setCovers((data as any[]) || []);
+            setCovers((data as any) || []);
         } catch (error: any) {
             alert(`Failed to fetch covers: ${error.message}`);
         } finally {

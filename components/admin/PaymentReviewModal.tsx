@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/auth-js';
-import type { Enums, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
+import type { Enums, TablesUpdate, TablesInsert, Json } from '../../integrations/supabase/types';
 import type { PaymentWithDetails } from './PaymentQueuePage';
 import LoadingSpinner from '../common/LoadingSpinner';
 
@@ -25,13 +25,13 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                 }
     
                 const product = payment.products;
+                const productDetails = product.details as any;
                 const userId = payment.user_id;
                 
-                // Award subscription if applicable
-                if (product.product_type === 'subscription' && product.subscription_duration_days) {
+                if (product.product_type === 'subscription' && productDetails?.duration_days) {
                     const startDate = new Date();
                     const endDate = new Date(startDate);
-                    endDate.setDate(startDate.getDate() + product.subscription_duration_days);
+                    endDate.setDate(startDate.getDate() + productDetails.duration_days);
 
                     const newSubscription: TablesInsert<'user_subscriptions'> = {
                         user_id: userId,
@@ -45,10 +45,8 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                     if (subError) throw new Error(`Failed to create subscription: ${subError.message}`);
                 }
                 
-                // Determine total XP to add
-                const xpToAdd = (product.product_type === 'package' ? product.xp_amount : product.subscription_initial_xp) || 0;
+                const xpToAdd = (product.product_type === 'package' ? productDetails?.xp_amount : productDetails?.initial_xp) || 0;
                 
-                // Update user's XP balance if needed
                 if (xpToAdd > 0) {
                      const { error: rpcError } = await supabase.rpc('add_xp_to_user', {
                         user_id_to_update: userId,
@@ -61,14 +59,32 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                 const updatePayload: TablesUpdate<'manual_payments'> = { status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: finalNotes };
                 const { error } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
                 if (error) {
-                    // This is a critical state. User got the item, but payment is still pending. Alert admin to fix manually.
                     throw new Error(`CRITICAL: User ${userId} was awarded product ${product.id}, but failed to update payment status. Please manually set payment ${payment.id} to 'approved'.`);
                 }
+                
+                // Send notification for approval
+                const notification: TablesInsert<'notifications'> = {
+                    user_id: userId,
+                    type: 'PAYMENT_APPROVED',
+                    entity_id: String(payment.id),
+                    content: { productName: product.name, amount: payment.amount }
+                };
+                await supabase.from('notifications').insert(notification);
 
             } else { // Logic for 'rejected'
-                const updatePayload: TablesUpdate<'manual_payments'> = { status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: notes || 'Rejected without notes.'};
+                const finalNotes = notes || 'Your payment was rejected. Please ensure the screenshot and details are correct.';
+                const updatePayload: TablesUpdate<'manual_payments'> = { status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: finalNotes };
                 const { error } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
                 if (error) throw error;
+                
+                 // Send notification for rejection
+                const notification: TablesInsert<'notifications'> = {
+                    user_id: payment.user_id,
+                    type: 'PAYMENT_REJECTED',
+                    entity_id: String(payment.id),
+                    content: { productName: payment.products?.name || 'your purchase', amount: payment.amount, reason: finalNotes }
+                };
+                await supabase.from('notifications').insert(notification);
             }
 
             onUpdate();

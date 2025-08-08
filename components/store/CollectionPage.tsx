@@ -11,6 +11,7 @@ import type { Session } from '@supabase/auth-js';
 interface CollectionPageProps {
     onBack: () => void;
     session: Session;
+    showNotification: (details: any) => void;
 }
 
 type CollectionCategory = 'All' | 'Profile FX' | 'Profile Covers' | 'Themes' | 'Badges';
@@ -54,7 +55,7 @@ const InventoryCard = ({ item, onEquip, isEquipped }: { item: InventoryItem, onE
     );
 };
 
-const CollectionPage: React.FC<CollectionPageProps> = ({ onBack, session }) => {
+const CollectionPage: React.FC<CollectionPageProps> = ({ onBack, session, showNotification }) => {
     const [activeTab, setActiveTab] = useState<CollectionCategory>('All');
     const [ownedItems, setOwnedItems] = useState<InventoryItem[]>([]);
     const [equippedItemIds, setEquippedItemIds] = useState<{ fx: number | null, badge: number | null, cover: number | null }>({ fx: null, badge: null, cover: null });
@@ -84,11 +85,11 @@ const CollectionPage: React.FC<CollectionPageProps> = ({ onBack, session }) => {
             });
 
         } catch (err: any) {
-            alert(`Error loading collection: ${err.message}`);
+            showNotification({ type: 'error', title: 'Error', message: `Error loading collection: ${err.message}`});
         } finally {
             setLoading(false);
         }
-    }, [session.user.id]);
+    }, [session.user.id, showNotification]);
 
     useEffect(() => {
         fetchData();
@@ -97,9 +98,9 @@ const CollectionPage: React.FC<CollectionPageProps> = ({ onBack, session }) => {
     const handleEquip = async (item: InventoryItem) => {
         const { data, error } = await supabase.rpc('equip_inventory_item', { p_inventory_id: item.id });
         if(error) {
-            alert(`Failed to equip item: ${error.message}`);
+            showNotification({ type: 'error', title: 'Error', message: `Failed to equip item: ${error.message}`});
         } else {
-            alert(data);
+            showNotification({ type: 'success', title: 'Success', message: data });
             await fetchData(); // Refresh to show new equipped state
         }
     };

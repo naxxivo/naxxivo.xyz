@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
-import type { Tables, TablesInsert, Enums, TablesUpdate } from '../integrations/supabase/types';
+import type { Tables, TablesInsert, Enums, TablesUpdate, Json } from '../integrations/supabase/types';
 import { generateAvatar, formatXp } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
@@ -23,6 +23,7 @@ type PostWithDetails = {
         username: string | null;
         name: string | null;
         photo_url: string | null;
+        active_cover: { preview_url: string | null; asset_details: Json } | null;
     } | null;
     likes: Array<{ user_id: string }>;
     comments: Array<{ count: number }>;
@@ -35,14 +36,14 @@ interface ProfileProps {
     session: Session;
     userId: string;
     onBack?: () => void;
-    onMessage?: (user: { id:string; name: string; photo_url: string | null }) => void;
+    onMessage?: (user: { id: string; name: string; photo_url: string | null; active_cover: { preview_url: string | null; asset_details: Json; } | null; }) => void;
     onNavigateToSettings: () => void;
     onNavigateToTools: () => void;
     onViewProfile: (userId: string) => void;
 }
 
 type ProfileData = Tables<'profiles'> & {
-    profile_music: { music_url: string }[] | null;
+    selected_music: { music_url: string } | null;
     profile_gifs: { gif_url: string } | null;
     active_badge?: StoreItem | null;
     active_fx?: StoreItem | null;
@@ -54,6 +55,14 @@ type ProfileStub = {
     name: string | null;
     username: string;
     photo_url: string | null;
+    active_cover: { preview_url: string | null, asset_details: Json } | null;
+};
+
+const ensureProtocol = (url: string) => {
+    if (!/^(?:f|ht)tps?\:\/\//.test(url)) {
+        return `https://${url}`;
+    }
+    return url;
 };
 
 const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, onNavigateToSettings, onNavigateToTools, onViewProfile }) => {
@@ -66,7 +75,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     const [isFollowing, setIsFollowing] = useState(false);
     const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
     const [modalState, setModalState] = useState<{ type: 'followers' | 'following' | null; users: ProfileStub[]; loading: boolean; title: string }>({ type: null, users: [], loading: false, title: '' });
-    const [commentModalPostId, setCommentModalPostId] = useState<number | null>(null);
+    const [commentModalPost, setCommentModalPost] = useState<PostWithDetails | null>(null);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -101,44 +110,35 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 // Step 1: Fetch base profile data
                 const { data: profileBase, error: profileError } = await supabase
                     .from('profiles')
-                    .select('*, profile_music(music_url)')
+                    .select('*')
                     .eq('id', userId)
                     .single();
 
                 if (profileError || !profileBase) throw new Error(profileError?.message || "Profile not found.");
 
-                // Step 2: Fetch related items in separate queries
-                let activeGif: { gif_url: string } | null = null;
-                if (profileBase.active_gif_id) {
-                    const { data: gifData } = await supabase.from('profile_gifs').select('gif_url').eq('id', profileBase.active_gif_id).single();
-                    activeGif = gifData;
-                }
-                
-                let activeBadge: StoreItem | null = null;
-                if (profileBase.active_badge_id) {
-                    const { data: badgeData } = await supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_badge_id).single();
-                    activeBadge = badgeData as StoreItem | null;
-                }
-
-                let activeFx: StoreItem | null = null;
-                if (profileBase.active_fx_id) {
-                    const { data: fxData } = await supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_fx_id).single();
-                    activeFx = fxData as StoreItem | null;
-                }
-                
-                let activeCover: StoreItem | null = null;
-                if (profileBase.active_cover_id) {
-                    const { data: coverData } = await supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_cover_id).single();
-                    activeCover = coverData as StoreItem | null;
-                }
+                // Step 2: Fetch other related items in parallel
+                const [
+                    musicRes,
+                    gifRes,
+                    badgeRes,
+                    fxRes,
+                    coverRes
+                ] = await Promise.all([
+                    profileBase.selected_music_id ? supabase.from('profile_music').select('music_url').eq('id', profileBase.selected_music_id).single() : Promise.resolve({ data: null, error: null }),
+                    profileBase.active_gif_id ? supabase.from('profile_gifs').select('gif_url').eq('id', profileBase.active_gif_id).single() : Promise.resolve({ data: null, error: null }),
+                    profileBase.active_badge_id ? supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_badge_id).single() : Promise.resolve({ data: null, error: null }),
+                    profileBase.active_fx_id ? supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_fx_id).single() : Promise.resolve({ data: null, error: null }),
+                    profileBase.active_cover_id ? supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_cover_id).single() : Promise.resolve({ data: null, error: null }),
+                ]);
 
                 // Step 3: Combine all data
                 const fullProfileData: ProfileData = {
-                    ...profileBase,
-                    profile_gifs: activeGif,
-                    active_badge: activeBadge,
-                    active_fx: activeFx,
-                    active_cover: activeCover
+                    ...(profileBase as any),
+                    selected_music: musicRes.data,
+                    profile_gifs: gifRes.data,
+                    active_badge: badgeRes.data as StoreItem | null,
+                    active_fx: fxRes.data as StoreItem | null,
+                    active_cover: coverRes.data as StoreItem | null,
                 };
 
                 setProfile(fullProfileData);
@@ -158,7 +158,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     .from('posts')
                     .select(`
                         id, created_at, caption, content_url, user_id, status,
-                        profiles (username, name, photo_url),
+                        profiles (username, name, photo_url, active_cover:active_cover_id(preview_url, asset_details)),
                         likes (user_id),
                         comments (count)
                     `)
@@ -166,14 +166,14 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     .order('created_at', { ascending: false });
 
                 if(postError) throw postError;
-                if (postData) {
-                    setPosts(postData as any[]);
-                } else {
-                    setPosts([]);
-                }
+                setPosts((postData as any) || []);
 
             } catch (error: any) {
-                setError(error.message || "An error occurred.");
+                let errorMessage = error.message || "An error occurred.";
+                if (error.message && error.message.includes('column "selected_music_id" does not exist')) {
+                    errorMessage = "Database schema is out of date and is missing a column. Profile music may not work correctly. Please run the required SQL update.";
+                }
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
@@ -188,14 +188,15 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     }, [userId, session.user.id, isMyProfile]);
 
     const handleAvatarClick = async () => {
-        const musicUrl = profile?.profile_music?.[0]?.music_url;
+        const musicUrl = profile?.selected_music?.music_url;
         if (!musicUrl) return;
     
         if (isPlaying && audioRef.current) {
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
-            if (!audioRef.current) {
+            if (!audioRef.current || audioRef.current.src !== musicUrl) {
+                if(audioRef.current) audioRef.current.pause();
                 audioRef.current = new Audio(musicUrl);
                 audioRef.current.crossOrigin = "anonymous";
                 audioRef.current.addEventListener('ended', () => setIsPlaying(false));
@@ -243,9 +244,9 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             }
 
             if (userIds.length > 0) {
-                const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url').in('id', userIds);
+                const { data: profiles, error } = await supabase.from('profiles').select('id, name, username, photo_url, active_cover:active_cover_id(preview_url, asset_details)').in('id', userIds);
                 if (error) throw error;
-                setModalState(s => ({...s, users: (profiles as ProfileStub[]) || [], loading: false }));
+                setModalState(s => ({...s, users: (profiles as any) || [], loading: false }));
             } else {
                 setModalState(s => ({...s, users: [], loading: false }));
             }
@@ -270,6 +271,15 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     const activeFxUrl = profile.active_fx?.preview_url;
     const activeCoverUrl = profile.active_cover?.preview_url;
     const activeBadgeUrl = profile.active_badge?.preview_url;
+
+    const transform = (profile.active_cover?.asset_details as { transform?: { scale: number; translateX: number; translateY: number; } })?.transform;
+    const baseTransform = 'translate(-50%, -50%)';
+    const dynamicTransform = transform 
+        ? ` translateX(${transform.translateX}px) translateY(${transform.translateY}px) scale(${transform.scale})`
+        : '';
+    const transformStyle = {
+        transform: `${baseTransform}${dynamicTransform}`
+    };
 
     const statItem = (value: string | number, label: string) => (
         <div>
@@ -312,8 +322,8 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                              <button onClick={handleAvatarClick} className="relative w-32 h-32 block group focus:outline-none rounded-full focus:ring-4 focus:ring-offset-2 focus:ring-offset-[var(--theme-card-bg)] focus:ring-[var(--theme-ring)]">
                                 {activeFxUrl && !activeCoverUrl && <img src={activeFxUrl} alt="Profile Effect" className="absolute inset-[-16px] w-44 h-44 pointer-events-none" />}
                                 <img src={profileImageUrl} alt="avatar" className="relative w-32 h-32 rounded-full object-cover border-4 border-[var(--theme-card-bg)] shadow-lg" />
-                                {activeCoverUrl && <img src={activeCoverUrl} alt="Profile Cover" className="absolute inset-0 w-full h-full pointer-events-none" />}
-                                {isMyProfile && (profile.profile_music?.length ?? 0) > 0 && (
+                                {activeCoverUrl && <img src={activeCoverUrl} alt="Profile Cover" className="absolute top-1/2 left-1/2 pointer-events-none" style={transformStyle} />}
+                                {profile.selected_music && (
                                     <div className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-md z-20">
                                         <MusicNoteIcon className="text-[var(--theme-primary)]" />
                                     </div>
@@ -329,9 +339,15 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                         {profile.bio && <p className="text-sm text-[var(--theme-text)] mt-3 max-w-md mx-auto">{profile.bio}</p>}
 
                         <div className="flex justify-center gap-4 my-6">
-                            <a href="#" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><WebsiteIcon/></a>
-                            <a href="#" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><YouTubeIcon/></a>
-                            <a href="#" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><FacebookIcon className="w-6 h-6"/></a>
+                            {profile.website_url && (
+                                <a href={ensureProtocol(profile.website_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><WebsiteIcon/></a>
+                            )}
+                             {profile.youtube_url && (
+                                <a href={ensureProtocol(profile.youtube_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><YouTubeIcon/></a>
+                            )}
+                             {profile.facebook_url && (
+                                <a href={ensureProtocol(profile.facebook_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><FacebookIcon className="w-6 h-6"/></a>
+                            )}
                         </div>
                         
                         <div className="flex justify-around items-center border-t border-b border-gray-200 dark:border-gray-700 py-4 my-6">
@@ -341,12 +357,26 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                         </div>
 
                         {!isMyProfile && (
-                            <div className="px-4">
+                            <div className="px-4 flex items-center gap-3">
                                 <Button
                                     onClick={handleFollowToggle}
                                     disabled={isUpdatingFollow}
+                                    variant={isFollowing ? 'secondary' : 'primary'}
+                                    className="flex-1"
                                 >
                                     {isUpdatingFollow ? '...' : (isFollowing ? 'Unfollow' : 'Follow')}
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    className="flex-1"
+                                    onClick={() => onMessage && profile && onMessage({
+                                        id: profile.id,
+                                        name: profile.name || profile.username,
+                                        photo_url: profile.photo_url,
+                                        active_cover: profile.active_cover || null
+                                    })}
+                                >
+                                    Message
                                 </Button>
                             </div>
                         )}
@@ -361,7 +391,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                                 post={post}
                                 session={session}
                                 onViewProfile={onViewProfile}
-                                onOpenComments={() => setCommentModalPostId(post.id)}
+                                onOpenComments={() => setCommentModalPost(post)}
                                 hideFollowButton={true}
                             />
                         ))}
@@ -385,11 +415,12 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                     }}
                 />
 
-                {commentModalPostId && (
+                {commentModalPost && (
                     <CommentModal
-                        postId={commentModalPostId}
+                        postId={commentModalPost.id}
+                        postOwnerId={commentModalPost.user_id}
                         session={session}
-                        onClose={() => setCommentModalPostId(null)}
+                        onClose={() => setCommentModalPost(null)}
                         onCommentAdded={handleCommentAdded}
                     />
                 )}

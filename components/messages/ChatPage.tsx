@@ -2,14 +2,15 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Tables, TablesInsert } from '../../integrations/supabase/types';
+import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
 import { BackArrowIcon, AttachmentIcon, ReadReceiptIcon } from '../common/AppIcons';
 import { motion } from 'framer-motion';
+import Avatar from '../common/Avatar';
 
 // --- Types --- //
 interface ChatPageProps {
     session: any;
-    otherUser: { id: string; name: string; photo_url: string | null };
+    otherUser: { id: string; name: string; photo_url: string | null; active_cover: { preview_url: string | null; asset_details: Json } | null };
     onBack: () => void;
 }
 
@@ -112,7 +113,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 <div className="flex items-center justify-between">
                      <button onClick={onBack} className="hover:opacity-80 transition-opacity"><BackArrowIcon /></button>
                      <div className="flex flex-col items-center text-center">
-                        <img src={otherUser.photo_url || generateAvatar(otherUser.name)} alt={otherUser.name} className="w-12 h-12 rounded-full object-cover border-2 border-[var(--theme-primary)]/50" />
+                        <Avatar
+                            photoUrl={otherUser.photo_url}
+                            name={otherUser.name}
+                            activeCover={otherUser.active_cover}
+                            size="md"
+                            imageClassName="border-2 border-[var(--theme-primary)]/50"
+                        />
                         <h1 className="font-bold text-lg mt-1">{otherUser.name}</h1>
                         <p className="text-xs text-[var(--theme-text-secondary)]">Online</p>
                      </div>
@@ -134,7 +141,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                             className={`flex flex-col gap-1 ${msg.sender_id === myId ? 'items-end' : 'items-start'}`}
                         >
                             <div className={`flex items-end gap-2 ${msg.sender_id === myId ? 'flex-row-reverse' : 'flex-row'}`}>
-                                {msg.sender_id !== myId && <img src={otherUser.photo_url || generateAvatar(otherUser.name)} className="w-6 h-6 rounded-full self-start" alt=""/>}
+                                {msg.sender_id !== myId && 
+                                    <Avatar
+                                        photoUrl={otherUser.photo_url}
+                                        name={otherUser.name}
+                                        activeCover={otherUser.active_cover}
+                                        size="xxs"
+                                        containerClassName="self-start"
+                                    />
+                                }
                                 <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${msg.sender_id === myId ? 'bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-br-none' : 'bg-[var(--theme-card-bg-alt)] text-[var(--theme-text)] rounded-bl-none'}`}>
                                     <p className="text-sm break-words">{msg.content}</p>
                                 </div>

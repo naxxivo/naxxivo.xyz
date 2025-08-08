@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Session } from '@supabase/auth-js';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, TablesUpdate, TablesInsert } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import StoreItemFormModal from './StoreItemFormModal';
 
@@ -45,7 +45,16 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
 
     const handleSaveItem = async (itemData: Partial<StoreItem>) => {
         try {
-            const payload = { ...itemData, price: Number(itemData.price) || 0 };
+            const payload: TablesUpdate<'store_items'> = {
+                name: itemData.name,
+                description: itemData.description,
+                category: itemData.category,
+                price: Number(itemData.price) || 0,
+                preview_url: itemData.preview_url,
+                asset_details: itemData.asset_details,
+                is_active: itemData.is_active,
+                is_approved: itemData.is_approved,
+            };
             
             if (editingItem) { // If we are editing, update the existing item
                 const { error } = await supabase
@@ -54,7 +63,17 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
                     .eq('id', editingItem.id);
                 if (error) throw error;
             } else { // Otherwise, insert a new item
-                const { id, ...insertPayload } = payload; // Remove id from payload for insert
+                const insertPayload: TablesInsert<'store_items'> = {
+                    name: payload.name!,
+                    category: payload.category!,
+                    description: payload.description,
+                    price: payload.price,
+                    preview_url: payload.preview_url,
+                    asset_details: payload.asset_details,
+                    is_active: payload.is_active,
+                    is_approved: payload.is_approved,
+                    created_by_user_id: null, // Admin-created items
+                };
                 const { error } = await supabase
                     .from('store_items')
                     .insert(insertPayload);

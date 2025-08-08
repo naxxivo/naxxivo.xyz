@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Button from '../common/Button';
 import { generateAvatar } from '../../utils/helpers';
-import type { Tables, TablesInsert } from '../../integrations/supabase/types';
+import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
+import Avatar from '../common/Avatar';
 
 interface CommentWithProfile {
     id: number;
@@ -16,17 +17,19 @@ interface CommentWithProfile {
         name: string | null;
         username: string;
         photo_url: string | null;
+        active_cover: { preview_url: string | null; asset_details: Json } | null;
     };
 };
 
 interface CommentModalProps {
     postId: number;
+    postOwnerId: string;
     session: Session;
     onClose: () => void;
     onCommentAdded: (postId: number) => void;
 }
 
-const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, onCommentAdded }) => {
+const CommentModal: React.FC<CommentModalProps> = ({ postId, postOwnerId, session, onClose, onCommentAdded }) => {
     const [comments, setComments] = useState<CommentWithProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
@@ -35,8 +38,6 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
 
     const fetchComments = useCallback(async () => {
         setLoading(true);
-        // Add !inner hint to ensure Supabase returns a single object for the 'profiles' relation.
-        // This fixes the type mismatch where the API was returning an array.
         const { data, error } = await supabase
             .from('comments')
             .select(`
@@ -44,7 +45,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                 content,
                 user_id,
                 created_at,
-                profiles!inner (name, username, photo_url)
+                profiles!inner (name, username, photo_url, active_cover:active_cover_id(preview_url, asset_details))
             `)
             .eq('post_id', postId)
             .order('created_at', { ascending: true });
@@ -52,7 +53,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
         if (error) {
             console.error("Failed to fetch comments:", error);
         } else {
-            setComments((data as any[]) || []);
+            setComments((data as any) || []);
         }
         setLoading(false);
     }, [postId]);
@@ -79,6 +80,17 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
             const { error } = await supabase.from('comments').insert(commentData as any);
             if (error) throw error;
             
+            // Send notification to post owner
+            if (postOwnerId !== session.user.id) {
+                const notification: TablesInsert<'notifications'> = {
+                    user_id: postOwnerId,
+                    actor_id: session.user.id,
+                    type: 'POST_COMMENT',
+                    entity_id: String(postId)
+                };
+                await supabase.from('notifications').insert(notification as any);
+            }
+
             setNewComment('');
             onCommentAdded(postId);
             await fetchComments(); // Refetch to show the new comment
@@ -123,7 +135,13 @@ const CommentModal: React.FC<CommentModalProps> = ({ postId, session, onClose, o
                         ) : comments.length > 0 ? (
                             comments.map(comment => (
                                 <div key={comment.id} className="flex items-start space-x-3">
-                                    <img src={comment.profiles?.photo_url || generateAvatar(comment.profiles?.name || '')} alt={comment.profiles?.name || ''} className="w-8 h-8 rounded-full flex-shrink-0" />
+                                    <Avatar
+                                        photoUrl={comment.profiles?.photo_url}
+                                        name={comment.profiles?.name}
+                                        activeCover={comment.profiles?.active_cover}
+                                        size="xs"
+                                        containerClassName="flex-shrink-0"
+                                    />
                                     <div className="bg-[var(--theme-bg)] rounded-lg p-3 text-sm">
                                         <p className="font-semibold text-[var(--theme-text)]">{comment.profiles?.name || 'Anonymous'}</p>
                                         <p className="text-[var(--theme-text)]">{comment.content}</p>

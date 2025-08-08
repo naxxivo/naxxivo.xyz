@@ -3,14 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
 import Input from './Input';
 import LoadingSpinner from './LoadingSpinner';
+import { supabase } from '../../integrations/supabase/client';
+import type { Session } from '@supabase/auth-js';
 
 interface PasswordModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    session: Session;
 }
 
-const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSuccess, session }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isChecking, setIsChecking] = useState(false);
@@ -26,21 +29,36 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSucces
         }
     }, [isOpen]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setIsChecking(true);
 
-        // Simulate a small delay for better UX
-        setTimeout(() => {
-            if (password === '01927539878') {
+        if (password === '01927539878') {
+             setTimeout(() => {
                 onSuccess();
-            } else {
-                setError('Incorrect password. Please try again.');
-                setPassword('');
+             }, 500);
+        } else {
+            try {
+                const { data, error: rpcError } = await supabase.rpc('deduct_xp_for_action', {
+                    p_user_id: session.user.id,
+                    p_cost: 10000
+                });
+                if (rpcError) throw rpcError;
+
+                if (typeof data === 'string' && data.startsWith('Error:')) {
+                    setError(data);
+                } else {
+                    setError('Incorrect password. 10,000 XP was deducted as a penalty.');
+                }
+
+            } catch (err: any) {
+                setError(err.message || 'An error occurred while processing the penalty.');
+            } finally {
+                 setPassword('');
+                 setIsChecking(false);
             }
-            setIsChecking(false);
-        }, 500);
+        }
     };
 
     return (
@@ -67,7 +85,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSucces
                     >
                         <form onSubmit={handleSubmit}>
                             <h2 className="text-xl font-bold text-[var(--theme-text)] mb-3 text-center">Enter Control Password</h2>
-                            <p className="text-sm text-[var(--theme-text-secondary)] mb-6 text-center">Enter the password to access the admin panel.</p>
+                            <p className="text-sm text-[var(--theme-text-secondary)] mb-6 text-center">Incorrect attempts will incur an XP penalty.</p>
                             
                             <div className="space-y-4">
                                 <Input

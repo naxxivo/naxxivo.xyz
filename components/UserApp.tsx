@@ -28,13 +28,17 @@ import InfoPage from './info/InfoPage';
 import EarnXpPage from './xp/EarnXpPage';
 import PasswordModal from './common/PasswordModal';
 import UploadCoverPage from './store/UploadCoverPage';
+import NotificationsPage from './notifications/NotificationsPage';
 import { motion, AnimatePresence } from 'framer-motion';
+import NotificationPopup, { type NotificationDetails } from './common/NotificationPopup';
+import Button from './common/Button';
+import type { Json } from '../integrations/supabase/types';
 
 export type AuthView =
     'home' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
     'top-up' | 'subscriptions' | 'manual-payment' |
-    'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover';
+    'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover' | 'notifications';
 
 const pageVariants = {
     initial: { opacity: 0, x: "100%" },
@@ -61,9 +65,72 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
     const [viewingSeriesId, setViewingSeriesId] = useState<number | null>(null);
     const [paymentProductId, setPaymentProductId] = useState<number | null>(null);
-    const [chattingWith, setChattingWith] = useState<{ id: string; name: string; photo_url: string | null } | null>(null);
+    const [chattingWith, setChattingWith] = useState<{ id: string; name: string; photo_url: string | null; active_cover: { preview_url: string | null; asset_details: Json } | null } | null>(null);
     const [refreshFeedKey, setRefreshFeedKey] = useState(0);
     const [refreshAnimeKey, setRefreshAnimeKey] = useState(0);
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+
+    const [notification, setNotification] = useState<NotificationDetails | null>(null);
+    const [showPermissionBanner, setShowPermissionBanner] = useState(false);
+    
+    useEffect(() => {
+        // Fetch initial unread count
+        const fetchUnreadCount = async () => {
+            const { count, error } = await supabase
+                .from('notifications')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', session.user.id)
+                .eq('is_read', false);
+            if(error) console.error(error);
+            setUnreadNotificationCount(count || 0);
+        };
+        fetchUnreadCount();
+
+        // Listen for new notifications in real-time
+        const channel = supabase
+            .channel('public:notifications')
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'notifications',
+                filter: `user_id=eq.${session.user.id}`
+            }, (payload) => {
+                setUnreadNotificationCount(current => current + 1);
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session.user.id]);
+    
+    const showNotification = (details: NotificationDetails) => {
+        setNotification(details);
+    };
+    
+    const showBrowserNotification = (title: string, body: string) => {
+        if (Notification.permission === 'granted') {
+            new Notification(title, { body, icon: '/favicon.ico' });
+        }
+    };
+    
+    useEffect(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            setShowPermissionBanner(true);
+        }
+    }, []);
+
+    const handleRequestPermission = () => {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                showNotification({ type: 'success', title: 'Notifications Enabled!', message: 'You will now receive updates from NAXXIVO.'});
+            } else {
+                 showNotification({ type: 'info', title: 'Notifications Blocked', message: 'You can enable them in your browser settings later.'});
+            }
+            setShowPermissionBanner(false);
+        });
+    };
+    
 
     const handleLogout = async () => {
         await (supabase.auth as any).signOut();
@@ -131,6 +198,8 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const handleNavigateToInfo = () => setAuthView('info');
     const handleNavigateToEarnXp = () => setAuthView('earn-xp');
     const handleNavigateToUploadCover = () => setAuthView('upload-cover');
+    const handleNavigateToNotifications = () => setAuthView('notifications');
+
 
     const handleViewProfile = (userId: string) => {
         setIsSearchOpen(false);
@@ -150,7 +219,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         );
     } else {
         const CurrentPage = {
-            home: <HomePage session={session} onViewProfile={handleViewProfile} refreshKey={refreshFeedKey} onOpenSearch={() => setIsSearchOpen(true)} />,
+            home: <HomePage session={session} onViewProfile={handleViewProfile} refreshKey={refreshFeedKey} onOpenSearch={() => setIsSearchOpen(true)} onOpenNotifications={handleNavigateToNotifications} unreadNotificationCount={unreadNotificationCount} />,
             discover: <UsersPage session={session} onViewProfile={handleViewProfile} />,
             messages: <MessagesPage session={session} onStartChat={setChattingWith} />,
             profile: <Profile 
@@ -163,6 +232,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         onViewProfile={handleViewProfile}
                      />,
             settings: <SettingsPage 
+                        session={session}
                         onBack={() => setAuthView('profile')} 
                         onNavigateToEditProfile={handleNavigateToEditProfile}
                         onNavigateToMusicLibrary={handleNavigateToMusicLibrary}
@@ -181,6 +251,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
             'music-library': <MusicLibraryPage
                                 session={session}
                                 onBack={() => setAuthView('profile')}
+                                showNotification={showNotification}
                             />,
             tools: <ToolsPage 
                         onBack={() => setAuthView('profile')} 
@@ -205,20 +276,21 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                             />,
             'create-series': <CreateSeriesPage onBack={() => setAuthView('anime')} onSeriesCreated={() => { setAuthView('anime'); setRefreshAnimeKey(k => k + 1); }} />,
             'create-episode': <CreateEpisodePage onBack={() => setAuthView('anime')} onEpisodeCreated={() => setAuthView('anime')} />,
-            'top-up': <TopUpPage onBack={() => setAuthView('tools')} onPurchase={handleNavigateToManualPayment} onManageSubscriptions={handleNavigateToSubscriptions} />,
-            'subscriptions': <SubscriptionClaimPage onBack={() => setAuthView('top-up')} session={session} />,
-            'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} />,
-            store: <StorePage onBack={() => setAuthView('tools')} session={session} onNavigateToUploadCover={handleNavigateToUploadCover} />,
-            collection: <CollectionPage onBack={() => setAuthView('tools')} session={session} />,
+            'top-up': <TopUpPage onBack={() => setAuthView('tools')} onPurchase={handleNavigateToManualPayment} onManageSubscriptions={handleNavigateToSubscriptions} showBrowserNotification={showBrowserNotification} />,
+            'subscriptions': <SubscriptionClaimPage onBack={() => setAuthView('top-up')} session={session} showNotification={showNotification} showBrowserNotification={showBrowserNotification} />,
+            'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} showNotification={showNotification} />,
+            store: <StorePage onBack={() => setAuthView('tools')} session={session} onNavigateToUploadCover={handleNavigateToUploadCover} showNotification={showNotification} />,
+            collection: <CollectionPage onBack={() => setAuthView('tools')} session={session} showNotification={showNotification} />,
             info: <InfoPage onBack={() => setAuthView('tools')} />,
             'earn-xp': <EarnXpPage onBack={() => setAuthView('tools')} session={session} />,
             'upload-cover': <UploadCoverPage onBack={() => setAuthView('store')} session={session} />,
+            'notifications': <NotificationsPage session={session} onBack={() => setAuthView('home')} onMarkAllRead={() => setUnreadNotificationCount(0)} />,
         }[authView];
 
         const isFullScreenPage = [
             'profile', 'music-library', 'tools', 'anime', 'anime-series', 'create-series', 'create-episode',
             'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile',
-            'store', 'collection', 'info', 'earn-xp', 'upload-cover'
+            'store', 'collection', 'info', 'earn-xp', 'upload-cover', 'notifications'
         ].includes(authView);
 
         pageContent = (
@@ -259,6 +331,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         setIsPasswordModalOpen(false);
                         onEnterAdminView();
                     }}
+                    session={session}
                 />
             </>
         )
@@ -267,6 +340,15 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     return (
         <div className="w-full min-h-screen bg-gray-200 dark:bg-black flex justify-center">
             <div className="w-full max-w-sm bg-[var(--theme-bg)] min-h-screen shadow-2xl relative overflow-x-hidden">
+                {showPermissionBanner && (
+                    <div className="absolute top-0 left-0 right-0 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] p-3 z-[101] text-center shadow-lg">
+                        <p className="text-sm">Want to get notified about rewards? Enable notifications!</p>
+                        <div className="flex gap-2 justify-center mt-2">
+                            <Button size="small" variant="secondary" onClick={handleRequestPermission} className="w-auto !text-[var(--theme-primary-text)] !bg-white/30 hover:!bg-white/50">Enable</Button>
+                            <Button size="small" variant="secondary" onClick={() => setShowPermissionBanner(false)} className="w-auto !text-[var(--theme-primary-text)] !bg-transparent hover:!bg-white/20">Maybe Later</Button>
+                        </div>
+                    </div>
+                )}
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={chattingWith ? 'chat' : 'main'}
@@ -280,6 +362,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         {pageContent}
                     </motion.div>
                 </AnimatePresence>
+                <NotificationPopup notification={notification} onClose={() => setNotification(null)} />
             </div>
         </div>
     );

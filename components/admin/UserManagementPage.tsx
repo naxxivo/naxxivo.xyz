@@ -109,8 +109,21 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
 
         } catch (error: any) {
             console.error("Failed to update user:", error);
-            const errorMessage = error?.message || JSON.stringify(error);
-            alert(`Failed to update user:\n${errorMessage}`);
+            let detailMessage = 'An unknown error occurred.';
+            if (error) {
+                if (typeof error.message === 'string' && error.message) {
+                    detailMessage = error.message;
+                    if (error.details) detailMessage += `\nDetails: ${error.details}`;
+                    if (error.hint) detailMessage += `\nHint: ${error.hint}`;
+                } else {
+                    try {
+                        detailMessage = JSON.stringify(error, null, 2);
+                    } catch {
+                        detailMessage = String(error);
+                    }
+                }
+            }
+            alert(`Failed to update user:\n${detailMessage}`);
         }
     };
 

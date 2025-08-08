@@ -1,19 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar } from '../../utils/helpers';
-import type { TablesInsert } from '../../integrations/supabase/types';
+import type { TablesInsert, Json } from '../../integrations/supabase/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
+import Avatar from '../common/Avatar';
 
 interface QuickPostInputProps {
     session: Session;
     onPostCreated: () => void;
 }
 
+type CurrentUserProfile = {
+    photo_url: string | null;
+    username: string;
+    active_cover: { preview_url: string | null; asset_details: Json } | null;
+};
+
+
 const QuickPostInput: React.FC<QuickPostInputProps> = ({ session, onPostCreated }) => {
     const [caption, setCaption] = useState('');
     const [isPosting, setIsPosting] = useState(false);
+    const [profile, setProfile] = useState<CurrentUserProfile | null>(null);
+
+    useEffect(() => {
+        const fetchMyProfile = async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('username, photo_url, active_cover:active_cover_id(preview_url, asset_details)')
+                .eq('id', session.user.id)
+                .single();
+            if (data) {
+                setProfile(data as any);
+            }
+        };
+        fetchMyProfile();
+    }, [session.user.id]);
 
     const handlePost = async () => {
         if (!caption.trim() || isPosting) return;
@@ -39,10 +61,11 @@ const QuickPostInput: React.FC<QuickPostInputProps> = ({ session, onPostCreated 
 
     return (
         <div className="flex items-center space-x-3 bg-[var(--theme-card-bg)] p-2 rounded-2xl shadow-sm">
-            <img 
-                src={session.user.user_metadata.photo_url || generateAvatar(session.user.id)} 
-                alt="My avatar" 
-                className="w-10 h-10 rounded-full" 
+            <Avatar 
+                photoUrl={profile?.photo_url} 
+                name={profile?.username}
+                activeCover={profile?.active_cover}
+                size="sm"
             />
             <input
                 type="text"

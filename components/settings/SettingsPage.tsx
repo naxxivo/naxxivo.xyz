@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { motion } from 'framer-motion';
 import {
@@ -6,8 +6,11 @@ import {
     BellIcon, ShieldCheckIcon, QuestionMarkCircleIcon, InfoIcon, LogoutIcon, AdminIcon
 } from '../common/AppIcons';
 import Button from '../common/Button';
+import type { Session } from '@supabase/auth-js';
+import type { Tables } from '../../integrations/supabase/types';
 
 interface SettingsPageProps {
+    session: Session;
     onBack: () => void;
     onNavigateToEditProfile: () => void;
     onNavigateToMusicLibrary: () => void;
@@ -56,13 +59,29 @@ const SectionHeader = ({ title }: { title: string }) => (
     <h2 className="px-4 pt-6 pb-2 text-sm font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">{title}</h2>
 );
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ onBack, onLogout, onNavigateToEditProfile, onNavigateToMusicLibrary, onNavigateToAdminPanel }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, onNavigateToEditProfile, onNavigateToMusicLibrary, onNavigateToAdminPanel }) => {
     const [notifications, setNotifications] = React.useState({
         likes: true,
         comments: true,
         followers: true,
     });
+    const [profile, setProfile] = useState<Pick<Tables<'profiles'>, 'is_admin' | 'xp_balance'> | null>(null);
 
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('is_admin, xp_balance')
+                .eq('id', session.user.id)
+                .single();
+            if (data) {
+                setProfile(data);
+            }
+        };
+        fetchProfile();
+    }, [session.user.id]);
+
+    const canAccessAdmin = profile && (profile.is_admin || profile.xp_balance >= 10000);
 
     return (
         <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col">
@@ -103,16 +122,20 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onBack, onLogout, onNavigat
                     <SettingsItem icon={<InfoIcon />} title="App Info" subtitle="Version 1.0.0" />
                 </div>
 
-                 {/* Advanced Section */}
-                <SectionHeader title="Advanced" />
-                <div className="mx-4 bg-[var(--theme-card-bg)] shadow-sm rounded-xl">
-                    <SettingsItem
-                        icon={<AdminIcon />}
-                        title="[ control ]"
-                        subtitle="Access administrative panel"
-                        onClick={onNavigateToAdminPanel}
-                    />
-                </div>
+                {/* Advanced Section */}
+                {canAccessAdmin && (
+                    <>
+                        <SectionHeader title="Advanced" />
+                        <div className="mx-4 bg-[var(--theme-card-bg)] shadow-sm rounded-xl">
+                            <SettingsItem
+                                icon={<AdminIcon />}
+                                title="[ control ]"
+                                subtitle="Access administrative panel"
+                                onClick={onNavigateToAdminPanel}
+                            />
+                        </div>
+                    </>
+                )}
             </main>
 
             <footer className="p-4 flex-shrink-0">

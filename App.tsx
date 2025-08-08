@@ -9,6 +9,7 @@ import AdminPanel from './components/admin/AdminPanel';
 import WelcomeBonusModal from './components/auth/WelcomeBonusModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Tables, TablesUpdate } from './integrations/supabase/types';
+import ConnectivityStatusOverlay from './components/common/ConnectivityStatusOverlay';
 
 type AuthMode = 'onboarding' | 'login' | 'signup';
 type UserRole = 'user' | 'admin';
@@ -19,6 +20,8 @@ const App: React.FC = () => {
     const [authMode, setAuthMode] = useState<AuthMode>('onboarding');
     const [isAdminView, setIsAdminView] = useState(false);
     const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
+    const [isOffline, setIsOffline] = useState(!navigator.onLine);
+    const [isServerDown, setIsServerDown] = useState(false);
 
     useEffect(() => {
         // Ensure light mode is always active by removing the dark class if it exists.
@@ -40,6 +43,59 @@ const App: React.FC = () => {
             subscription.unsubscribe();
         };
     }, []);
+
+    // Effect for connectivity
+    useEffect(() => {
+        const handleOnline = () => setIsOffline(false);
+        const handleOffline = () => {
+            setIsOffline(true);
+            setIsServerDown(false); // Can't be a server issue if we're offline
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    // Effect for server health check
+    useEffect(() => {
+        if (isOffline) {
+            return;
+        }
+
+        let isMounted = true;
+
+        const healthCheck = async () => {
+            try {
+                // A very lightweight query to check server responsiveness.
+                const { error } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).limit(1);
+                if (!isMounted) return;
+                // "Failed to fetch" is a common browser message for network errors (CORS, DNS, server down).
+                if (error && error.message.includes('Failed to fetch')) {
+                    setIsServerDown(true);
+                } else {
+                    // If it succeeds or has a different error (like RLS), the server is responsive.
+                    setIsServerDown(false);
+                }
+            } catch (e) {
+                if(isMounted) {
+                    setIsServerDown(true);
+                }
+            }
+        };
+
+        healthCheck(); // Initial check
+        const intervalId = setInterval(healthCheck, 30000); // Check every 30 seconds
+
+        return () => {
+            isMounted = false;
+            clearInterval(intervalId);
+        };
+    }, [isOffline]);
 
     // Effect to react to session changes (login/logout) and profile updates
     useEffect(() => {
@@ -75,45 +131,47 @@ const App: React.FC = () => {
         );
     }
     
-    if (!session) {
-        return (
-            <div className="w-full min-h-screen flex items-center justify-center">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={authMode}
-                        {...{
-                            initial: { opacity: 0 },
-                            animate: { opacity: 1 },
-                            exit: { opacity: 0 },
-                            transition: { duration: 0.3 },
-                        } as any}
-                        className="w-full h-full"
-                    >
-                        {authMode === 'onboarding' && <AuthPage onSetMode={setAuthMode} />}
-                        {(authMode === 'login' || authMode === 'signup') && <AuthForm mode={authMode} onSetMode={setAuthMode} />}
-                    </motion.div>
-                </AnimatePresence>
-            </div>
-        );
-    }
-    
     return (
         <>
-            <AnimatePresence>
-                {isAdminView ? (
-                    <motion.div key="admin-view" {...{ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } as any}>
-                        <AdminPanel session={session} onExitAdminView={() => setIsAdminView(false)} />
-                    </motion.div>
-                ) : (
-                    <motion.div key="user-app" {...{ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } as any}>
-                        <UserApp session={session} onEnterAdminView={() => setIsAdminView(true)} />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-            <WelcomeBonusModal
-                isOpen={showWelcomeBonus}
-                onClose={() => setShowWelcomeBonus(false)}
-            />
+            <ConnectivityStatusOverlay isOffline={isOffline} isServerDown={!isOffline && isServerDown} />
+            
+            {!session ? (
+                <div className="w-full min-h-screen flex items-center justify-center">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={authMode}
+                            {...{
+                                initial: { opacity: 0 },
+                                animate: { opacity: 1 },
+                                exit: { opacity: 0 },
+                                transition: { duration: 0.3 },
+                            } as any}
+                            className="w-full h-full"
+                        >
+                            {authMode === 'onboarding' && <AuthPage onSetMode={setAuthMode} />}
+                            {(authMode === 'login' || authMode === 'signup') && <AuthForm mode={authMode} onSetMode={setAuthMode} />}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            ) : (
+                <>
+                    <AnimatePresence>
+                        {isAdminView ? (
+                            <motion.div key="admin-view" {...{ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } as any}>
+                                <AdminPanel session={session} onExitAdminView={() => setIsAdminView(false)} />
+                            </motion.div>
+                        ) : (
+                            <motion.div key="user-app" {...{ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } as any}>
+                                <UserApp session={session} onEnterAdminView={() => setIsAdminView(true)} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    <WelcomeBonusModal
+                        isOpen={showWelcomeBonus}
+                        onClose={() => setShowWelcomeBonus(false)}
+                    />
+                </>
+            )}
         </>
     );
 };

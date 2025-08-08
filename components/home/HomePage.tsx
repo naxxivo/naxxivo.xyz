@@ -3,17 +3,20 @@ import { supabase } from '../../integrations/supabase/client';
 import PostCard from './PostCard';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Logo from '../common/Logo';
-import { SearchIcon } from '../common/AppIcons';
+import { SearchIcon, BellIcon } from '../common/AppIcons';
 import CommentModal from './CommentModal';
 import QuickPostInput from './QuickPostInput';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, Json } from '../../integrations/supabase/types';
 import { generateAvatar } from '../../utils/helpers';
+import Avatar from '../common/Avatar';
 
 interface HomePageProps {
     session: any;
     onViewProfile: (userId: string) => void;
     refreshKey: number;
     onOpenSearch: () => void;
+    onOpenNotifications: () => void;
+    unreadNotificationCount: number;
 }
 
 export type PostWithDetails = {
@@ -27,23 +30,28 @@ export type PostWithDetails = {
         username: string | null;
         name: string | null;
         photo_url: string | null;
+        active_cover: { preview_url: string | null; asset_details: Json } | null;
     } | null;
     likes: Array<{ user_id: string }>;
     comments: Array<{ count: number }>;
 };
 
+type SuggestedUser = Pick<Tables<'profiles'>, 'id' | 'name' | 'photo_url' | 'username'> & {
+    active_cover: { preview_url: string | null; asset_details: Json } | null;
+};
+
 const SuggestedUsers: React.FC<{ onViewProfile: (userId: string) => void }> = ({ onViewProfile }) => {
-    const [users, setUsers] = useState<Pick<Tables<'profiles'>, 'id' | 'name' | 'photo_url' | 'username'>[]>([]);
+    const [users, setUsers] = useState<SuggestedUser[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchUsers = async () => {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('id, name, photo_url, username')
+                .select('id, name, photo_url, username, active_cover:active_cover_id(preview_url, asset_details)')
                 .order('xp_balance', { ascending: false })
                 .limit(10);
-            if (data) setUsers(data);
+            if (data) setUsers(data as any[]);
             setLoading(false);
         };
         fetchUsers();
@@ -58,7 +66,13 @@ const SuggestedUsers: React.FC<{ onViewProfile: (userId: string) => void }> = ({
                 {users.map(user => (
                     <button key={user.id} onClick={() => onViewProfile(user.id)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-20">
                         <div className="w-16 h-16 rounded-full p-0.5 flex items-center justify-center bg-gradient-to-tr from-[var(--theme-primary)] to-[var(--theme-secondary)]">
-                            <img src={user.photo_url || generateAvatar(user.username)} alt={user.name || ''} className="w-full h-full object-cover rounded-full p-0.5 bg-[var(--theme-card-bg)]" />
+                            <Avatar
+                                photoUrl={user.photo_url}
+                                name={user.username}
+                                activeCover={user.active_cover}
+                                containerClassName="w-full h-full"
+                                imageClassName="p-0.5 bg-[var(--theme-card-bg)]"
+                            />
                         </div>
                         <p className="text-xs text-[var(--theme-text-secondary)] truncate w-full">{user.name || user.username}</p>
                     </button>
@@ -69,12 +83,12 @@ const SuggestedUsers: React.FC<{ onViewProfile: (userId: string) => void }> = ({
 };
 
 
-const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey, onOpenSearch }) => {
+const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey, onOpenSearch, onOpenNotifications, unreadNotificationCount }) => {
     const [posts, setPosts] = useState<PostWithDetails[]>([]);
     const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [commentModalPostId, setCommentModalPostId] = useState<number | null>(null);
+    const [commentModalPost, setCommentModalPost] = useState<PostWithDetails | null>(null);
     const myId = session.user.id;
 
     const fetchPosts = useCallback(async () => {
@@ -94,7 +108,8 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                         profiles (
                             username,
                             name,
-                            photo_url
+                            photo_url,
+                            active_cover:active_cover_id(preview_url, asset_details)
                         ),
                         likes ( user_id ),
                         comments ( count )
@@ -105,7 +120,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
             
             const { data: postData, error: postsError } = postsPromise;
             if (postsError) throw postsError;
-            setPosts((postData as any[]) || []);
+            setPosts((postData as any) || []);
 
             const { data: followsData, error: followsError } = followsPromise;
             if (followsError) throw followsError;
@@ -159,9 +174,17 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                 <div className="text-3xl">
                   <Logo/>
                 </div>
-                <button onClick={onOpenSearch} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
-                    <SearchIcon />
-                </button>
+                <div className="flex items-center space-x-4">
+                    <button onClick={onOpenSearch} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
+                        <SearchIcon />
+                    </button>
+                    <button onClick={onOpenNotifications} className="relative text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
+                        <BellIcon />
+                        {unreadNotificationCount > 0 && (
+                            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--theme-bg)]" />
+                        )}
+                    </button>
+                </div>
             </header>
 
             <SuggestedUsers onViewProfile={onViewProfile} />
@@ -176,7 +199,7 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                             post={post}
                             session={session}
                             onViewProfile={onViewProfile}
-                            onOpenComments={() => setCommentModalPostId(post.id)}
+                            onOpenComments={() => setCommentModalPost(post)}
                             isInitiallyFollowing={followingSet.has(post.user_id)}
                         />)
                 ) : (
@@ -186,11 +209,12 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
                     </div>
                 )}
             </div>
-             {commentModalPostId && (
+             {commentModalPost && (
                 <CommentModal
-                    postId={commentModalPostId}
+                    postId={commentModalPost.id}
+                    postOwnerId={commentModalPost.user_id}
                     session={session}
-                    onClose={() => setCommentModalPostId(null)}
+                    onClose={() => setCommentModalPost(null)}
                     onCommentAdded={handleCommentAdded}
                 />
             )}

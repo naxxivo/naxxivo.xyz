@@ -2,17 +2,20 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
 import LoadingSpinner from '../common/LoadingSpinner';
-import type { Tables } from '../../integrations/supabase/types';
+import type { Tables, Json } from '../../integrations/supabase/types';
 import { SearchIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon } from '../common/AppIcons';
-import { generateAvatar, formatXp } from '../../utils/helpers';
+import { formatXp } from '../../utils/helpers';
 import { motion } from 'framer-motion';
+import Avatar from '../common/Avatar';
 
 interface UsersPageProps {
     session: Session;
     onViewProfile: (userId: string) => void;
 }
 
-type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'xp_balance'>;
+type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'xp_balance'> & {
+    active_cover: { preview_url: string | null, asset_details: Json } | null;
+};
 
 const UserRow: React.FC<{ user: Profile, rank: number, onViewProfile: (userId: string) => void }> = ({ user, rank, onViewProfile }) => {
     const isTopThree = rank <= 3;
@@ -37,9 +40,13 @@ const UserRow: React.FC<{ user: Profile, rank: number, onViewProfile: (userId: s
             <div className="font-bold text-lg w-10 text-center text-[var(--theme-text-secondary)] flex items-center justify-center">
                  {isTopThree ? rankIcon : <span className="text-xl">{rank}</span>}
             </div>
-            <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 ml-2">
-                <img src={user.photo_url || generateAvatar(user.username)} alt={user.name || ''} className="w-full h-full object-cover" />
-            </div>
+            <Avatar
+                photoUrl={user.photo_url}
+                name={user.username}
+                activeCover={user.active_cover}
+                size="lg"
+                containerClassName="ml-2"
+            />
             <div className="ml-4 flex-grow overflow-hidden">
                 <p className="truncate font-bold text-[var(--theme-text)]">{user.name || user.username}</p>
                 <p className="text-sm truncate text-[var(--theme-text-secondary)]">@{user.username}</p>
@@ -66,11 +73,11 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
             try {
                 const { data: profilesData, error: profilesError } = await supabase
                         .from('profiles')
-                        .select('id, name, username, photo_url, xp_balance')
+                        .select('id, name, username, photo_url, xp_balance, active_cover:active_cover_id(preview_url, asset_details)')
                         .order('xp_balance', { ascending: false });
 
                 if (profilesError) throw profilesError;
-                setProfiles(profilesData || []);
+                setProfiles((profilesData as any[]) || []);
 
             } catch (err: any) {
                 setError(err.message || 'Failed to load users.');

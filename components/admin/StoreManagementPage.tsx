@@ -45,17 +45,15 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
 
     const handleSaveProduct = async (productData: Partial<Product>) => {
         try {
+            // The productData from the modal is already correctly structured.
+            // We just ensure the price is a number.
             const payload = {
                 ...productData,
                 price: Number(productData.price) || 0,
-                xp_amount: Number(productData.xp_amount) || null,
-                subscription_initial_xp: Number(productData.subscription_initial_xp) || null,
-                subscription_daily_xp: Number(productData.subscription_daily_xp) || null,
-                subscription_duration_days: Number(productData.subscription_duration_days) || null,
             };
             
-            // `upsert` handles both creating (if id is missing) and updating
-            const { error } = await supabase.from('products').upsert(payload).select();
+            // `upsert` handles both creating (if id is missing) and updating.
+            const { error } = await supabase.from('products').upsert(payload as any).select();
             
             if (error) throw error;
             
@@ -63,8 +61,21 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
             await fetchProducts(); // Refresh the list
         } catch (err: any) {
              console.error('Failed to save product:', err);
-             const errorMessage = err.message || JSON.stringify(err);
-             alert(`Save failed: ${errorMessage}`);
+             let detailMessage = 'An unknown error occurred.';
+            if (err) {
+                if (typeof err.message === 'string' && err.message) {
+                    detailMessage = err.message;
+                    if (err.details) detailMessage += `\nDetails: ${err.details}`;
+                    if (err.hint) detailMessage += `\nHint: ${err.hint}`;
+                } else {
+                    try {
+                        detailMessage = JSON.stringify(err, null, 2);
+                    } catch {
+                        detailMessage = String(err);
+                    }
+                }
+            }
+             alert(`Save failed: ${detailMessage}`);
         }
     };
 
@@ -95,14 +106,16 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {products.map(product => (
+                            {products.map(product => {
+                                const details = product.details as any;
+                                return (
                                 <tr key={product.id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">{product.name}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize">{product.product_type}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${product.price.toFixed(2)}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {product.product_type === 'package' ? product.xp_amount : 
-                                         `${product.subscription_initial_xp || 0} + ${product.subscription_daily_xp || 0}/day`
+                                        {product.product_type === 'package' ? details?.xp_amount?.toLocaleString() : 
+                                         `${details?.initial_xp?.toLocaleString() || 0} + ${details?.daily_xp?.toLocaleString() || 0}/day`
                                         }
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -116,7 +129,7 @@ const StoreManagementPage: React.FC<StoreManagementPageProps> = ({ session }) =>
                                         <button onClick={() => handleEdit(product)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</button>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                 </div>

@@ -238,6 +238,29 @@ export interface Database {
           status?: string
         }
       },
+      notifications: {
+        Row: {
+          id: number;
+          user_id: string;
+          type: Enums<'notification_type'>;
+          actor_id: string | null;
+          entity_id: string | null;
+          content: Json | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          type: Enums<'notification_type'>;
+          actor_id?: string | null;
+          entity_id?: string | null;
+          content?: Json | null;
+          is_read?: boolean;
+        };
+        Update: {
+          is_read?: boolean;
+        };
+      },
       posts: {
         Row: {
           caption: string | null
@@ -264,40 +287,31 @@ export interface Database {
         Row: {
           created_at: string
           description: string | null
+          details: Json | null
           icon: string | null
           id: number
           is_active: boolean
           name: string
           price: number
           product_type: Database["public"]["Enums"]["product_type"]
-          subscription_daily_xp: number | null
-          subscription_duration_days: number | null
-          subscription_initial_xp: number | null
-          xp_amount: number | null
         }
         Insert: {
           description?: string | null
+          details?: Json | null
           icon?: string | null
           is_active?: boolean
           name: string
           price: number
           product_type: Database["public"]["Enums"]["product_type"]
-          subscription_daily_xp?: number | null
-          subscription_duration_days?: number | null
-          subscription_initial_xp?: number | null
-          xp_amount?: number | null
         }
         Update: {
           description?: string | null
+          details?: Json | null
           icon?: string | null
           is_active?: boolean
           name?: string
           price?: number
           product_type?: Database["public"]["Enums"]["product_type"]
-          subscription_daily_xp?: number | null
-          subscription_duration_days?: number | null
-          subscription_initial_xp?: number | null
-          xp_amount?: number | null
         }
       },
       profile_gifs: {
@@ -356,6 +370,9 @@ export interface Database {
           active_badge_id: number | null
           is_admin: boolean | null
           active_cover_id: number | null
+          website_url: string | null
+          youtube_url: string | null
+          facebook_url: string | null
         }
         Insert: {
           id: string
@@ -373,6 +390,9 @@ export interface Database {
           active_badge_id?: number | null
           is_admin?: boolean | null
           active_cover_id?: number | null
+          website_url?: string | null
+          youtube_url?: string | null
+          facebook_url?: string | null
         }
         Update: {
           bio?: string | null
@@ -389,6 +409,9 @@ export interface Database {
           active_badge_id?: number | null
           is_admin?: boolean | null
           active_cover_id?: number | null
+          website_url?: string | null
+          youtube_url?: string | null
+          facebook_url?: string | null
         }
       },
       user_subscriptions: {
@@ -676,6 +699,14 @@ export interface Database {
     }
     Enums: {
       comment_status: "live" | "hidden"
+      notification_type:
+        | "NEW_FOLLOWER"
+        | "POST_LIKE"
+        | "POST_COMMENT"
+        | "NEW_MESSAGE"
+        | "PAYMENT_APPROVED"
+        | "PAYMENT_REJECTED"
+        | "XP_REWARD"
       payment_status: "pending" | "approved" | "rejected"
       post_status: "live" | "suspended" | "under_review"
       product_type: "package" | "subscription"
