@@ -39,8 +39,12 @@ export type AuthView =
     'top-up' | 'subscriptions' | 'manual-payment' |
     'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover' | 'notifications';
 
+type ProfileForInvite = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'> & {
+    active_cover: { preview_url: string | null; asset_details: Json } | null;
+};
+
 type InviteWithProfile = Tables<'game_invites'> & {
-    profiles: Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'active_cover_id'> | null;
+    profiles: ProfileForInvite | null;
 };
     
 const pageVariants = {
@@ -82,33 +86,29 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [notification, setNotification] = useState<NotificationDetails | null>(null);
     const [showPermissionBanner, setShowPermissionBanner] = useState(false);
     
-    // Listen for my incoming and sent invites
+    // Listen for my INCOMING invites
     useEffect(() => {
         const myId = session.user.id;
         const channel = supabase
-            .channel('game-invites')
+            .channel(`invites-for-${myId}`)
             .on<Tables<'game_invites'>>(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'game_invites' },
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'game_invites',
+                    filter: `invitee_id=eq.${myId}`,
+                },
                 async (payload) => {
-                    const invite = payload.new as Tables<'game_invites'>;
-
-                    // An invite I received
-                    if (payload.eventType === 'INSERT' && invite.invitee_id === myId && invite.status === 'pending') {
-                        const { data: profile } = await supabase.from('profiles').select('id, name, username, photo_url, active_cover_id').eq('id', invite.inviter_id).single();
-                        setIncomingInvite({ ...invite, profiles: profile });
-                    }
-                    
-                    // An invite I sent was updated
-                    if (payload.eventType === 'UPDATE' && invite.inviter_id === myId && sentInvite?.id === invite.id) {
-                        setSentInvite(invite);
-                        if(invite.status === 'accepted' && invite.game_id) {
-                            setGameIdToPlay(invite.game_id);
-                            setAuthView('game');
-                            setSentInvite(null);
-                        } else if (invite.status === 'rejected' || invite.status === 'cancelled') {
-                             setSentInvite(null); // Clear waiting state
-                        }
+                    const newInvite = payload.new;
+                    if (newInvite.status === 'pending') {
+                        const { data: profile } = await supabase
+                            .from('profiles')
+                            .select('id, name, username, photo_url, active_cover:active_cover_id(preview_url, asset_details)')
+                            .eq('id', newInvite.inviter_id)
+                            .single();
+                        
+                        setIncomingInvite({ ...newInvite, profiles: profile as any });
                     }
                 }
             )
@@ -117,8 +117,43 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session.user.id, sentInvite]);
+    }, [session.user.id]);
 
+    // Track the status of an invite I SENT
+    useEffect(() => {
+        if (!sentInvite || sentInvite.status !== 'pending') {
+            return;
+        }
+
+        const channel = supabase
+            .channel(`sent-invite-status-${sentInvite.id}`)
+            .on<Tables<'game_invites'>>(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'game_invites',
+                    filter: `id=eq.${sentInvite.id}`,
+                },
+                (payload) => {
+                    const updatedInvite = payload.new;
+                    if (updatedInvite.status === 'accepted' && updatedInvite.game_id) {
+                        setGameIdToPlay(updatedInvite.game_id);
+                        setAuthView('game');
+                        setSentInvite(null);
+                    } else if (updatedInvite.status === 'rejected' || updatedInvite.status === 'cancelled') {
+                        setSentInvite(null);
+                    } else {
+                        setSentInvite(updatedInvite);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [sentInvite]);
     
     const showNotification = (details: NotificationDetails) => {
         setNotification(details);

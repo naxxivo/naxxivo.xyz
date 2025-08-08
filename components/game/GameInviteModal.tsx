@@ -4,15 +4,14 @@ import type { Tables, Json } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import Avatar from '../common/Avatar';
 
-type InviteWithProfile = Tables<'game_invites'> & {
-    profiles: {
-        id: string;
-        name: string | null;
-        username: string;
-        photo_url: string | null;
-        active_cover_id: number | null;
-    } | null;
+type ProfileForInvite = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'> & {
+    active_cover: { preview_url: string | null; asset_details: Json } | null;
 };
+
+type InviteWithProfile = Tables<'game_invites'> & {
+    profiles: ProfileForInvite | null;
+};
+
 
 interface GameInviteModalProps {
     invite: InviteWithProfile | null;
@@ -40,6 +39,7 @@ const GameInviteModal: React.FC<GameInviteModalProps> = ({ invite, onAccept, onD
                         <Avatar
                             photoUrl={invite.profiles?.photo_url}
                             name={invite.profiles?.name || invite.profiles?.username}
+                            activeCover={invite.profiles?.active_cover}
                             size="lg"
                             containerClassName="-mt-16 mb-4 border-4 border-[var(--theme-card-bg)] rounded-full"
                         />
