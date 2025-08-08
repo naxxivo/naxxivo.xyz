@@ -104,7 +104,7 @@ export interface Database {
           player1_id: string
           player2_id: string | null
           status: Database["public"]["Enums"]["game_status"]
-          current_turn: string
+          current_turn: string | null
           game_state: Json | null
           pot_amount: number
           winner_id: string | null
@@ -114,15 +114,15 @@ export interface Database {
           player1_id: string
           player2_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
-          current_turn: string
+          current_turn?: string | null
           game_state?: Json | null
-          pot_amount: number
+          pot_amount?: number
           winner_id?: string | null
         }
         Update: {
           player2_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
-          current_turn?: string
+          current_turn?: string | null
           game_state?: Json | null
           winner_id?: string | null
         }
@@ -646,6 +646,13 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
+      add_gold_coins_to_user: {
+        Args: {
+          user_id_to_update: string
+          coins_to_add: number
+        }
+        Returns: undefined
+      }
       add_xp_to_user: {
         Args: {
           user_id_to_update: string
@@ -656,6 +663,12 @@ export interface Database {
       buy_store_item: {
         Args: {
           p_item_id: number
+        }
+        Returns: string
+      }
+      cancel_carrom_matchmaking: {
+        Args: {
+          game_id_to_cancel: number
         }
         Returns: string
       }
@@ -679,6 +692,12 @@ export interface Database {
           p_inventory_id: number
         }
         Returns: string
+      }
+      find_or_create_carrom_match: {
+        Args: {
+          bet_amount: number
+        }
+        Returns: Json
       }
       get_admin_dashboard_stats: {
         Args: Record<string, never>

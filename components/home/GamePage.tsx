@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Logo from '../common/Logo';
@@ -38,7 +38,7 @@ const GameLobby: React.FC<{ onPlayRandom: () => void; profile: any }> = ({ onPla
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="w-full max-w-xs mt-12 space-y-4">
                 <Button onClick={onPlayRandom} size="large" className="w-full flex items-center justify-center !h-16 text-xl">
                     <GameIcon className="mr-3" />
-                    Play Random Match
+                    Play (100 Coins)
                 </Button>
                 <Button variant="secondary" size="large" className="w-full !h-14" disabled>
                     Invite a Friend
@@ -70,6 +70,7 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const myId = session.user.id;
+    const gameChannelRef = useRef<any>(null);
 
     const fetchProfile = useCallback(async () => {
         setLoading(true);
@@ -93,15 +94,117 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
     useEffect(() => {
         fetchProfile();
     }, [fetchProfile]);
-    
+
+    const cleanupGame = useCallback(() => {
+        if (gameChannelRef.current) {
+            supabase.removeChannel(gameChannelRef.current);
+            gameChannelRef.current = null;
+        }
+        setCurrentGame(null);
+        setGameState('lobby');
+    }, []);
+
+    useEffect(() => {
+        if (gameChannelRef.current) {
+            supabase.removeChannel(gameChannelRef.current);
+            gameChannelRef.current = null;
+        }
+
+        if (currentGame?.id && (gameState === 'searching' || gameState === 'in-game')) {
+            gameChannelRef.current = supabase
+                .channel(`carrom_game_${currentGame.id}`)
+                .on<Tables<'carrom_games'>>(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'carrom_games',
+                        filter: `id=eq.${currentGame.id}`,
+                    },
+                    (payload) => {
+                        const updatedGame = payload.new;
+                        setCurrentGame(updatedGame);
+                        if (updatedGame.status === 'active' && gameState === 'searching') {
+                            setGameState('in-game');
+                        }
+                        if (updatedGame.status === 'finished' || updatedGame.status === 'abandoned') {
+                            alert(`Game over! Winner: ${updatedGame.winner_id}`);
+                            cleanupGame();
+                            fetchProfile();
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
+        return () => {
+            if (gameChannelRef.current) {
+                supabase.removeChannel(gameChannelRef.current);
+            }
+        };
+    }, [currentGame?.id, gameState, cleanupGame, fetchProfile]);
+
     const handlePlayRandom = async () => {
         setGameState('searching');
-        // TODO: Implement RPC call to Supabase to find or create a game.
-        // For now, we simulate finding a game.
-        setTimeout(() => {
-            alert("Matchmaking logic needs to be implemented via Supabase RPC functions.");
+        setError(null);
+        const betAmount = 100;
+
+        if (profile && profile.gold_coins < betAmount) {
+            setError("You don't have enough coins to play.");
             setGameState('lobby');
-        }, 3000);
+            return;
+        }
+
+        const { data, error: rpcError } = await supabase.rpc('find_or_create_carrom_match', {
+            bet_amount: betAmount,
+        });
+
+        if (rpcError) {
+            setError(`Matchmaking Error: ${rpcError.message}`);
+            setGameState('lobby');
+            return;
+        }
+
+        if (data.error) {
+            setError(data.error);
+            setGameState('lobby');
+            await fetchProfile();
+            return;
+        }
+
+        const { data: gameData, error: gameError } = await supabase
+            .from('carrom_games')
+            .select('*')
+            .eq('id', data.game_id)
+            .single();
+
+        if (gameError) {
+            setError(`Error fetching game data: ${gameError.message}`);
+            setGameState('lobby');
+            return;
+        }
+
+        setCurrentGame(gameData);
+        await fetchProfile();
+
+        if (gameData.status === 'active') {
+            setGameState('in-game');
+        }
+    };
+    
+    const handleCancelSearch = async () => {
+        if (!currentGame || currentGame.status !== 'waiting') return;
+
+        const { data, error: rpcError } = await supabase.rpc('cancel_carrom_matchmaking', {
+            game_id_to_cancel: currentGame.id,
+        });
+        
+        if (rpcError || (data && data.startsWith('Error'))) {
+            setError(data || rpcError?.message || 'Failed to cancel search.');
+        } else {
+            cleanupGame();
+            await fetchProfile();
+        }
     };
 
     if (loading) {
@@ -138,6 +241,9 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                         <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full flex flex-col items-center justify-center">
                             <LoadingSpinner />
                             <p className="mt-4 text-[var(--theme-text-secondary)]">Searching for an opponent...</p>
+                            <Button variant="secondary" onClick={handleCancelSearch} className="mt-6 w-auto px-6">
+                                Cancel
+                            </Button>
                         </motion.div>
                     )}
                     {gameState === 'in-game' && currentGame && (
