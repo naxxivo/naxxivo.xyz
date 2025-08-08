@@ -5,7 +5,6 @@ import Button from '../common/Button';
 import Input from '../common/Input';
 import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { BackArrowIcon } from '../common/AppIcons';
 import { generateAvatar } from '../../utils/helpers';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,8 +13,6 @@ interface EditProfilePageProps {
     onBack: () => void;
     onProfileUpdated: () => void;
 }
-
-type ProfileData = Pick<Tables<'profiles'>, 'name' | 'username' | 'bio' | 'photo_url' | 'cover_url'>;
 
 const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onProfileUpdated }) => {
     const [loading, setLoading] = useState(true);
@@ -113,7 +110,7 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
 
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update(updates)
+                .update(updates as any)
                 .eq('id', session.user.id);
 
             if (updateError) throw updateError;
@@ -133,15 +130,9 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
     }
 
     return (
-        <div className="pb-6">
-             <header className="flex items-center p-4">
-                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Edit Profile</h1>
-                <div className="w-6"></div> {/* Placeholder */}
-             </header>
-            
+        <div className="pb-6 max-w-2xl mx-auto">
              <div>
-                <div className="relative h-36 bg-gray-200 dark:bg-gray-700">
+                <div className="relative h-36 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
                     {coverUrl ? <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-primary)]"></div>}
                     <Button size="small" variant="secondary" onClick={() => openUrlModal('cover')} className="absolute bottom-2 right-2 w-auto px-3 py-1 text-xs bg-black/30 text-white border-white/50 hover:bg-black/50">Change Cover</Button>
                 </div>

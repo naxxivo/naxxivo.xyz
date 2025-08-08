@@ -12,7 +12,7 @@ const Button: React.FC<ButtonProps> = ({ children, className, variant = 'primary
     
     const variantClasses = {
         primary: "text-[var(--theme-primary-text)] bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-hover)] shadow-[0_8px_20px_-10px_var(--theme-button-shadow)] hover:shadow-lg disabled:bg-opacity-50 disabled:shadow-none disabled:cursor-not-allowed",
-        secondary: "text-[var(--theme-secondary-text)] bg-transparent border-2 border-[var(--theme-secondary)] hover:bg-[var(--theme-secondary-hover)] hover:border-[var(--theme-secondary)] disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
+        secondary: "text-[var(--theme-secondary-text)] bg-[var(--theme-secondary)] border-2 border-transparent hover:bg-[var(--theme-secondary-hover)] hover:border-[var(--theme-primary)]/50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
     };
     
     const sizeClasses = {

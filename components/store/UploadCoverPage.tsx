@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { BackArrowIcon, UploadIcon } from '../common/AppIcons';
+import { UploadIcon } from '../common/AppIcons';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -23,7 +23,7 @@ const UploadCoverPage: React.FC<UploadCoverPageProps> = ({ onBack, session }) =>
     const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -38,7 +38,8 @@ const UploadCoverPage: React.FC<UploadCoverPageProps> = ({ onBack, session }) =>
         }
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         if (!name.trim() || !coverFile) {
             setError('Please provide a name and select an image file.');
             return;
@@ -75,7 +76,7 @@ const UploadCoverPage: React.FC<UploadCoverPageProps> = ({ onBack, session }) =>
                 throw new Error(data);
             }
 
-            alert(data || "Submission successful!");
+            alert(data || "Submission successful! Your item is now pending approval.");
             onBack();
 
         } catch (err: any) {
@@ -87,60 +88,46 @@ const UploadCoverPage: React.FC<UploadCoverPageProps> = ({ onBack, session }) =>
     };
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col">
-            <header className="flex-shrink-0 flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">Submit a Profile Cover</h1>
-                <div className="w-6"></div>
-            </header>
-
-            <main className="flex-grow p-4 space-y-6">
+        <div className="min-h-full flex flex-col">
+            <main className="flex-grow space-y-6 max-w-lg mx-auto">
                 <div className="bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm">
                     <div
                         onClick={() => fileInputRef.current?.click()}
                         className="w-40 h-40 mx-auto bg-[var(--theme-bg)] rounded-full flex items-center justify-center border-2 border-dashed border-[var(--theme-secondary)]/50 cursor-pointer hover:border-[var(--theme-primary)]"
                     >
                         {previewUrl ? (
-                            <img src={previewUrl} alt="Cover Preview" className="w-full h-full object-cover" />
+                            <img src={previewUrl} alt="Cover Preview" className="w-full h-full object-contain" />
                         ) : (
                             <div className="text-center text-[var(--theme-text-secondary)]">
                                 <UploadIcon className="w-10 h-10 mx-auto" />
-                                <p className="text-xs mt-1">Click to Upload</p>
+                                <p className="text-xs mt-1">Click to Upload (PNG)</p>
                             </div>
                         )}
                     </div>
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png" className="hidden" />
-                    <p className="text-xs text-center mt-2 text-[var(--theme-text-secondary)]">For best results, use a square PNG with a transparent center.</p>
-                </div>
+                    <input ref={fileInputRef} type="file" accept="image/png" onChange={handleFileChange} className="hidden" />
+                    
+                    <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+                        <Input id="coverName" label="Cover Name" value={name} onChange={e => setName(e.target.value)} required disabled={isSubmitting} />
+                        <Input id="coverDescription" label="Description" value={description} onChange={e => setDescription(e.target.value)} disabled={isSubmitting} />
+                        
+                        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-                <div className="bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm space-y-4">
-                    <Input id="name" label="Cover Name" value={name} onChange={e => setName(e.target.value)} required />
-                    <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Description</label>
-                        <textarea
-                            id="description"
-                            value={description}
-                            onChange={e => setDescription(e.target.value)}
-                            rows={3}
-                            className="appearance-none block w-full px-4 py-3 bg-[var(--theme-bg)] border-transparent border rounded-lg text-[var(--theme-text)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)] sm:text-sm"
-                        />
-                    </div>
-                    {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                        <div className="pt-4">
+                            <Button type="submit" disabled={isSubmitting || !coverFile}>
+                                {isSubmitting ? <LoadingSpinner /> : 'Submit for Approval'}
+                            </Button>
+                        </div>
+                    </form>
                 </div>
-
-                <Button onClick={handleSubmit} disabled={isSubmitting || !coverFile || !name}>
-                    Submit for Review
-                </Button>
             </main>
-
             <ConfirmationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={handleConfirmSubmit}
-                title="Confirm Submission"
-                message={`Submitting this cover will cost ${UPLOAD_COST.toLocaleString()} XP. This fee is non-refundable. Are you sure you want to proceed?`}
-                confirmText={`Yes, pay ${UPLOAD_COST.toLocaleString()} XP`}
                 isConfirming={isSubmitting}
+                title="Confirm Submission"
+                message={`Submitting a new profile cover costs ${UPLOAD_COST.toLocaleString()} XP. This will be deducted from your balance. Are you sure you want to proceed?`}
+                confirmText="Yes, Submit"
             />
         </div>
     );

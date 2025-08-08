@@ -69,7 +69,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile })
             } as any}
             className="fixed inset-0 bg-[var(--theme-bg)]/80 backdrop-blur-lg z-[100] flex flex-col"
         >
-            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 flex-shrink-0">
+            <div className="flex items-center p-4 border-b border-black/10 dark:border-white/10 flex-shrink-0">
                  <button onClick={onClose} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)] mr-3"><BackArrowIcon /></button>
                  <div className="relative flex-grow">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--theme-text-secondary)]">
@@ -84,7 +84,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile })
                         autoFocus
                     />
                 </div>
-            </header>
+            </div>
             
             <main className="flex-grow overflow-y-auto p-4">
                 {loading && (

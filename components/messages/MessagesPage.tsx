@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { SearchIcon as SearchIconSVG, MenuIcon } from '../common/AppIcons';
+import { SearchIcon as SearchIconSVG } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Json } from '../../integrations/supabase/types';
 import Avatar from '../common/Avatar';
@@ -136,43 +135,36 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
     }, [conversations, searchTerm]);
     
     return (
-        <div className="bg-[var(--theme-bg)] min-h-screen">
-            <header className="bg-[var(--theme-header-bg)] p-4 rounded-b-[2.5rem] text-[var(--theme-header-text)] shadow-lg border-b-2 border-[var(--theme-primary)]">
-                <div className="flex justify-between items-center">
-                    <button><MenuIcon/></button>
-                    <h1 className="text-xl font-bold">Messages</h1>
-                    <img src={session.user.user_metadata.avatar_url || generateAvatar(session.user.id)} alt="My Avatar" className="w-8 h-8 rounded-full" />
-                </div>
-                 <div className="relative mt-4">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--theme-text-secondary)]">
-                        <SearchIconSVG />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Search"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[var(--theme-secondary)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-2.5 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
-                    />
-                </div>
-                <div className="mt-4">
-                    <div className="flex space-x-4 overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
-                         {onlineUsers.map(user => (
-                            <button key={user.id} onClick={() => onStartChat(user)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-16">
-                                <Avatar 
-                                    photoUrl={user.photo_url}
-                                    name={user.username}
-                                    activeCover={user.active_cover}
-                                    size="lg"
-                                    imageClassName="border-2 border-[var(--theme-primary)]/50"
-                                />
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </header>
+        <div className="min-h-full">
+            <div className="relative mb-4">
+               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--theme-text-secondary)]">
+                   <SearchIconSVG />
+               </div>
+               <input
+                   type="text"
+                   placeholder="Search"
+                   value={searchTerm}
+                   onChange={(e) => setSearchTerm(e.target.value)}
+                   className="w-full bg-[var(--theme-secondary)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-2.5 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
+               />
+           </div>
+           <div className="mb-4">
+               <div className="flex space-x-4 overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
+                    {onlineUsers.map(user => (
+                       <button key={user.id} onClick={() => onStartChat(user)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-16">
+                           <Avatar 
+                               photoUrl={user.photo_url}
+                               name={user.username}
+                               activeCover={user.active_cover}
+                               size="lg"
+                               imageClassName="border-2 border-[var(--theme-primary)]/50"
+                           />
+                       </button>
+                   ))}
+               </div>
+           </div>
             
-            <main className="bg-[var(--theme-card-bg)] rounded-t-[2.5rem] -mt-8 pt-6">
+            <main>
                 {loading && (
                      <div className="flex justify-center pt-20">
                         <LoadingSpinner />
@@ -193,7 +185,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                 )}
 
                 {!loading && filteredConversations.length > 0 && (
-                    <div className="space-y-1 px-3">
+                    <div className="space-y-1">
                          <AnimatePresence>
                             {filteredConversations.map(({ other_user, last_message, unread_count }, index) => {
                                 const isUnread = unread_count > 0;
@@ -207,7 +199,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                                         transition: { delay: index * 0.05 }
                                     } as any}
                                     onClick={() => onStartChat(other_user)}
-                                    className="w-full flex items-center p-3 rounded-2xl hover:bg-[var(--theme-card-bg-alt)] transition-colors text-left"
+                                    className="w-full flex items-center p-3 rounded-2xl hover:bg-[var(--theme-secondary)] transition-colors text-left"
                                 >
                                     <div className="relative flex-shrink-0">
                                         <Avatar

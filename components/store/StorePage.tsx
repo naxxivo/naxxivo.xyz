@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { BackArrowIcon, CoinIcon, UploadIcon } from '../common/AppIcons';
+import { CoinIcon, UploadIcon } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
 import { formatXp } from '../../utils/helpers';
@@ -129,16 +129,7 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
     });
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col">
-            <header className="flex-shrink-0 flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">The Bazaar</h1>
-                <div className="w-auto flex items-center gap-1 text-sm font-bold bg-black/20 text-white px-2 py-1 rounded-full">
-                    <CoinIcon className="w-5 h-5 text-yellow-300"/>
-                    {formatXp(userXp)}
-                </div>
-            </header>
-
+        <div className="min-h-full flex flex-col">
             <div className="p-2 flex-shrink-0">
                 <div className="flex bg-[var(--theme-card-bg-alt)] p-1 rounded-full w-full">
                     {(['Featured', 'Profile FX', 'Profile Covers', 'Themes', 'Badges'] as const).map(tab => (
@@ -162,11 +153,11 @@ const StorePage: React.FC<StorePageProps> = ({ onBack, session, onNavigateToUplo
                 </div>
             </div>
 
-            <main className="flex-grow overflow-y-auto p-4">
+            <main className="flex-grow overflow-y-auto pt-4">
                  {loading ? (
                      <div className="flex justify-center pt-20"><LoadingSpinner /></div>
                  ) : (
-                    <motion.div layout className="grid grid-cols-2 gap-4">
+                    <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <AnimatePresence>
                             {activeTab === 'Profile Covers' && (
                                 <motion.button

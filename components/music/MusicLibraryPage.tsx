@@ -4,7 +4,7 @@ import type { Session } from '@supabase/auth-js';
 import type { Tables, TablesInsert, TablesUpdate } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Button from '../common/Button';
-import { BackArrowIcon, PlayIcon, PauseIcon, UploadIcon, DeleteIcon, CheckCircleIcon } from '../common/AppIcons';
+import { PlayIcon, PauseIcon, UploadIcon, DeleteIcon, CheckCircleIcon } from '../common/AppIcons';
 import ConfirmationModal from '../common/ConfirmationModal';
 
 interface MusicLibraryPageProps {
@@ -58,8 +58,8 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack, sh
             setGifs(gifsRes.data || []);
 
             if (profileRes.error) throw profileRes.error;
-            setActiveGifId(profileRes.data?.active_gif_id || null);
-            setSelectedMusicId(profileRes.data?.selected_music_id || null);
+            setActiveGifId((profileRes.data as any)?.active_gif_id || null);
+            setSelectedMusicId((profileRes.data as any)?.selected_music_id || null);
 
         } catch (err: any) {
             let errorMessage = err.message || 'Failed to load library.';
@@ -96,7 +96,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack, sh
                 music_url: publicUrl,
                 file_name: file.name
             };
-            const { error: insertError } = await supabase.from('profile_music').insert(newTrack);
+            const { error: insertError } = await supabase.from('profile_music').insert(newTrack as any);
             if (insertError) throw insertError;
 
             showNotification({ type: 'success', title: 'Upload Successful', message: `${file.name} has been added to your library.` });
@@ -110,7 +110,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack, sh
 
     const handleSelectMusic = async (trackId: number) => {
         const payload: TablesUpdate<'profiles'> = { selected_music_id: trackId === selectedMusicId ? null : trackId };
-        const { error } = await supabase.from('profiles').update(payload).eq('id', myId);
+        const { error } = await supabase.from('profiles').update(payload as any).eq('id', myId);
         if (error) {
             showNotification({ type: 'error', title: 'Error', message: 'Failed to set active music.' });
         } else {
@@ -121,14 +121,8 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack, sh
     // ... (other handlers for play/pause, GIF upload/delete/select)
 
     return (
-         <div className="min-h-screen bg-[var(--theme-bg)]">
-            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Music & Animations</h1>
-                <div className="w-6"></div>
-            </header>
-
-            <main className="p-4 space-y-6">
+         <div className="min-h-full">
+            <main className="space-y-6">
                 {loading ? <div className="flex justify-center pt-20"><LoadingSpinner /></div> : 
                  error ? <p className="text-red-500 text-center">{error}</p> : (
                     <>

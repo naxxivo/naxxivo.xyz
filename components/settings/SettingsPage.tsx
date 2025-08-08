@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { motion } from 'framer-motion';
 import {
-    BackArrowIcon, UserCircleIcon, LockIcon, CreditCardIcon,
+    UserCircleIcon, LockIcon, CreditCardIcon,
     BellIcon, ShieldCheckIcon, QuestionMarkCircleIcon, InfoIcon, LogoutIcon, AdminIcon
 } from '../common/AppIcons';
 import Button from '../common/Button';
@@ -84,13 +84,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, 
     const canAccessAdmin = profile && (profile.is_admin || profile.xp_balance >= 10000);
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col">
-            <header className="flex-shrink-0 flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">Settings</h1>
-                <div className="w-6"></div> {/* Placeholder for centering */}
-            </header>
-            
+        <div className="min-h-full flex flex-col">
             <main className="flex-grow overflow-y-auto">
                 {/* Account Section */}
                 <SectionHeader title="Account" />

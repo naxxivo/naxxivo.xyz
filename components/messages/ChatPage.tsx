@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
 import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
-import { BackArrowIcon, AttachmentIcon, ReadReceiptIcon } from '../common/AppIcons';
+import { AttachmentIcon, ReadReceiptIcon } from '../common/AppIcons';
 import { motion } from 'framer-motion';
 import Avatar from '../common/Avatar';
 
@@ -108,26 +107,8 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-[var(--theme-bg)]">
-            <header className="flex-shrink-0 bg-[var(--theme-header-bg)] p-4 pb-8 rounded-b-[2.5rem] text-[var(--theme-header-text)] shadow-lg border-b-2 border-[var(--theme-primary)]">
-                <div className="flex items-center justify-between">
-                     <button onClick={onBack} className="hover:opacity-80 transition-opacity"><BackArrowIcon /></button>
-                     <div className="flex flex-col items-center text-center">
-                        <Avatar
-                            photoUrl={otherUser.photo_url}
-                            name={otherUser.name}
-                            activeCover={otherUser.active_cover}
-                            size="md"
-                            imageClassName="border-2 border-[var(--theme-primary)]/50"
-                        />
-                        <h1 className="font-bold text-lg mt-1">{otherUser.name}</h1>
-                        <p className="text-xs text-[var(--theme-text-secondary)]">Online</p>
-                     </div>
-                     <div className="w-6"></div> {/* Placeholder for centering */}
-                </div>
-            </header>
-
-            <main className="flex-grow overflow-y-auto p-4 space-y-4 bg-[var(--theme-card-bg)] rounded-t-[2.5rem] -mt-8 flex flex-col">
+        <div className="flex flex-col h-full bg-[var(--theme-bg)]">
+            <main className="flex-grow overflow-y-auto p-4 space-y-4 flex flex-col">
                 <div className="flex-grow space-y-4">
                     {loading && <div className="flex justify-center items-center h-full"><LoadingSpinner /></div>}
                     {error && <p className="text-red-500 text-center">{error}</p>}

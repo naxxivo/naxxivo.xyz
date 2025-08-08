@@ -41,7 +41,7 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                         end_date: endDate.toISOString(),
                         is_active: true,
                     };
-                    const { error: subError } = await supabase.from('user_subscriptions').insert(newSubscription);
+                    const { error: subError } = await supabase.from('user_subscriptions').insert(newSubscription as any);
                     if (subError) throw new Error(`Failed to create subscription: ${subError.message}`);
                 }
                 
@@ -57,7 +57,7 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                 
                 const finalNotes = notes || `Approved and awarded: ${product.name}`;
                 const updatePayload: TablesUpdate<'manual_payments'> = { status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: finalNotes };
-                const { error } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+                const { error } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
                 if (error) {
                     throw new Error(`CRITICAL: User ${userId} was awarded product ${product.id}, but failed to update payment status. Please manually set payment ${payment.id} to 'approved'.`);
                 }
@@ -69,12 +69,12 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                     entity_id: String(payment.id),
                     content: { productName: product.name, amount: payment.amount }
                 };
-                await supabase.from('notifications').insert(notification);
+                await supabase.from('notifications').insert(notification as any);
 
             } else { // Logic for 'rejected'
                 const finalNotes = notes || 'Your payment was rejected. Please ensure the screenshot and details are correct.';
                 const updatePayload: TablesUpdate<'manual_payments'> = { status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: session.user.id, admin_notes: finalNotes };
-                const { error } = await supabase.from('manual_payments').update(updatePayload).eq('id', payment.id);
+                const { error } = await supabase.from('manual_payments').update(updatePayload as any).eq('id', payment.id);
                 if (error) throw error;
                 
                  // Send notification for rejection
@@ -84,7 +84,7 @@ const PaymentReviewModal: React.FC<PaymentReviewModalProps> = ({ payment, onClos
                     entity_id: String(payment.id),
                     content: { productName: payment.products?.name || 'your purchase', amount: payment.amount, reason: finalNotes }
                 };
-                await supabase.from('notifications').insert(notification);
+                await supabase.from('notifications').insert(notification as any);
             }
 
             onUpdate();

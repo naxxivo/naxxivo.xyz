@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables, Json, TablesInsert } from '../../integrations/supabase/types';
-import { BackArrowIcon, CoinIcon } from '../common/AppIcons';
+import { CoinIcon } from '../common/AppIcons';
 import Button from '../common/Button';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -85,15 +85,9 @@ const TopUpPage: React.FC<TopUpPageProps> = ({ onBack, onPurchase, onManageSubsc
     const xpPackages = products.filter(p => p.product_type === 'package');
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)]">
-             <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Top Up XP</h1>
-                <div className="w-6"></div> {/* Placeholder */}
-            </header>
-
+        <div className="min-h-full">
             {loading ? <div className="flex justify-center pt-20"><LoadingSpinner/></div> : (
-                <main className="p-4 space-y-8">
+                <main className="space-y-8">
                      {/* Gift Code Section */}
                     <section>
                          <h2 className="text-lg font-bold text-[var(--theme-text)] mb-3">Redeem Gift Code</h2>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { BackArrowIcon, PlayIcon } from '../common/AppIcons';
+import { PlayIcon } from '../common/AppIcons';
 import { motion } from 'framer-motion';
 
 interface SeriesDetailPageProps {
@@ -86,13 +86,13 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
     const videoDetails = selectedEpisodeUrl ? getVideoDetails(selectedEpisodeUrl) : null;
 
 
-    if (loading) return <div className="flex justify-center pt-20"><LoadingSpinner /></div>;
+    if (loading) return <div className="flex justify-center items-center h-full"><LoadingSpinner /></div>;
     if (error) return <div className="text-center pt-20 text-red-500">{error}</div>;
     if (!series) return <div className="text-center pt-20 text-gray-500 dark:text-gray-400">Series not found.</div>;
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)]">
-            <div className="relative">
+        <div className="min-h-full">
+            <div className="relative -m-4 lg:-m-6">
                 {selectedEpisodeUrl ? (
                     <div className="w-full aspect-video bg-black flex items-center justify-center">
                        {videoDetails?.platform === 'youtube' ? (
@@ -135,9 +135,6 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
                         <div className="absolute inset-0 bg-black/30"></div>
                     </div>
                 )}
-                 <button onClick={onBack} className="absolute top-3 left-3 bg-black/40 text-white rounded-full p-2 hover:bg-black/60 transition-colors z-10">
-                    <BackArrowIcon />
-                 </button>
             </div>
             
             <div className="p-4">
@@ -152,7 +149,7 @@ const SeriesDetailPage: React.FC<SeriesDetailPageProps> = ({ seriesId, onBack })
                         <motion.button
                             key={ep.id}
                             onClick={() => setSelectedEpisodeUrl(ep.video_url)}
-                            className="w-full flex items-center p-3 bg-[var(--theme-card-bg)] rounded-lg hover:bg-opacity-80 transition-colors"
+                            className="w-full flex items-center p-3 bg-[var(--theme-card-bg)] rounded-lg hover:bg-[var(--theme-secondary)] transition-colors"
                             {...{ whileTap: { scale: 0.98 } } as any}
                         >
                             <div className="w-10 h-10 bg-[var(--theme-secondary)]/40 text-[var(--theme-text-secondary)] rounded-md flex items-center justify-center font-bold text-lg flex-shrink-0">

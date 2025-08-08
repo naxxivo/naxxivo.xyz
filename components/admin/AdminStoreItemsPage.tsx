@@ -59,7 +59,7 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
             if (editingItem) { // If we are editing, update the existing item
                 const { error } = await supabase
                     .from('store_items')
-                    .update(payload)
+                    .update(payload as any)
                     .eq('id', editingItem.id);
                 if (error) throw error;
             } else { // Otherwise, insert a new item
@@ -76,7 +76,7 @@ const AdminStoreItemsPage: React.FC<AdminStoreItemsPageProps> = ({ session }) =>
                 };
                 const { error } = await supabase
                     .from('store_items')
-                    .insert(insertPayload);
+                    .insert(insertPayload as any);
                 if (error) throw error;
             }
             

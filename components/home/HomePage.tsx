@@ -2,12 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import PostCard from './PostCard';
 import LoadingSpinner from '../common/LoadingSpinner';
-import Logo from '../common/Logo';
-import { SearchIcon, BellIcon } from '../common/AppIcons';
 import CommentModal from './CommentModal';
 import QuickPostInput from './QuickPostInput';
 import type { Tables, Json } from '../../integrations/supabase/types';
-import { generateAvatar } from '../../utils/helpers';
 import Avatar from '../common/Avatar';
 
 interface HomePageProps {
@@ -170,23 +167,6 @@ const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey,
 
     return (
         <div className="space-y-4">
-            <header className="flex justify-between items-center">
-                <div className="text-3xl">
-                  <Logo/>
-                </div>
-                <div className="flex items-center space-x-4">
-                    <button onClick={onOpenSearch} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
-                        <SearchIcon />
-                    </button>
-                    <button onClick={onOpenNotifications} className="relative text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
-                        <BellIcon />
-                        {unreadNotificationCount > 0 && (
-                            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--theme-bg)]" />
-                        )}
-                    </button>
-                </div>
-            </header>
-
             <SuggestedUsers onViewProfile={onViewProfile} />
 
              <QuickPostInput session={session} onPostCreated={fetchPosts} />

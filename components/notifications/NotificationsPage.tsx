@@ -48,7 +48,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ session, onBack, 
         try {
             const { error } = await supabase
                 .from('notifications')
-                .update({ is_read: true })
+                .update({ is_read: true } as any)
                 .eq('user_id', session.user.id)
                 .eq('is_read', false);
             if(error) throw error;

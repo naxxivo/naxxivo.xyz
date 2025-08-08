@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { BackArrowIcon, AddIcon } from '../common/AppIcons';
+import { AddIcon } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AnimePageProps {
@@ -37,19 +37,13 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
     }, []);
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)]">
-            <header className="flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">Watch Anime</h1>
-                <div className="w-6"></div> {/* Placeholder for centering */}
-            </header>
-
-            <main className="p-4">
+        <div className="min-h-full">
+            <main>
                 {loading && <div className="flex justify-center pt-20"><LoadingSpinner /></div>}
                 {error && <p className="text-center text-red-500">{error}</p>}
                 {!loading && (
                     series.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {series.map((item, index) => (
                                 <motion.div
                                     key={item.id}
@@ -77,7 +71,7 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
                 )}
             </main>
 
-            <div className="fixed bottom-24 right-6 z-20">
+            <div className="fixed bottom-6 right-6 z-20">
                  <AnimatePresence>
                     {isFabMenuOpen && (
                         <motion.div
@@ -89,10 +83,10 @@ const AnimePage: React.FC<AnimePageProps> = ({ onBack, onViewSeries, onCreateSer
                             } as any}
                             className="flex flex-col items-end space-y-3 mb-3"
                         >
-                            <button onClick={onCreateEpisode} className="flex items-center bg-[var(--theme-card-bg)] shadow-lg rounded-full px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:bg-gray-100 dark:hover:bg-opacity-80">
+                            <button onClick={onCreateEpisode} className="flex items-center bg-[var(--theme-card-bg)] shadow-lg rounded-full px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:bg-[var(--theme-secondary)]">
                                 Add Episode
                             </button>
-                            <button onClick={onCreateSeries} className="flex items-center bg-[var(--theme-card-bg)] shadow-lg rounded-full px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:bg-gray-100 dark:hover:bg-opacity-80">
+                            <button onClick={onCreateSeries} className="flex items-center bg-[var(--theme-card-bg)] shadow-lg rounded-full px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:bg-[var(--theme-secondary)]">
                                 Create Series
                             </button>
                         </motion.div>

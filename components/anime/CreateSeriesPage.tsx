@@ -3,7 +3,6 @@ import { supabase } from '../../integrations/supabase/client';
 import type { TablesInsert } from '../../integrations/supabase/types';
 import Button from '../common/Button';
 import Input from '../common/Input';
-import { BackArrowIcon } from '../common/AppIcons';
 
 interface CreateSeriesPageProps {
     onBack: () => void;
@@ -48,15 +47,9 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ onBack, onSeriesCre
     };
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)]">
-            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Create New Series</h1>
-                <div className="w-6"></div> {/* Placeholder */}
-            </header>
-            
-            <main className="p-4">
-                <form onSubmit={handleSubmit} className="space-y-4 bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm">
+        <div className="min-h-full">
+            <main>
+                <form onSubmit={handleSubmit} className="space-y-4 bg-[var(--theme-card-bg)] p-6 rounded-lg shadow-sm max-w-lg mx-auto">
                     <Input id="title" label="Series Title" type="text" value={title} onChange={e => setTitle(e.target.value)} required disabled={loading} />
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Description</label>

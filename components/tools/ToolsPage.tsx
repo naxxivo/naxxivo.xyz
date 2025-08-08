@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackArrowIcon, ChevronRightIcon, StoreIcon, CollectionIcon, InfoIcon, TrophyIcon, AdminIcon } from '../common/AppIcons';
+import { ChevronRightIcon, StoreIcon, CollectionIcon, InfoIcon, TrophyIcon } from '../common/AppIcons';
 import { motion } from 'framer-motion';
 
 interface ToolsPageProps {
@@ -17,17 +17,17 @@ const ToolListItem = ({ title, description, icon, comingSoon, delay, onClick }: 
     <motion.button
         onClick={onClick}
         {...{
-            initial: { opacity: 0, x: -30 },
-            animate: { opacity: 1, x: 0 },
+            initial: { opacity: 0, y: 30 },
+            animate: { opacity: 1, y: 0 },
             transition: { type: 'spring', stiffness: 400, damping: 25, delay: delay * 0.08 },
         } as any}
         disabled={comingSoon || !onClick}
-        className="w-full flex items-center p-4 bg-[var(--theme-card-bg)] rounded-xl shadow-sm space-x-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] focus:ring-offset-[var(--theme-bg)] transition-all"
+        className="w-full h-full flex flex-col p-4 bg-[var(--theme-card-bg)] rounded-xl shadow-lg space-y-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--theme-secondary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] focus:ring-offset-[var(--theme-bg)] transition-all text-left"
     >
-        <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-[var(--theme-secondary)]/20 rounded-lg text-2xl text-[var(--theme-text-secondary)]">
+        <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-[var(--theme-secondary)]/20 rounded-lg text-3xl text-[var(--theme-primary)]">
             {icon}
         </div>
-        <div className="flex-grow text-left">
+        <div className="flex-grow">
             <h3 className="font-bold text-[var(--theme-text)] flex items-center">
                 {title}
                 {comingSoon && (
@@ -38,7 +38,6 @@ const ToolListItem = ({ title, description, icon, comingSoon, delay, onClick }: 
             </h3>
             <p className="text-sm text-[var(--theme-text-secondary)] mt-1">{description}</p>
         </div>
-        {!comingSoon && <ChevronRightIcon className="flex-shrink-0 text-[var(--theme-text-secondary)]" />}
     </motion.button>
 );
 
@@ -82,7 +81,7 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavi
             comingSoon: false,
         },
         {
-            title: "Watch Anime",
+            title: "Anime Hub",
             description: "Stream your favorite anime series.",
             icon: '📺',
             onClick: onNavigateToAnime,
@@ -99,27 +98,18 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavi
 
 
     return (
-        <div className="min-h-screen bg-[var(--theme-bg)]">
-            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-[var(--theme-card-bg)] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[var(--theme-text)] mx-auto">Tools & Features</h1>
-                 {/* Placeholder for centering */}
-                <div className="w-6"></div>
-            </header>
-
-            <main className="p-4 space-y-3">
-                {allTools.map((tool, index) => (
-                    <ToolListItem
-                        key={tool.title}
-                        title={tool.title}
-                        description={tool.description}
-                        icon={tool.icon}
-                        comingSoon={tool.comingSoon}
-                        delay={index}
-                        onClick={tool.onClick}
-                    />
-                ))}
-            </main>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {allTools.map((tool, index) => (
+                <ToolListItem
+                    key={tool.title}
+                    title={tool.title}
+                    description={tool.description}
+                    icon={tool.icon}
+                    comingSoon={tool.comingSoon}
+                    delay={index}
+                    onClick={tool.onClick}
+                />
+            ))}
         </div>
     );
 };
