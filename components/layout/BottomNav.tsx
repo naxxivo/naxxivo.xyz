@@ -4,7 +4,7 @@ import { GameIcon, MessageIcon, AddIcon, DiscoverIcon, ProfileIcon, PlayIcon, Lo
 import type { AuthView } from '../UserApp';
 import LoadingSpinner from '../common/LoadingSpinner';
 
-type GameStatus = 'idle' | 'searching' | 'playing' | 'finished';
+type GameStatus = 'idle' | 'searching' | 'playing' | 'finished' | 'inviting';
 
 interface BottomNavProps {
     activeView: AuthView;
@@ -36,7 +36,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onCenter
             case 'finished':
                 return { icon: <PlayIcon className="w-8 h-8"/>, label: gameStatus === 'idle' ? 'New Game' : 'Play Again' };
             case 'searching':
-                return { icon: <LoadingSpinner />, label: 'Searching...' };
+            case 'inviting':
+                return { icon: <LoadingSpinner />, label: gameStatus === 'searching' ? 'Searching...' : 'Inviting...' };
             case 'playing':
                 return { icon: <LogoutIcon className="w-8 h-8" />, label: 'Leave Game' };
             default:
@@ -57,7 +58,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onCenter
                                 onClick={onCenterButtonClick}
                                 className="p-3 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-2xl shadow-lg -translate-y-4 hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)] disabled:opacity-60"
                                 aria-label={centerButtonContent.label}
-                                disabled={gameStatus === 'searching'}
+                                disabled={gameStatus === 'searching' || gameStatus === 'inviting'}
                                 {...{
                                     whileHover: { scale: 1.1 },
                                     whileTap: { scale: 0.9 },

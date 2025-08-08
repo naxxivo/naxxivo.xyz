@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../integrations/supabase/client';
 import Profile from './Profile';
-import GamePage from './home/HomePage';
+import GamePage, { type GameStatus } from './home/HomePage';
 import BottomNav from './layout/BottomNav';
 import MessagesPage from './messages/MessagesPage';
 import ChatPage from './messages/ChatPage';
@@ -29,17 +29,20 @@ import NotificationsPage from './notifications/NotificationsPage';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationPopup, { type NotificationDetails } from './common/NotificationPopup';
 import Button from './common/Button';
-import type { Json } from '../integrations/supabase/types';
+import type { Json, Tables } from '../integrations/supabase/types';
 import ConfirmationModal from './common/ConfirmationModal';
+import GameInviteModal from './game/GameInviteModal';
 
 export type AuthView =
     'game' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
     'top-up' | 'subscriptions' | 'manual-payment' |
     'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover' | 'notifications';
-    
-type GameStatus = 'idle' | 'searching' | 'playing' | 'finished';
 
+type InviteWithProfile = Tables<'game_invites'> & {
+    profiles: Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url' | 'active_cover_id'> | null;
+};
+    
 const pageVariants = {
     initial: { opacity: 0, x: "100%" },
     in: { opacity: 1, x: 0 },
@@ -59,7 +62,6 @@ interface UserAppProps {
 
 const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [authView, setAuthView] = useState<AuthView>('game');
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
     const [viewingSeriesId, setViewingSeriesId] = useState<number | null>(null);
@@ -68,54 +70,61 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [refreshAnimeKey, setRefreshAnimeKey] = useState(0);
     const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
+    // Game & Invite State
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
-    const [newGameTrigger, setNewGameTrigger] = useState(0);
+    const [gameIdToPlay, setGameIdToPlay] = useState<string | null>(null);
+    const [sentInvite, setSentInvite] = useState<Tables<'game_invites'> | null>(null);
+    const [incomingInvite, setIncomingInvite] = useState<InviteWithProfile | null>(null);
+    const [isInviteSearchOpen, setInviteSearchOpen] = useState(false);
+    const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
     const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
 
     const [notification, setNotification] = useState<NotificationDetails | null>(null);
     const [showPermissionBanner, setShowPermissionBanner] = useState(false);
     
+    // Listen for my incoming and sent invites
     useEffect(() => {
-        // Fetch initial unread count
-        const fetchUnreadCount = async () => {
-            const { count, error } = await supabase
-                .from('notifications')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', session.user.id)
-                .eq('is_read', false);
-            if(error) console.error(error);
-            setUnreadNotificationCount(count || 0);
-        };
-        fetchUnreadCount();
-
-        // Listen for new notifications in real-time
+        const myId = session.user.id;
         const channel = supabase
-            .channel('public:notifications')
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'notifications',
-                filter: `user_id=eq.${session.user.id}`
-            }, (payload) => {
-                setUnreadNotificationCount(current => current + 1);
-            })
+            .channel('game-invites')
+            .on<Tables<'game_invites'>>(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'game_invites' },
+                async (payload) => {
+                    const invite = payload.new as Tables<'game_invites'>;
+
+                    // An invite I received
+                    if (payload.eventType === 'INSERT' && invite.invitee_id === myId && invite.status === 'pending') {
+                        const { data: profile } = await supabase.from('profiles').select('id, name, username, photo_url, active_cover_id').eq('id', invite.inviter_id).single();
+                        setIncomingInvite({ ...invite, profiles: profile });
+                    }
+                    
+                    // An invite I sent was updated
+                    if (payload.eventType === 'UPDATE' && invite.inviter_id === myId && sentInvite?.id === invite.id) {
+                        setSentInvite(invite);
+                        if(invite.status === 'accepted' && invite.game_id) {
+                            setGameIdToPlay(invite.game_id);
+                            setAuthView('game');
+                            setSentInvite(null);
+                        } else if (invite.status === 'rejected' || invite.status === 'cancelled') {
+                             setSentInvite(null); // Clear waiting state
+                        }
+                    }
+                }
+            )
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session.user.id]);
+    }, [session.user.id, sentInvite]);
+
     
     const showNotification = (details: NotificationDetails) => {
         setNotification(details);
     };
     
-    const showBrowserNotification = (title: string, body: string) => {
-        if (Notification.permission === 'granted') {
-            new Notification(title, { body, icon: '/favicon.ico' });
-        }
-    };
-    
+    // Browser notifications
     useEffect(() => {
         if ('Notification' in window && Notification.permission === 'default') {
             setShowPermissionBanner(true);
@@ -141,13 +150,54 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         setViewingProfileId(null);
         setChattingWith(null);
         setViewingSeriesId(null);
+        setGameIdToPlay(null);
+        setSentInvite(null);
         setAuthView(view);
+    };
+    
+    // --- Invite Flow Handlers ---
+    const handleSendInvite = async (invitee: Pick<Tables<'profiles'>, 'id'>) => {
+        setInviteSearchOpen(false);
+        const { data, error } = await supabase
+            .from('game_invites')
+            .insert({ inviter_id: session.user.id, invitee_id: invitee.id })
+            .select()
+            .single();
+        if (error) {
+            showNotification({ type: 'error', title: 'Invite Failed', message: error.message });
+        } else {
+            setSentInvite(data);
+            setPendingInviteIds(prev => new Set(prev).add(invitee.id));
+        }
+    };
+    
+    const handleAcceptInvite = async (inviteId: string) => {
+        const { data: gameId, error } = await supabase.rpc('accept_game_invite', { p_invite_id: inviteId });
+        setIncomingInvite(null);
+        if (error) {
+            showNotification({ type: 'error', title: 'Error', message: 'Could not accept invite. It may have expired.' });
+        } else {
+            setGameIdToPlay(gameId);
+            setAuthView('game');
+        }
+    };
+    
+    const handleDeclineInvite = async (inviteId: string) => {
+        await supabase.rpc('decline_game_invite', { p_invite_id: inviteId });
+        setIncomingInvite(null);
+    };
+
+    const handleCancelInvite = async (inviteId: string) => {
+        await supabase.rpc('cancel_game_invite', { p_invite_id: inviteId });
+        setSentInvite(null);
     };
 
     const handleCenterButtonClick = () => {
         if (gameStatus === 'idle' || gameStatus === 'finished') {
-            setNewGameTrigger(c => c + 1);
-            setAuthView('game');
+            // This is now handled inside GamePage.
+            // A better approach would be to manage game state here.
+            // For now, we just go to the game page.
+            handleSetAuthView('game');
         }
         if (gameStatus === 'playing') {
             setIsLeaveConfirmOpen(true);
@@ -155,13 +205,9 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     };
 
     const handleLeaveGame = () => {
-        // This is a simple implementation. A real app would update the game state
-        // to `finished` and declare the other player the winner.
+        setGameIdToPlay(null);
         setGameStatus('idle');
-        setNewGameTrigger(0); // Reset trigger
         setIsLeaveConfirmOpen(false);
-        // Force a re-render of a fresh GamePage by changing the key
-        setNewGameTrigger(c => c + 100); 
     };
     
     const handleNavigateToSettings = () => {
@@ -214,7 +260,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const handleNavigateToNotifications = () => setAuthView('notifications');
 
     const handleViewProfile = (userId: string) => {
-        setIsSearchOpen(false);
+        setInviteSearchOpen(false);
         setAuthView('profile');
         setViewingProfileId(userId);
     };
@@ -231,7 +277,14 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         );
     } else {
         const CurrentPage = {
-            game: <GamePage key={newGameTrigger} session={session} onStatusChange={setGameStatus} newGameTrigger={newGameTrigger} />,
+            game: <GamePage 
+                session={session} 
+                onStatusChange={setGameStatus} 
+                onInviteFriend={() => setInviteSearchOpen(true)}
+                sentInvite={sentInvite}
+                gameIdToPlay={gameIdToPlay}
+                onCancelInvite={handleCancelInvite}
+             />,
             discover: <UsersPage session={session} onViewProfile={handleViewProfile} />,
             messages: <MessagesPage session={session} onStartChat={setChattingWith} />,
             profile: <Profile 
@@ -288,8 +341,8 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                             />,
             'create-series': <CreateSeriesPage onBack={() => setAuthView('anime')} onSeriesCreated={() => { setAuthView('anime'); setRefreshAnimeKey(k => k + 1); }} />,
             'create-episode': <CreateEpisodePage onBack={() => setAuthView('anime')} onEpisodeCreated={() => setAuthView('anime')} />,
-            'top-up': <TopUpPage onBack={() => setAuthView('tools')} onPurchase={handleNavigateToManualPayment} onManageSubscriptions={handleNavigateToSubscriptions} showBrowserNotification={showBrowserNotification} />,
-            'subscriptions': <SubscriptionClaimPage onBack={() => setAuthView('top-up')} session={session} showNotification={showNotification} showBrowserNotification={showBrowserNotification} />,
+            'top-up': <TopUpPage onBack={() => setAuthView('tools')} onPurchase={handleNavigateToManualPayment} onManageSubscriptions={handleNavigateToSubscriptions} showBrowserNotification={(title, body) => {}} />,
+            'subscriptions': <SubscriptionClaimPage onBack={() => setAuthView('top-up')} session={session} showNotification={showNotification} showBrowserNotification={(title, body) => {}} />,
             'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} showNotification={showNotification} />,
             store: <StorePage onBack={() => setAuthView('tools')} session={session} onNavigateToUploadCover={handleNavigateToUploadCover} showNotification={showNotification} />,
             collection: <CollectionPage onBack={() => setAuthView('tools')} session={session} showNotification={showNotification} />,
@@ -310,7 +363,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                 <main className={`pb-20 ${!isFullScreenPage ? 'pt-4 px-4' : ''}`}>
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={authView + (viewingProfileId || '') + (viewingSeriesId || '')}
+                            key={authView + (viewingProfileId || '') + (viewingSeriesId || '') + (gameIdToPlay || '')}
                             {...{
                                 variants: pageVariants,
                                 initial: "initial",
@@ -329,8 +382,13 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                     onCenterButtonClick={handleCenterButtonClick}
                     gameStatus={gameStatus}
                 />
-                <AnimatePresence>
-                  {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} onViewProfile={handleViewProfile} />}
+                 <AnimatePresence>
+                    {isInviteSearchOpen && <SearchOverlay 
+                        onClose={() => setInviteSearchOpen(false)} 
+                        onInvite={handleSendInvite} 
+                        mode="invite" 
+                        pendingInviteIds={pendingInviteIds}
+                    />}
                 </AnimatePresence>
                  <PasswordModal
                     isOpen={isPasswordModalOpen}
@@ -379,6 +437,11 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                     </motion.div>
                 </AnimatePresence>
                 <NotificationPopup notification={notification} onClose={() => setNotification(null)} />
+                <GameInviteModal 
+                    invite={incomingInvite}
+                    onAccept={handleAcceptInvite}
+                    onDecline={handleDeclineInvite}
+                />
             </div>
         </div>
     );

@@ -8,7 +8,7 @@ import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
 import { BackArrowIcon, SettingsIcon, MusicNoteIcon, ToolsIcon, CoinIcon, AdminIcon, WebsiteIcon, YouTubeIcon, FacebookIcon } from './common/AppIcons';
 import { motion } from 'framer-motion';
-import PostCard, { type PostWithDetails } from './home/PostCard';
+import PostCard, { PostWithDetails } from './home/PostCard';
 import CommentModal from './home/CommentModal';
 
 // --- Types --- //

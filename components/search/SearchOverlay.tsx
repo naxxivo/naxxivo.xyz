@@ -5,13 +5,16 @@ import { motion } from 'framer-motion';
 import { SearchIcon, BackArrowIcon } from '../common/AppIcons';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { generateAvatar } from '../../utils/helpers';
+import Button from '../common/Button';
 
 interface SearchOverlayProps {
     onClose: () => void;
-    onViewProfile: (userId: string) => void;
+    onViewProfile?: (userId: string) => void;
+    onInvite?: (profile: Profile) => void;
+    mode?: 'search' | 'invite';
+    pendingInviteIds?: Set<string>;
 }
 
-// Use a specific Pick type for search results to improve performance
 type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'>;
 
 const useDebounce = (value: string, delay: number) => {
@@ -27,7 +30,7 @@ const useDebounce = (value: string, delay: number) => {
     return debouncedValue;
 };
 
-const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile }) => {
+const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile, onInvite, mode = 'search', pendingInviteIds = new Set() }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
@@ -41,11 +44,14 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile })
             }
             setLoading(true);
             try {
-                // Select only required fields instead of '*'
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error("User not found");
+
                 const { data, error } = await supabase
                     .from('profiles')
                     .select('id, name, username, photo_url')
                     .or(`name.ilike.%${debouncedSearchTerm}%,username.ilike.%${debouncedSearchTerm}%`)
+                    .neq('id', user.id) // Exclude self from results
                     .limit(10);
                 
                 if (error) throw error;
@@ -59,6 +65,12 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile })
 
         searchUsers();
     }, [debouncedSearchTerm]);
+
+    const handleItemClick = (profile: Profile) => {
+        if (mode === 'search' && onViewProfile) {
+            onViewProfile(profile.id);
+        }
+    };
 
     return (
         <motion.div
@@ -94,10 +106,12 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile })
                      <div className="text-center text-[var(--theme-text-secondary)] pt-10">No users found for "{debouncedSearchTerm}".</div>
                 )}
                 <div className="space-y-3">
-                    {results.map(profile => (
-                         <button
+                    {results.map(profile => {
+                        const isInvited = pendingInviteIds.has(profile.id);
+                        return (
+                         <div
                             key={profile.id}
-                            onClick={() => onViewProfile(profile.id)}
+                            onClick={() => handleItemClick(profile)}
                             className="w-full flex items-center p-2 rounded-lg hover:bg-[var(--theme-card-bg-alt)] transition-colors"
                         >
                             <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
@@ -107,12 +121,19 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose, onViewProfile })
                                     className="w-full h-full object-cover" 
                                 />
                             </div>
-                            <div className="ml-4 text-left">
+                            <div className="ml-4 text-left flex-grow">
                                 <p className="font-semibold text-[var(--theme-text)] truncate">{profile.name || profile.username}</p>
                                 <p className="text-sm text-[var(--theme-text-secondary)] truncate">@{profile.username}</p>
                             </div>
-                        </button>
-                    ))}
+                            {mode === 'invite' && onInvite && (
+                                <div className="ml-2">
+                                    <Button size="small" className="w-24" onClick={() => onInvite(profile)} disabled={isInvited}>
+                                        {isInvited ? 'Invited' : 'Invite'}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )})}
                 </div>
             </main>
 

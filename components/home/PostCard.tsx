@@ -6,13 +6,7 @@ import { motion } from 'framer-motion';
 import { HeartIcon, CommentIcon, OptionsIcon, ShareIcon } from '../common/AppIcons';
 import Avatar from '../common/Avatar';
 
-export type PostWithDetails = {
-    id: number;
-    created_at: string;
-    caption: string | null;
-    content_url: string | null;
-    user_id: string;
-    status: Tables<'posts'>['status'];
+export type PostWithDetails = Tables<'posts'> & {
     profiles: {
         username: string | null;
         name: string | null;
