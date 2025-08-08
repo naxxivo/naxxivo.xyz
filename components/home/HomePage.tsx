@@ -1,177 +1,225 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import type { Tables, Enums } from '../../integrations/supabase/types';
+import PostCard from './PostCard';
 import LoadingSpinner from '../common/LoadingSpinner';
-import Button from '../common/Button';
-import { motion, AnimatePresence } from 'framer-motion';
-import type { Session } from '@supabase/auth-js';
+import Logo from '../common/Logo';
+import { SearchIcon, BellIcon } from '../common/AppIcons';
+import CommentModal from './CommentModal';
+import QuickPostInput from './QuickPostInput';
+import type { Tables, Json } from '../../integrations/supabase/types';
+import { generateAvatar } from '../../utils/helpers';
+import Avatar from '../common/Avatar';
 
-type Game = Tables<'tic_tac_toe_games'>;
-type Invite = Tables<'game_invites'>;
-export type GameStatus = 'idle' | 'searching' | 'playing' | 'finished' | 'inviting';
-
-interface GamePageProps {
-    session: Session;
-    onStatusChange: (status: GameStatus) => void;
-    onInviteFriend: () => void;
-    sentInvite: Invite | null;
-    gameIdToPlay: string | null;
-    onCancelInvite: (inviteId: string) => void;
+interface HomePageProps {
+    session: any;
+    onViewProfile: (userId: string) => void;
+    refreshKey: number;
+    onOpenSearch: () => void;
+    onOpenNotifications: () => void;
+    unreadNotificationCount: number;
 }
 
-const GamePage: React.FC<GamePageProps> = ({ session, onStatusChange, onInviteFriend, sentInvite, gameIdToPlay, onCancelInvite }) => {
-    const [game, setGame] = useState<Game | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [playerSymbol, setPlayerSymbol] = useState<'X' | 'O' | null>(null);
-    const myId = session.user.id;
+export type PostWithDetails = {
+    id: number;
+    created_at: string;
+    caption: string | null;
+    content_url: string | null;
+    user_id: string;
+    status: Tables<'posts'>['status'];
+    profiles: {
+        username: string | null;
+        name: string | null;
+        photo_url: string | null;
+        active_cover: { preview_url: string | null; asset_details: Json } | null;
+    } | null;
+    likes: Array<{ user_id: string }>;
+    comments: Array<{ count: number }>;
+};
 
-    // Effect to handle loading a specific game
+type SuggestedUser = Pick<Tables<'profiles'>, 'id' | 'name' | 'photo_url' | 'username'> & {
+    active_cover: { preview_url: string | null; asset_details: Json } | null;
+};
+
+const SuggestedUsers: React.FC<{ onViewProfile: (userId: string) => void }> = ({ onViewProfile }) => {
+    const [users, setUsers] = useState<SuggestedUser[]>([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        const loadGame = async (gameId: string) => {
-            setLoading(true);
-            const { data, error } = await supabase.from('tic_tac_toe_games').select('*').eq('id', gameId).single();
-            if (error) {
-                setError("Could not load the game.");
-            } else {
-                setGame(data);
-                setPlayerSymbol(data.player1_id === myId ? 'X' : 'O');
-            }
+        const fetchUsers = async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, name, photo_url, username, active_cover:active_cover_id(preview_url, asset_details)')
+                .order('xp_balance', { ascending: false })
+                .limit(10);
+            if (data) setUsers(data as any[]);
             setLoading(false);
         };
+        fetchUsers();
+    }, []);
 
-        if (gameIdToPlay) {
-            loadGame(gameIdToPlay);
-        }
-    }, [gameIdToPlay, myId]);
-    
+    if (loading) return null;
 
-    const findOrCreateGame = useCallback(async () => {
-        // ... (existing quick play logic)
-    }, [myId, onStatusChange]);
-    
-    useEffect(() => {
-        if (sentInvite) {
-            onStatusChange('inviting');
-        } else if (!game && !loading) {
-            onStatusChange('idle');
-        }
-    }, [sentInvite, game, loading, onStatusChange]);
-
-    
-    useEffect(() => {
-        if (!game || !game.id) return;
-
-        if (game.status === 'in_progress') onStatusChange('playing');
-        else if (game.status === 'finished') onStatusChange('finished');
-        else if (game.status === 'waiting_for_player') onStatusChange('searching');
-
-        const channel = supabase
-            .channel(`game-${game.id}`)
-            .on<Game>(
-                'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'tic_tac_toe_games', filter: `id=eq.${game.id}` },
-                (payload) => {
-                    setGame(payload.new as Game);
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [game, onStatusChange]);
-
-    const handleCellClick = async (index: number) => {
-        if (!game || game.status !== 'in_progress' || game.current_turn !== myId || game.board[index] !== '') return;
-
-        const newBoard = [...game.board];
-        newBoard[index] = playerSymbol!;
-        setGame({ ...game, board: newBoard, current_turn: null });
-
-        await supabase.rpc('handle_tic_tac_toe_move', {
-            game_id: game.id,
-            cell_index: index,
-        });
-    };
-    
-    const getGameStatusText = () => {
-        if (sentInvite) return "Waiting for friend to accept...";
-        if (!game) return "Ready to play?";
-        if (game.status === 'waiting_for_player') return "Waiting for opponent...";
-        if (game.status === 'finished') {
-            if (game.winner_id === myId) return "You Win!";
-            if (game.winner_id) return "You Lose!";
-            return "It's a Draw!";
-        }
-        if (game.status === 'in_progress') {
-            return game.current_turn === myId ? "Your Turn" : "Opponent's Turn";
-        }
-        return "";
-    };
-
-    if (game) {
-        // --- Game Board View ---
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] p-4 text-center">
-                <h1 className="font-logo text-5xl text-[var(--theme-text)] mb-4">Tic-Tac-Toe</h1>
-                 <p className={`text-xl font-bold mb-4 transition-colors ${game.current_turn === myId ? 'text-[var(--theme-primary)]' : 'text-[var(--theme-text)]'}`}>
-                    {getGameStatusText()}
-                </p>
-                <div className="grid grid-cols-3 gap-3 w-full max-w-xs aspect-square">
-                    {game.board.map((cell, index) => (
-                        <motion.button
-                            key={index}
-                            onClick={() => handleCellClick(index)}
-                            disabled={game.current_turn !== myId || cell !== '' || game.status !== 'in_progress'}
-                            className="bg-[var(--theme-card-bg)] rounded-lg flex items-center justify-center text-5xl font-bold disabled:opacity-70"
-                            whileTap={{ scale: 0.9 }}
-                        >
-                            <AnimatePresence>
-                                {cell === 'X' && <motion.span initial={{scale:0}} animate={{scale:1}} className="text-red-500">X</motion.span>}
-                                {cell === 'O' && <motion.span initial={{scale:0}} animate={{scale:1}} className="text-blue-500">O</motion.span>}
-                            </AnimatePresence>
-                        </motion.button>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    // --- Lobby View ---
     return (
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] p-4 text-center">
-            <h1 className="font-logo text-5xl text-[var(--theme-text)] mb-4">Tic-Tac-Toe</h1>
-            {error && <p className="text-red-500 mb-4">{error}</p>}
-
-            <AnimatePresence mode="wait">
-                {sentInvite ? (
-                    <motion.div
-                        key="inviting"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="flex flex-col items-center gap-4"
-                    >
-                        <LoadingSpinner />
-                        <p className="text-lg font-semibold text-[var(--theme-text)] animate-pulse">{getGameStatusText()}</p>
-                        <Button variant="secondary" size="small" className="w-auto" onClick={() => onCancelInvite(sentInvite.id)}>Cancel Invite</Button>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="lobby"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="flex flex-col items-center gap-4 w-full max-w-xs"
-                    >
-                        <Button onClick={onInviteFriend}>Invite a Friend</Button>
-                        <Button onClick={findOrCreateGame} variant="secondary">Quick Play</Button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+        <div className="mb-4">
+            <h2 className="font-bold text-[var(--theme-text)] mb-2">Top Travelers</h2>
+            <div className="flex space-x-4 overflow-x-auto pb-3 -mx-4 px-4 hide-scrollbar">
+                {users.map(user => (
+                    <button key={user.id} onClick={() => onViewProfile(user.id)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-20">
+                        <div className="w-16 h-16 rounded-full p-0.5 flex items-center justify-center bg-gradient-to-tr from-[var(--theme-primary)] to-[var(--theme-secondary)]">
+                            <Avatar
+                                photoUrl={user.photo_url}
+                                name={user.username}
+                                activeCover={user.active_cover}
+                                containerClassName="w-full h-full"
+                                imageClassName="p-0.5 bg-[var(--theme-card-bg)]"
+                            />
+                        </div>
+                        <p className="text-xs text-[var(--theme-text-secondary)] truncate w-full">{user.name || user.username}</p>
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };
 
-export default GamePage;
+
+const HomePage: React.FC<HomePageProps> = ({ session, onViewProfile, refreshKey, onOpenSearch, onOpenNotifications, unreadNotificationCount }) => {
+    const [posts, setPosts] = useState<PostWithDetails[]>([]);
+    const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [commentModalPost, setCommentModalPost] = useState<PostWithDetails | null>(null);
+    const myId = session.user.id;
+
+    const fetchPosts = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [postsPromise, followsPromise] = await Promise.all([
+                 supabase
+                    .from('posts')
+                    .select(`
+                        id,
+                        created_at,
+                        caption,
+                        content_url,
+                        user_id,
+                        status,
+                        profiles (
+                            username,
+                            name,
+                            photo_url,
+                            active_cover:active_cover_id(preview_url, asset_details)
+                        ),
+                        likes ( user_id ),
+                        comments ( count )
+                    `)
+                    .order('created_at', { ascending: false }),
+                supabase.from('follows').select('following_id').eq('follower_id', myId)
+            ]);
+            
+            const { data: postData, error: postsError } = postsPromise;
+            if (postsError) throw postsError;
+            setPosts((postData as any) || []);
+
+            const { data: followsData, error: followsError } = followsPromise;
+            if (followsError) throw followsError;
+            if (followsData) {
+                setFollowingSet(new Set(followsData.map(f => f.following_id)));
+            }
+
+
+        } catch (error: any) {
+            setError(error.message || "Failed to fetch posts.");
+        } finally {
+            setLoading(false);
+        }
+    }, [myId]);
+
+    useEffect(() => {
+        fetchPosts();
+    }, [session, refreshKey, myId, fetchPosts]);
+    
+    const handleCommentAdded = useCallback((postId: number) => {
+        setPosts(currentPosts => 
+            currentPosts.map(p => {
+                if (p.id === postId) {
+                    const newCommentCount = (p.comments[0]?.count ?? 0) + 1;
+                    return { ...p, comments: [{ count: newCommentCount }] };
+                }
+                return p;
+            })
+        );
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center pt-20">
+                <LoadingSpinner />
+            </div>
+        );
+    }
+    
+    if (error) {
+        return (
+            <div className="text-center pt-20 text-red-500" role="alert">
+                <p>Error loading feed: {error}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            <header className="flex justify-between items-center">
+                <div className="text-3xl">
+                  <Logo/>
+                </div>
+                <div className="flex items-center space-x-4">
+                    <button onClick={onOpenSearch} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
+                        <SearchIcon />
+                    </button>
+                    <button onClick={onOpenNotifications} className="relative text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
+                        <BellIcon />
+                        {unreadNotificationCount > 0 && (
+                            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--theme-bg)]" />
+                        )}
+                    </button>
+                </div>
+            </header>
+
+            <SuggestedUsers onViewProfile={onViewProfile} />
+
+             <QuickPostInput session={session} onPostCreated={fetchPosts} />
+            
+            <div className="space-y-6 pt-4">
+                {posts.length > 0 ? (
+                    posts.map(post => 
+                        <PostCard
+                            key={post.id}
+                            post={post}
+                            session={session}
+                            onViewProfile={onViewProfile}
+                            onOpenComments={() => setCommentModalPost(post)}
+                            isInitiallyFollowing={followingSet.has(post.user_id)}
+                        />)
+                ) : (
+                    <div className="text-center py-16 px-4 bg-[var(--theme-card-bg-alt)] rounded-2xl">
+                        <h2 className="text-xl font-semibold text-[var(--theme-text)]">The feed is empty!</h2>
+                        <p className="text-[var(--theme-text-secondary)] mt-2">Be the first to share something with the community.</p>
+                    </div>
+                )}
+            </div>
+             {commentModalPost && (
+                <CommentModal
+                    postId={commentModalPost.id}
+                    postOwnerId={commentModalPost.user_id}
+                    session={session}
+                    onClose={() => setCommentModalPost(null)}
+                    onCommentAdded={handleCommentAdded}
+                />
+            )}
+        </div>
+    );
+};
+
+export default HomePage;

@@ -8,10 +8,27 @@ import LoadingSpinner from './common/LoadingSpinner';
 import FollowListModal from './common/FollowListModal';
 import { BackArrowIcon, SettingsIcon, MusicNoteIcon, ToolsIcon, CoinIcon, AdminIcon, WebsiteIcon, YouTubeIcon, FacebookIcon } from './common/AppIcons';
 import { motion } from 'framer-motion';
-import PostCard, { PostWithDetails } from './home/PostCard';
+import PostCard from './home/PostCard';
 import CommentModal from './home/CommentModal';
 
 // --- Types --- //
+type PostWithDetails = {
+    id: number;
+    created_at: string;
+    caption: string | null;
+    content_url: string | null;
+    user_id: string;
+    status: Tables<'posts'>['status'];
+    profiles: {
+        username: string | null;
+        name: string | null;
+        photo_url: string | null;
+        active_cover: { preview_url: string | null; asset_details: Json } | null;
+    } | null;
+    likes: Array<{ user_id: string }>;
+    comments: Array<{ count: number }>;
+};
+
 type StoreItem = Pick<Tables<'store_items'>, 'id' | 'asset_details' | 'preview_url'>;
 
 // --- Profile Component --- //

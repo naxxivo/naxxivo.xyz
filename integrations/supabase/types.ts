@@ -608,57 +608,6 @@ export interface Database {
           item_id: number;
         };
         Update: {};
-      },
-       tic_tac_toe_games: {
-        Row: {
-          id: string
-          player1_id: string
-          player2_id: string | null
-          board: string[]
-          current_turn: string | null
-          status: Database["public"]["Enums"]["game_status"]
-          winner_id: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          player1_id: string
-          player2_id?: string | null
-          board?: string[]
-          current_turn?: string | null
-          status?: Database["public"]["Enums"]["game_status"]
-          winner_id?: string | null
-        }
-        Update: {
-          player2_id?: string | null
-          board?: string[]
-          current_turn?: string | null
-          status?: Database["public"]["Enums"]["game_status"]
-          winner_id?: string | null
-        }
-      },
-      game_invites: {
-        Row: {
-          id: string
-          inviter_id: string
-          invitee_id: string
-          status: Database["public"]["Enums"]["invite_status"]
-          game_id: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          inviter_id: string
-          invitee_id: string
-          status?: Database["public"]["Enums"]["invite_status"]
-          game_id?: string | null
-        }
-        Update: {
-          status?: Database["public"]["Enums"]["invite_status"]
-          game_id?: string | null
-        }
       }
     }
     Views: {
@@ -747,34 +696,6 @@ export interface Database {
         }
         Returns: undefined
       }
-       handle_tic_tac_toe_move: {
-        Args: {
-          game_id: string
-          cell_index: number
-        }
-        Returns: {
-          status: string
-          message: string
-        }
-      },
-      accept_game_invite: {
-        Args: {
-          p_invite_id: string
-        }
-        Returns: string
-      },
-      decline_game_invite: {
-        Args: {
-          p_invite_id: string
-        }
-        Returns: undefined
-      },
-      cancel_game_invite: {
-        Args: {
-          p_invite_id: string
-        }
-        Returns: undefined
-      }
     }
     Enums: {
       comment_status: "live" | "hidden"
@@ -791,8 +712,6 @@ export interface Database {
       product_type: "package" | "subscription"
       profile_status: "active" | "banned"
       store_item_category: "PROFILE_FX" | "THEME" | "BADGE" | "PROFILE_COVER"
-      game_status: "waiting_for_player" | "in_progress" | "finished"
-      invite_status: "pending" | "accepted" | "rejected" | "expired" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -853,18 +772,6 @@ export const Constants = {
         Badge: "BADGE",
         ProfileCover: "PROFILE_COVER"
       },
-       game_status: {
-        WaitingForPlayer: "waiting_for_player",
-        InProgress: "in_progress",
-        Finished: "finished",
-      },
-       invite_status: {
-        Pending: "pending",
-        Accepted: "accepted",
-        Rejected: "rejected",
-        Expired: "expired",
-        Cancelled: "cancelled",
-      }
     },
   },
 } as const

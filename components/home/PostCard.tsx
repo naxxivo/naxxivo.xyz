@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
+import type { PostWithDetails } from './HomePage';
 import { generateAvatar } from '../../utils/helpers';
-import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
+import type { Tables, TablesInsert } from '../../integrations/supabase/types';
 import { motion } from 'framer-motion';
 import { HeartIcon, CommentIcon, OptionsIcon, ShareIcon } from '../common/AppIcons';
 import Avatar from '../common/Avatar';
-
-export type PostWithDetails = Tables<'posts'> & {
-    profiles: {
-        username: string | null;
-        name: string | null;
-        photo_url: string | null;
-        active_cover: { preview_url: string | null; asset_details: Json } | null;
-    } | null;
-    likes: Array<{ user_id: string }>;
-    comments: Array<{ count: number }>;
-};
 
 type CommentWithProfile = Tables<'comments'> & {
     profiles: {

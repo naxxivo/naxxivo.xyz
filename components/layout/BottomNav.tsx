@@ -1,23 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { GameIcon, MessageIcon, AddIcon, DiscoverIcon, ProfileIcon, PlayIcon, LogoutIcon } from '../common/AppIcons';
+import { HomeIcon, MessageIcon, AddIcon, DiscoverIcon, ProfileIcon, BellIcon } from '../common/AppIcons';
 import type { AuthView } from '../UserApp';
-import LoadingSpinner from '../common/LoadingSpinner';
-
-type GameStatus = 'idle' | 'searching' | 'playing' | 'finished' | 'inviting';
 
 interface BottomNavProps {
     activeView: AuthView;
-    setAuthView: (view: 'game' | 'discover' | 'profile' | 'messages') => void;
-    onCenterButtonClick: () => void;
-    gameStatus: GameStatus;
+    setAuthView: (view: 'home' | 'discover' | 'profile' | 'messages') => void;
+    onAddPost: () => void;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onCenterButtonClick, gameStatus }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onAddPost }) => {
     const navItems = [
-        { view: 'game', label: 'Game', icon: GameIcon },
+        { view: 'home', label: 'Home', icon: HomeIcon },
         { view: 'messages', label: 'Messages', icon: MessageIcon },
-        { view: 'add', label: 'Game Action', icon: AddIcon },
+        { view: 'add', label: 'Create Post', icon: AddIcon },
         { view: 'discover', label: 'Discover', icon: DiscoverIcon },
         { view: 'profile', label: 'Profile', icon: ProfileIcon },
     ];
@@ -30,23 +26,6 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onCenter
         'notifications'
     ];
 
-    const getCenterButtonContent = () => {
-        switch (gameStatus) {
-            case 'idle':
-            case 'finished':
-                return { icon: <PlayIcon className="w-8 h-8"/>, label: gameStatus === 'idle' ? 'New Game' : 'Play Again' };
-            case 'searching':
-            case 'inviting':
-                return { icon: <LoadingSpinner />, label: gameStatus === 'searching' ? 'Searching...' : 'Inviting...' };
-            case 'playing':
-                return { icon: <LogoutIcon className="w-8 h-8" />, label: 'Leave Game' };
-            default:
-                return { icon: <PlayIcon className="w-8 h-8" />, label: 'New Game' };
-        }
-    };
-
-    const centerButtonContent = getCenterButtonContent();
-
     return (
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-20 bg-[var(--theme-header-bg)]/80 backdrop-blur-lg border-t border-t-[var(--theme-secondary)]/30 z-50">
             <div className="h-full flex justify-around items-center">
@@ -55,16 +34,15 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onCenter
                         return (
                              <motion.button
                                 key={item.view}
-                                onClick={onCenterButtonClick}
-                                className="p-3 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-2xl shadow-lg -translate-y-4 hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)] disabled:opacity-60"
-                                aria-label={centerButtonContent.label}
-                                disabled={gameStatus === 'searching' || gameStatus === 'inviting'}
+                                onClick={onAddPost}
+                                className="p-3 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-2xl shadow-lg -translate-y-4 hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
+                                aria-label={item.label}
                                 {...{
-                                    whileHover: { scale: 1.1 },
+                                    whileHover: { scale: 1.1, rotate: 90 },
                                     whileTap: { scale: 0.9 },
                                 } as any}
                             >
-                               {centerButtonContent.icon}
+                               <AddIcon />
                             </motion.button>
                         )
                     }
@@ -73,7 +51,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setAuthView, onCenter
                     return (
                         <button
                             key={item.view}
-                            onClick={() => setAuthView(item.view as 'game' | 'discover' | 'profile' | 'messages')}
+                            onClick={() => setAuthView(item.view as 'home' | 'discover' | 'profile' | 'messages')}
                             className={`transition-colors duration-200 relative ${isActive ? 'text-[var(--theme-primary)]' : 'text-[var(--theme-header-text)]/70 hover:text-[var(--theme-header-text)]'}`}
                             aria-label={item.label}
                         >
