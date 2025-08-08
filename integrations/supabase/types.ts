@@ -6,21 +6,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type GamePiece = {
-  id: string;
-  x: number;
-  y: number;
-  color: 'white' | 'black' | 'red';
-  isPocketed: boolean;
-};
-
-export type GameState = {
-  pieces: GamePiece[];
-  striker: { x: number; y: number };
-  score: { player1: number; player2: number };
-};
-
-
 export interface Database {
   public: {
     Tables: {
@@ -113,38 +98,6 @@ export interface Database {
           updated_at?: string | null
         }
       },
-      carrom_games: {
-        Row: {
-          id: number
-          player1_id: string
-          player2_id: string | null
-          status: Database["public"]["Enums"]["game_status"]
-          current_turn: string | null
-          game_state: Json | null
-          pot_amount: number
-          winner_id: string | null
-          created_at: string
-          bet: number
-        }
-        Insert: {
-          player1_id: string
-          player2_id?: string | null
-          status?: Database["public"]["Enums"]["game_status"]
-          current_turn?: string | null
-          game_state?: Json | null
-          pot_amount?: number
-          winner_id?: string | null
-          bet?: number
-        }
-        Update: {
-          player2_id?: string | null
-          status?: Database["public"]["Enums"]["game_status"]
-          current_turn?: string | null
-          game_state?: Json | null
-          winner_id?: string | null
-          bet?: number
-        }
-      },
       comments: {
         Row: {
           content: string
@@ -205,28 +158,6 @@ export interface Database {
         Update: {
           follower_id?: string
           following_id?: string
-        }
-      },
-      game_invites: {
-        Row: {
-          id: number
-          inviter_id: string
-          invitee_id: string
-          status: Database["public"]["Enums"]["game_invite_status"]
-          bet_amount: number
-          game_id: number | null
-          created_at: string
-        }
-        Insert: {
-          inviter_id: string
-          invitee_id: string
-          status?: Database["public"]["Enums"]["game_invite_status"]
-          bet_amount: number
-          game_id?: number | null
-        }
-        Update: {
-          status?: Database["public"]["Enums"]["game_invite_status"]
-          game_id?: number | null
         }
       },
       likes: {
@@ -434,7 +365,6 @@ export interface Database {
           status: Database["public"]["Enums"]["profile_status"]
           username: string
           xp_balance: number
-          gold_coins: number
           has_seen_welcome_bonus: boolean
           active_fx_id: number | null
           active_badge_id: number | null
@@ -455,7 +385,6 @@ export interface Database {
           active_gif_id?: number | null
           status?: Database["public"]["Enums"]["profile_status"]
           xp_balance?: number
-          gold_coins?: number
           has_seen_welcome_bonus?: boolean
           active_fx_id?: number | null
           active_badge_id?: number | null
@@ -475,7 +404,6 @@ export interface Database {
           status?: Database["public"]["Enums"]["profile_status"]
           username?: string
           xp_balance?: number
-          gold_coins?: number
           has_seen_welcome_bonus?: boolean
           active_fx_id?: number | null
           active_badge_id?: number | null
@@ -680,6 +608,35 @@ export interface Database {
           item_id: number;
         };
         Update: {};
+      },
+       tic_tac_toe_games: {
+        Row: {
+          id: string
+          player1_id: string
+          player2_id: string | null
+          board: string[]
+          current_turn: string | null
+          status: Database["public"]["Enums"]["game_status"]
+          winner_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          player1_id: string
+          player2_id?: string | null
+          board?: string[]
+          current_turn?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          winner_id?: string | null
+        }
+        Update: {
+          player2_id?: string | null
+          board?: string[]
+          current_turn?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          winner_id?: string | null
+        }
       }
     }
     Views: {
@@ -698,19 +655,6 @@ export interface Database {
           p_item_id: number
         }
         Returns: string
-      }
-      cancel_carrom_matchmaking: {
-        Args: {
-          game_id_to_cancel: number
-        }
-        Returns: string
-      }
-      create_game_invite: {
-        Args: {
-          p_invitee_id: string
-          p_bet_amount: number
-        }
-        Returns: Json
       }
       create_user_profile_cover: {
         Args: {
@@ -732,12 +676,6 @@ export interface Database {
           p_inventory_id: number
         }
         Returns: string
-      }
-      find_or_create_carrom_match: {
-        Args: {
-          bet_amount: number
-        }
-        Returns: Json
       }
       get_admin_dashboard_stats: {
         Args: Record<string, never>
@@ -780,20 +718,6 @@ export interface Database {
         }
         Returns: string
       }
-      respond_to_game_invite: {
-        Args: {
-          p_invite_id: number
-          p_response: Enums<'game_invite_status'>
-        }
-        Returns: Json
-      }
-      submit_carrom_turn: {
-        Args: {
-          p_game_id: number
-          p_new_game_state: Json
-        }
-        Returns: string
-      }
       update_task_progress: {
         Args: {
           p_user_id: string
@@ -801,11 +725,19 @@ export interface Database {
         }
         Returns: undefined
       }
+       handle_tic_tac_toe_move: {
+        Args: {
+          game_id: string
+          cell_index: number
+        }
+        Returns: {
+          status: string
+          message: string
+        }
+      }
     }
     Enums: {
       comment_status: "live" | "hidden"
-      game_invite_status: "pending" | "accepted" | "declined" | "expired"
-      game_status: "waiting" | "active" | "finished" | "abandoned"
       notification_type:
         | "NEW_FOLLOWER"
         | "POST_LIKE"
@@ -819,6 +751,7 @@ export interface Database {
       product_type: "package" | "subscription"
       profile_status: "active" | "banned"
       store_item_category: "PROFILE_FX" | "THEME" | "BADGE" | "PROFILE_COVER"
+      game_status: "waiting_for_player" | "in_progress" | "finished"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -879,6 +812,11 @@ export const Constants = {
         Badge: "BADGE",
         ProfileCover: "PROFILE_COVER"
       },
+       game_status: {
+        WaitingForPlayer: "waiting_for_player",
+        InProgress: "in_progress",
+        Finished: "finished",
+      }
     },
   },
 } as const
