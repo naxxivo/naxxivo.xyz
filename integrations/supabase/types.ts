@@ -109,6 +109,7 @@ export interface Database {
           pot_amount: number
           winner_id: string | null
           created_at: string
+          bet: number
         }
         Insert: {
           player1_id: string
@@ -118,6 +119,7 @@ export interface Database {
           game_state?: Json | null
           pot_amount?: number
           winner_id?: string | null
+          bet?: number
         }
         Update: {
           player2_id?: string | null
@@ -125,6 +127,7 @@ export interface Database {
           current_turn?: string | null
           game_state?: Json | null
           winner_id?: string | null
+          bet?: number
         }
       },
       comments: {
@@ -646,13 +649,6 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      add_gold_coins_to_user: {
-        Args: {
-          user_id_to_update: string
-          coins_to_add: number
-        }
-        Returns: undefined
-      }
       add_xp_to_user: {
         Args: {
           user_id_to_update: string

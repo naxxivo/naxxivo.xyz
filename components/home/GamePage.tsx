@@ -7,6 +7,7 @@ import type { Tables, Json } from '../../integrations/supabase/types';
 import Avatar from '../common/Avatar';
 import Button from '../common/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import CarromBoard from './CarromBoard';
 
 interface GamePageProps {
     session: any;
@@ -17,8 +18,11 @@ interface GamePageProps {
 }
 
 type GameState = 'lobby' | 'searching' | 'in-game';
+type CarromGame = Tables<'carrom_games'>;
+type Profile = Tables<'profiles'> & { active_cover: { preview_url: string | null, asset_details: Json } | null };
 
-const GameLobby: React.FC<{ onPlayRandom: () => void; profile: any }> = ({ onPlayRandom, profile }) => {
+
+const GameLobby: React.FC<{ onPlayRandom: () => void; profile: Profile | null }> = ({ onPlayRandom, profile }) => {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center p-4">
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', delay: 0.2 }}>
@@ -48,25 +52,11 @@ const GameLobby: React.FC<{ onPlayRandom: () => void; profile: any }> = ({ onPla
     );
 };
 
-const CarromBoard: React.FC<{ game: Tables<'carrom_games'> }> = ({ game }) => {
-    // This is a placeholder for the actual game board UI and logic
-    return (
-        <div className="w-full h-full flex items-center justify-center bg-green-800 rounded-lg p-4">
-            <div className="text-white text-center">
-                <h2 className="text-2xl font-bold">Carrom Game in Progress</h2>
-                <p>Game ID: {game.id}</p>
-                <p>Turn: {game.current_turn === game.player1_id ? 'Player 1' : 'Player 2'}</p>
-                 {/* TODO: Render the board state from game.game_state */}
-            </div>
-        </div>
-    );
-};
-
 
 const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearch, onOpenNotifications, unreadNotificationCount }) => {
     const [gameState, setGameState] = useState<GameState>('lobby');
-    const [profile, setProfile] = useState<Tables<'profiles'> | null>(null);
-    const [currentGame, setCurrentGame] = useState<Tables<'carrom_games'> | null>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [currentGame, setCurrentGame] = useState<CarromGame | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const myId = session.user.id;
@@ -113,7 +103,7 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
         if (currentGame?.id && (gameState === 'searching' || gameState === 'in-game')) {
             gameChannelRef.current = supabase
                 .channel(`carrom_game_${currentGame.id}`)
-                .on<Tables<'carrom_games'>>(
+                .on<CarromGame>(
                     'postgres_changes',
                     {
                         event: 'UPDATE',
@@ -162,38 +152,32 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
         if (rpcError) {
             setError(`Matchmaking Error: ${rpcError.message}`);
             setGameState('lobby');
-            return;
-        }
-
-        if (data.error) {
-            setError(data.error);
-            setGameState('lobby');
             await fetchProfile();
             return;
         }
+        
+        const responseData = data as { error?: string; status: 'joined' | 'created'; game: CarromGame };
 
-        const { data: gameData, error: gameError } = await supabase
-            .from('carrom_games')
-            .select('*')
-            .eq('id', data.game_id)
-            .single();
-
-        if (gameError) {
-            setError(`Error fetching game data: ${gameError.message}`);
+        if (responseData.error) {
+            setError(responseData.error);
             setGameState('lobby');
+            await fetchProfile(); // Re-fetch profile in case coins were deducted then refunded
             return;
         }
 
-        setCurrentGame(gameData);
-        await fetchProfile();
+        setCurrentGame(responseData.game);
+        await fetchProfile(); // Re-fetch profile to show updated coin balance
 
-        if (gameData.status === 'active') {
+        if (responseData.status === 'joined' || responseData.game.status === 'active') {
             setGameState('in-game');
         }
     };
     
     const handleCancelSearch = async () => {
         if (!currentGame || currentGame.status !== 'waiting') return;
+        
+        // Disable the button to prevent multiple clicks
+        setGameState('lobby');
 
         const { data, error: rpcError } = await supabase.rpc('cancel_carrom_matchmaking', {
             game_id_to_cancel: currentGame.id,
@@ -201,6 +185,7 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
         
         if (rpcError || (data && data.startsWith('Error'))) {
             setError(data || rpcError?.message || 'Failed to cancel search.');
+            setGameState('searching'); // Re-enable cancel button if failed
         } else {
             cleanupGame();
             await fetchProfile();
@@ -211,10 +196,6 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
         return <div className="flex justify-center pt-20"><LoadingSpinner /></div>;
     }
     
-    if (error) {
-        return <div className="text-center pt-20 text-red-500" role="alert"><p>{error}</p></div>;
-    }
-
     return (
         <div className="h-screen flex flex-col">
             <header className="flex-shrink-0 flex justify-between items-center p-4">
@@ -231,6 +212,7 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
             </header>
 
             <main className="flex-grow">
+                 {error && <div className="bg-red-500/10 text-red-500 p-3 text-center text-sm rounded-md m-4" role="alert"><p>{error}</p></div>}
                 <AnimatePresence mode="wait">
                     {gameState === 'lobby' && (
                          <motion.div key="lobby" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
@@ -247,8 +229,8 @@ const GamePage: React.FC<GamePageProps> = ({ session, onViewProfile, onOpenSearc
                         </motion.div>
                     )}
                     {gameState === 'in-game' && currentGame && (
-                        <motion.div key="game" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full p-4">
-                            <CarromBoard game={currentGame} />
+                        <motion.div key="game" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="h-full p-4">
+                            <CarromBoard game={currentGame} myId={myId} />
                         </motion.div>
                     )}
                 </AnimatePresence>
