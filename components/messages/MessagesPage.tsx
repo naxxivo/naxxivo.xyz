@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { SearchIcon as SearchIconSVG, MenuIcon } from '../common/AppIcons';
+import { SearchIcon as SearchIconSVG, PencilSquareIcon, MessageIcon } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Json } from '../../integrations/supabase/types';
 import Avatar from '../common/Avatar';
@@ -43,7 +42,7 @@ interface MessagesPageProps {
 
 const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [onlineUsers, setOnlineUsers] = useState<ProfileStub[]>([]);
+    const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -82,13 +81,13 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                     }
                 }
                 
-                // Fetch some users for the "online" list (dummy data for now)
+                // Fetch some users to simulate "online" status
                 const { data: onlineUsersData, error: onlineUsersError } = await supabase
                     .from('profiles')
-                    .select('id, name, username, photo_url, active_cover:active_cover_id(preview_url, asset_details)')
+                    .select('id')
                     .limit(10);
                 if(onlineUsersError) throw onlineUsersError;
-                setOnlineUsers((onlineUsersData as any[]) || []);
+                setOnlineUserIds(new Set(onlineUsersData.map(u => u.id)));
 
                 if (otherUserIds.size === 0) {
                     setConversations([]);
@@ -136,14 +135,17 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
     }, [conversations, searchTerm]);
     
     return (
-        <div className="bg-[var(--theme-bg)] min-h-screen">
-            <header className="bg-[var(--theme-header-bg)] p-4 rounded-b-[2.5rem] text-[var(--theme-header-text)] shadow-lg border-b-2 border-[var(--theme-primary)]">
-                <div className="flex justify-between items-center">
-                    <button><MenuIcon/></button>
-                    <h1 className="text-xl font-bold">Messages</h1>
-                    <img src={session.user.user_metadata.avatar_url || generateAvatar(session.user.id)} alt="My Avatar" className="w-8 h-8 rounded-full" />
-                </div>
-                 <div className="relative mt-4">
+        <div className="bg-[var(--theme-bg)] h-screen flex flex-col">
+            <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)]">
+                <div className="w-6"></div> {/* Placeholder */}
+                <h1 className="text-2xl font-bold text-[var(--theme-text)]">Chats</h1>
+                <button className="text-[var(--theme-primary)] hover:opacity-80">
+                    <PencilSquareIcon />
+                </button>
+            </header>
+            
+            <div className="p-4 flex-shrink-0">
+                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--theme-text-secondary)]">
                         <SearchIconSVG />
                     </div>
@@ -152,27 +154,12 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                         placeholder="Search"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[var(--theme-secondary)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-2.5 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
+                        className="w-full bg-[var(--theme-card-bg-alt)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-2.5 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
                     />
                 </div>
-                <div className="mt-4">
-                    <div className="flex space-x-4 overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
-                         {onlineUsers.map(user => (
-                            <button key={user.id} onClick={() => onStartChat(user)} className="flex flex-col items-center space-y-1 text-center flex-shrink-0 w-16">
-                                <Avatar 
-                                    photoUrl={user.photo_url}
-                                    name={user.username}
-                                    activeCover={user.active_cover}
-                                    size="lg"
-                                    imageClassName="border-2 border-[var(--theme-primary)]/50"
-                                />
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </header>
+            </div>
             
-            <main className="bg-[var(--theme-card-bg)] rounded-t-[2.5rem] -mt-8 pt-6">
+            <main className="flex-grow overflow-y-auto">
                 {loading && (
                      <div className="flex justify-center pt-20">
                         <LoadingSpinner />
@@ -186,7 +173,8 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                 )}
 
                 {!loading && !error && filteredConversations.length === 0 && (
-                    <div className="text-center py-16 px-4">
+                    <div className="text-center py-16 px-4 flex flex-col items-center">
+                        <MessageIcon className="w-16 h-16 text-[var(--theme-text-secondary)]/50 mb-4" />
                         <h2 className="text-xl font-semibold text-[var(--theme-text)]">No conversations yet</h2>
                         <p className="text-[var(--theme-text-secondary)] mt-2">Find users on the Discover page to start a chat.</p>
                     </div>
@@ -197,17 +185,19 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                          <AnimatePresence>
                             {filteredConversations.map(({ other_user, last_message, unread_count }, index) => {
                                 const isUnread = unread_count > 0;
+                                const isOnline = onlineUserIds.has(other_user.id);
                                 return (
                                  <motion.button 
                                     key={other_user.id} 
                                     {...{
                                         initial: { opacity: 0, y: 20 },
                                         animate: { opacity: 1, y: 0 },
-                                        exit: { opacity: 0, y: -20 },
-                                        transition: { delay: index * 0.05 }
+                                        exit: { opacity: 0, scale: 0.95 },
+                                        transition: { delay: index * 0.05 },
+                                        whileTap: { scale: 0.98 }
                                     } as any}
                                     onClick={() => onStartChat(other_user)}
-                                    className="w-full flex items-center p-3 rounded-2xl hover:bg-[var(--theme-card-bg-alt)] transition-colors text-left"
+                                    className="w-full flex items-center p-3 space-x-4 rounded-2xl hover:bg-[var(--theme-card-bg-alt)] transition-colors text-left"
                                 >
                                     <div className="relative flex-shrink-0">
                                         <Avatar
@@ -216,14 +206,15 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ session, onStartChat }) => 
                                             activeCover={other_user.active_cover}
                                             size="lg"
                                         />
+                                        {isOnline && <div className="absolute bottom-0.5 right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-[var(--theme-bg)]" />}
                                     </div>
-                                    <div className="ml-4 flex-grow overflow-hidden">
+                                    <div className="flex-grow overflow-hidden">
                                         <div className="flex justify-between items-start">
-                                            <p className={`truncate ${isUnread ? 'font-bold text-[var(--theme-text)]' : 'font-semibold text-[var(--theme-text)]'}`}>{other_user.name || other_user.username}</p>
+                                            <p className={`truncate font-bold text-[var(--theme-text)]`}>{other_user.name || other_user.username}</p>
                                             <span className="text-xs text-[var(--theme-text-secondary)] flex-shrink-0 ml-2">{new Date(last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                         <div className="flex justify-between items-start mt-1">
-                                            <p className={`text-sm truncate ${isUnread ? 'text-[var(--theme-text)]' : 'text-[var(--theme-text-secondary)]'}`}>{last_message.content}</p>
+                                            <p className={`text-sm truncate ${isUnread ? 'text-[var(--theme-text)] font-semibold' : 'text-[var(--theme-text-secondary)]'}`}>{last_message.content}</p>
                                             {isUnread && (
                                                 <span className="h-5 w-5 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] text-xs flex items-center justify-center rounded-full font-bold flex-shrink-0 ml-2">{unread_count}</span>
                                             )}

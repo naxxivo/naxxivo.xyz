@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { generateAvatar } from '../../utils/helpers';
 import LoadingSpinner from '../common/LoadingSpinner';
 import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
-import { BackArrowIcon, AttachmentIcon, ReadReceiptIcon } from '../common/AppIcons';
+import { BackArrowIcon, ReadReceiptIcon } from '../common/AppIcons';
 import { motion } from 'framer-motion';
 import Avatar from '../common/Avatar';
 
@@ -109,25 +108,23 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
 
     return (
         <div className="flex flex-col h-screen bg-[var(--theme-bg)]">
-            <header className="flex-shrink-0 bg-[var(--theme-header-bg)] p-4 pb-8 rounded-b-[2.5rem] text-[var(--theme-header-text)] shadow-lg border-b-2 border-[var(--theme-primary)]">
-                <div className="flex items-center justify-between">
+            <header className="flex-shrink-0 bg-[var(--theme-header-bg)]/80 backdrop-blur-lg p-3 flex items-center justify-between border-b border-[var(--theme-secondary)]/30 text-[var(--theme-header-text)]">
+                 <div className="flex items-center space-x-3">
                      <button onClick={onBack} className="hover:opacity-80 transition-opacity"><BackArrowIcon /></button>
-                     <div className="flex flex-col items-center text-center">
-                        <Avatar
-                            photoUrl={otherUser.photo_url}
-                            name={otherUser.name}
-                            activeCover={otherUser.active_cover}
-                            size="md"
-                            imageClassName="border-2 border-[var(--theme-primary)]/50"
-                        />
-                        <h1 className="font-bold text-lg mt-1">{otherUser.name}</h1>
-                        <p className="text-xs text-[var(--theme-text-secondary)]">Online</p>
+                     <Avatar
+                        photoUrl={otherUser.photo_url}
+                        name={otherUser.name}
+                        activeCover={otherUser.active_cover}
+                        size="sm"
+                     />
+                     <div>
+                        <h1 className="font-bold text-base leading-tight">{otherUser.name}</h1>
+                        <p className="text-xs text-green-500">Online</p>
                      </div>
-                     <div className="w-6"></div> {/* Placeholder for centering */}
-                </div>
+                 </div>
             </header>
 
-            <main className="flex-grow overflow-y-auto p-4 space-y-4 bg-[var(--theme-card-bg)] rounded-t-[2.5rem] -mt-8 flex flex-col">
+            <main className="flex-grow overflow-y-auto p-4 flex flex-col">
                 <div className="flex-grow space-y-4">
                     {loading && <div className="flex justify-center items-center h-full"><LoadingSpinner /></div>}
                     {error && <p className="text-red-500 text-center">{error}</p>}
@@ -135,26 +132,28 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                         <motion.div
                             key={msg.id}
                             {...{
-                                initial: { opacity: 0, y: 10 },
-                                animate: { opacity: 1, y: 0 },
+                                layout: true,
+                                initial: { opacity: 0, y: 20, scale: 0.9 },
+                                animate: { opacity: 1, y: 0, scale: 1 },
+                                transition: { type: 'spring', stiffness: 300, damping: 25 },
                             } as any}
                             className={`flex flex-col gap-1 ${msg.sender_id === myId ? 'items-end' : 'items-start'}`}
                         >
-                            <div className={`flex items-end gap-2 ${msg.sender_id === myId ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <div className={`flex items-end gap-2 max-w-sm ${msg.sender_id === myId ? 'flex-row-reverse' : 'flex-row'}`}>
                                 {msg.sender_id !== myId && 
                                     <Avatar
                                         photoUrl={otherUser.photo_url}
                                         name={otherUser.name}
                                         activeCover={otherUser.active_cover}
                                         size="xxs"
-                                        containerClassName="self-start"
+                                        containerClassName="self-end mb-1"
                                     />
                                 }
-                                <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${msg.sender_id === myId ? 'bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-br-none' : 'bg-[var(--theme-card-bg-alt)] text-[var(--theme-text)] rounded-bl-none'}`}>
+                                <div className={`p-3 rounded-2xl ${msg.sender_id === myId ? 'bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-br-lg' : 'bg-[var(--theme-card-bg-alt)] text-[var(--theme-text)] rounded-bl-lg'}`}>
                                     <p className="text-sm break-words">{msg.content}</p>
                                 </div>
                             </div>
-                            <div className={`flex items-center gap-1 text-xs text-[var(--theme-text-secondary)] ${msg.sender_id === myId ? 'mr-1' : 'ml-8'}`}>
+                            <div className={`flex items-center gap-1.5 text-xs text-[var(--theme-text-secondary)] px-2 ${msg.sender_id === myId ? '' : 'ml-8'}`}>
                                 <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 {msg.sender_id === myId && <ReadReceiptIcon isRead={msg.is_read} />}
                             </div>
@@ -164,17 +163,14 @@ const ChatPage: React.FC<ChatPageProps> = ({ session, otherUser, onBack }) => {
                 </div>
             </main>
 
-             <footer className="flex-shrink-0 p-3 bg-[var(--theme-card-bg)] border-t border-[var(--theme-secondary)]/50">
+             <footer className="flex-shrink-0 p-3 bg-[var(--theme-card-bg)] border-t border-[var(--theme-secondary)]/30">
                 <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                     <button type="button" className="p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-primary)]">
-                        <AttachmentIcon />
-                    </button>
                     <input
                         type="text"
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         placeholder="Type a message..."
-                        className="flex-grow bg-[var(--theme-card-bg-alt)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
+                        className="flex-grow bg-[var(--theme-bg)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
                         autoFocus
                     />
                     <button type="submit" className="p-3 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] rounded-full disabled:opacity-50 transition-transform hover:scale-110" disabled={!newMessage.trim()}>

@@ -57,19 +57,19 @@ const GiftCodeFormModal: React.FC<GiftCodeFormModalProps> = ({ isOpen, onClose, 
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
+                <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
                     <motion.div
                         {...{
                             initial: { opacity: 0, y: -50 },
                             animate: { opacity: 1, y: 0 },
                             exit: { opacity: 0, y: 50 },
                         } as any}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full"
+                        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full flex flex-col"
                         onClick={e => e.stopPropagation()}
                     >
                         <form onSubmit={handleSubmit}>
-                            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                                <h2 className="text-xl font-bold dark:text-gray-200">Create New Gift Code</h2>
+                            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Create New Gift Code</h2>
                             </div>
                             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                                 <Input
@@ -81,7 +81,7 @@ const GiftCodeFormModal: React.FC<GiftCodeFormModalProps> = ({ isOpen, onClose, 
                                     required
                                     maxLength={7}
                                     rightElement={
-                                        <button type="button" onClick={() => setFormData(p => ({...p, code: generateRandomCode()}))} className="text-xs text-indigo-500 hover:text-indigo-700">
+                                        <button type="button" onClick={() => setFormData(p => ({...p, code: generateRandomCode()}))} className="text-xs text-violet-500 hover:text-violet-700 font-semibold">
                                             Generate
                                         </button>
                                     }
@@ -97,14 +97,14 @@ const GiftCodeFormModal: React.FC<GiftCodeFormModalProps> = ({ isOpen, onClose, 
                                 <Input id="expires_at" label="Expires At (optional)" name="expires_at" type="date" value={String(formData.expires_at).split('T')[0] || ''} onChange={handleChange} />
                                 
                                 <div className="flex items-center">
-                                    <input id="is_active" name="is_active" type="checkbox" checked={!!formData.is_active} onChange={handleChange} className="h-4 w-4 rounded" />
-                                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">Code is Active</label>
+                                    <input id="is_active" name="is_active" type="checkbox" checked={!!formData.is_active} onChange={handleChange} className="h-4 w-4 rounded text-violet-600 focus:ring-violet-500" />
+                                    <label htmlFor="is_active" className="ml-2 block text-sm text-slate-700 dark:text-slate-300">Code is Active</label>
                                 </div>
                             </div>
-                            <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700">
+                            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 flex justify-end space-x-3 border-t border-slate-200 dark:border-slate-700">
                                 <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving} className="w-auto">Cancel</Button>
-                                <Button type="submit" disabled={isSaving} className="w-auto">
-                                    {isSaving ? <LoadingSpinner /> : 'Save Code'}
+                                <Button type="submit" disabled={isSaving} className="w-auto px-6">
+                                    {isSaving ? <LoadingSpinner /> : 'Save'}
                                 </Button>
                             </div>
                         </form>

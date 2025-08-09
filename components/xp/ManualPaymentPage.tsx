@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../../integrations/supabase/client';
 import type { Tables, TablesInsert, Json } from '../../integrations/supabase/types';
-import { BackArrowIcon, UploadIcon } from '../common/AppIcons';
+import { BackArrowIcon, UploadIcon, CoinIcon } from '../common/AppIcons';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import LoadingSpinner from '../common/LoadingSpinner';
 import type { NotificationDetails } from '../common/NotificationPopup';
+import { motion } from 'framer-motion';
 
 interface ManualPaymentPageProps {
     onBack: () => void;
@@ -90,7 +91,6 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
         setError(null);
 
         try {
-            // 1. Upload screenshot
             const fileName = `${session.user.id}-${Date.now()}-${screenshotFile.name}`;
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('payment-proofs')
@@ -98,12 +98,10 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
             
             if (uploadError) throw uploadError;
 
-            // 2. Get public URL
             const { data: { publicUrl } } = supabase.storage
                 .from('payment-proofs')
                 .getPublicUrl(fileName);
 
-            // 3. Create payment record
             const newPayment: TablesInsert<'manual_payments'> = {
                 user_id: session.user.id,
                 product_id: product.id,
@@ -136,55 +134,83 @@ const ManualPaymentPage: React.FC<ManualPaymentPageProps> = ({ onBack, session, 
     if (!product || !instructions) return <div className="p-4 text-center">Payment details not available.</div>;
 
     return (
-        <div className="min-h-screen bg-[#DAF1DE] dark:bg-[#0A1916]">
-            <header className="flex items-center p-4 border-b border-black/10 dark:border-white/10 bg-white dark:bg-[#102A27] sticky top-0 z-10">
-                <button onClick={onBack} className="text-[#235347] dark:text-[#8EB69B] hover:text-[#0E2B26] dark:hover:text-white"><BackArrowIcon /></button>
-                <h1 className="text-xl font-bold text-[#333333] dark:text-[#E0F0E9] mx-auto">Manual Payment</h1>
+        <div className="min-h-screen bg-[var(--theme-bg)]">
+            <header className="flex items-center p-4 border-b border-[var(--theme-secondary)]/30 bg-[var(--theme-header-bg)] sticky top-0 z-10">
+                <button onClick={onBack} className="text-[var(--theme-header-text)] hover:opacity-80"><BackArrowIcon /></button>
+                <h1 className="text-xl font-bold text-[var(--theme-header-text)] mx-auto">Complete Your Purchase</h1>
                 <div className="w-6"></div>
             </header>
 
             <main className="p-4 space-y-6">
-                <div className="bg-white dark:bg-[#102A27] p-6 rounded-lg shadow-sm">
-                    <h2 className="text-lg font-bold text-center text-[#333333] dark:text-[#E0F0E9]">Pay <span className="text-[#16A832]">${product.price.toFixed(2)}</span> for {product.name}</h2>
-                    <div className="mt-4 text-sm text-center text-[#235347] dark:text-[#8EB69B]">
-                        <p>Please send the exact amount to the following address and submit your transaction proof below.</p>
-                    </div>
-                    <div className="mt-4 bg-[#DAF1DE] dark:bg-[#0A1916] p-4 rounded-md space-y-2 text-[#333333] dark:text-[#E0F0E9]">
-                        <p><strong>Recipient:</strong> {instructions.recipient_name}</p>
-                        <p><strong>Binance Pay ID:</strong> {instructions.binance_pay_id}</p>
-                        <p><strong>Network:</strong> {instructions.network} ({instructions.currency})</p>
-                    </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="bg-white dark:bg-[#102A27] p-6 rounded-lg shadow-sm space-y-4">
-                    <Input id="senderDetails" label="Your Binance Pay ID or Email" value={senderDetails} onChange={e => setSenderDetails(e.target.value)} required disabled={isSubmitting} />
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-[#235347] dark:text-[#8EB69B] mb-1">Payment Screenshot</label>
-                        <div
-                            onClick={() => fileInputRef.current?.click()} 
-                            className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[#8EB69B]/50 dark:border-[#8EB69B]/30 border-dashed rounded-md cursor-pointer hover:border-[#235347] dark:hover:border-[#8EB69B]"
-                        >
-                            <div className="space-y-1 text-center">
-                                {screenshotPreview ? (
-                                    <img src={screenshotPreview} alt="Screenshot preview" className="mx-auto h-24 w-auto rounded-md" />
-                                ) : (
-                                    <UploadIcon />
-                                )}
-                                <div className="flex text-sm text-[#235347] dark:text-[#8EB69B]">
-                                    <p className="pl-1">{screenshotFile ? screenshotFile.name : "Click to upload proof"}</p>
-                                </div>
+                {/* Step 1: Order Summary */}
+                <motion.div {...{initial:{opacity:0, y:20}, animate:{opacity:1, y:0}, transition:{delay:0.1}} as any}>
+                    <div className="bg-[var(--theme-card-bg)] p-5 rounded-xl shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-[var(--theme-text-secondary)]">You are purchasing</p>
+                                <h2 className="text-xl font-bold text-[var(--theme-text)]">{product.name}</h2>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm text-[var(--theme-text-secondary)]">Total</p>
+                                <p className="text-2xl font-bold text-[var(--theme-primary)]">${product.price.toFixed(2)}</p>
                             </div>
                         </div>
-                        <input ref={fileInputRef} type="file" onChange={handleFileChange} accept="image/*" className="hidden" disabled={isSubmitting} />
                     </div>
+                </motion.div>
 
-                    {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-                    
-                    <Button type="submit" disabled={isSubmitting || !screenshotFile}>
-                        {isSubmitting ? <LoadingSpinner /> : 'Submit for Review'}
-                    </Button>
-                </form>
+                {/* Step 2: Payment Instructions */}
+                <motion.div {...{initial:{opacity:0, y:20}, animate:{opacity:1, y:0}, transition:{delay:0.2}} as any}>
+                     <div className="bg-[var(--theme-card-bg)] p-5 rounded-xl shadow-sm">
+                        <h3 className="font-bold text-[var(--theme-text)] text-lg mb-3">Payment Instructions</h3>
+                        <p className="text-sm text-[var(--theme-text-secondary)] mb-4">Send the exact amount to the following Binance Pay account.</p>
+                        <div className="space-y-3 bg-[var(--theme-bg)] p-4 rounded-lg">
+                             {Object.entries({
+                                'Recipient': instructions.recipient_name,
+                                'Binance Pay ID': instructions.binance_pay_id,
+                                'Network': `${instructions.network} (${instructions.currency})`
+                            }).map(([key, value]) => (
+                                <div key={key} className="flex justify-between items-center text-sm">
+                                    <span className="text-[var(--theme-text-secondary)]">{key}</span>
+                                    <span className="font-semibold text-[var(--theme-text)]">{value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Step 3: Submit Proof */}
+                 <motion.div {...{initial:{opacity:0, y:20}, animate:{opacity:1, y:0}, transition:{delay:0.3}} as any}>
+                    <form onSubmit={handleSubmit} className="bg-[var(--theme-card-bg)] p-5 rounded-xl shadow-sm space-y-4">
+                        <h3 className="font-bold text-[var(--theme-text)] text-lg">Submit Your Proof</h3>
+                        <Input id="senderDetails" label="Your Binance Pay ID or Email" value={senderDetails} onChange={e => setSenderDetails(e.target.value)} required disabled={isSubmitting} />
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Payment Screenshot</label>
+                            <div
+                                onClick={() => fileInputRef.current?.click()} 
+                                className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[var(--theme-secondary)]/50 border-dashed rounded-lg cursor-pointer hover:border-[var(--theme-primary)] transition-colors"
+                            >
+                                <div className="space-y-1 text-center">
+                                    {screenshotPreview ? (
+                                        <img src={screenshotPreview} alt="Screenshot preview" className="mx-auto h-24 w-auto rounded-md" />
+                                    ) : (
+                                        <UploadIcon className="mx-auto h-10 w-10 text-[var(--theme-text-secondary)]" />
+                                    )}
+                                    <div className="flex text-sm text-[var(--theme-text-secondary)]">
+                                        <p className="pl-1">{screenshotFile ? screenshotFile.name : "Click to upload proof"}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <input ref={fileInputRef} type="file" onChange={handleFileChange} accept="image/*" className="hidden" disabled={isSubmitting} />
+                        </div>
+
+                        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                        
+                        <Button type="submit" disabled={isSubmitting || !screenshotFile}>
+                            {isSubmitting ? <LoadingSpinner /> : 'Submit for Review'}
+                        </Button>
+                    </form>
+                </motion.div>
             </main>
         </div>
     );

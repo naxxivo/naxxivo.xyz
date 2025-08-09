@@ -4,9 +4,7 @@ import { supabase } from '../integrations/supabase/client';
 import AuthPage from './auth/AuthPage';
 import AuthForm from './auth/AuthForm';
 import Profile from './Profile';
-import HomePage from './home/HomePage';
 import BottomNav from './layout/BottomNav';
-import CreatePost from './home/CreatePost';
 import MessagesPage from './messages/MessagesPage';
 import ChatPage from './messages/ChatPage';
 import SettingsPage from './settings/SettingsPage';
@@ -29,27 +27,29 @@ import EarnXpPage from './xp/EarnXpPage';
 import PasswordModal from './common/PasswordModal';
 import UploadCoverPage from './store/UploadCoverPage';
 import NotificationsPage from './notifications/NotificationsPage';
+import EventsPage from './events/EventsPage';
+import LuckRoyalePage from './events/LuckRoyalePage';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationPopup, { type NotificationDetails } from './common/NotificationPopup';
 import Button from './common/Button';
 import type { Json } from '../integrations/supabase/types';
 
 export type AuthView =
-    'home' | 'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
+    'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
     'top-up' | 'subscriptions' | 'manual-payment' |
-    'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover' | 'notifications';
+    'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover' | 'notifications' | 'events' | 'luck-royale';
 
 const pageVariants = {
-    initial: { opacity: 0, x: "100%" },
-    in: { opacity: 1, x: 0 },
-    out: { opacity: 0, x: "-100%" },
+    initial: { opacity: 0, y: 20 },
+    in: { opacity: 1, y: 0 },
+    out: { opacity: 0, y: -20 },
 };
 
 const pageTransition = {
-    type: "tween" as const,
-    ease: "anticipate" as const,
-    duration: 0.5
+    type: "spring",
+    stiffness: 300,
+    damping: 30,
 };
 
 interface UserAppProps {
@@ -58,15 +58,13 @@ interface UserAppProps {
 }
 
 const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
-    const [authView, setAuthView] = useState<AuthView>('home');
-    const [isCreatePostOpen, setCreatePostOpen] = useState(false);
+    const [authView, setAuthView] = useState<AuthView>('discover');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
     const [viewingSeriesId, setViewingSeriesId] = useState<number | null>(null);
     const [paymentProductId, setPaymentProductId] = useState<number | null>(null);
     const [chattingWith, setChattingWith] = useState<{ id: string; name: string; photo_url: string | null; active_cover: { preview_url: string | null; asset_details: Json } | null } | null>(null);
-    const [refreshFeedKey, setRefreshFeedKey] = useState(0);
     const [refreshAnimeKey, setRefreshAnimeKey] = useState(0);
     const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
@@ -136,15 +134,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         await (supabase.auth as any).signOut();
     };
 
-    const handlePostCreated = () => {
-        setCreatePostOpen(false);
-        setRefreshFeedKey(prevKey => prevKey + 1);
-        if (authView !== 'home') {
-           handleSetAuthView('home');
-        }
-    };
-    
-    const handleSetAuthView = (view: 'home' | 'discover' | 'profile' | 'messages') => {
+    const handleSetAuthView = (view: 'discover' | 'profile' | 'messages') => {
         setViewingProfileId(null);
         setChattingWith(null);
         setViewingSeriesId(null);
@@ -199,6 +189,8 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const handleNavigateToEarnXp = () => setAuthView('earn-xp');
     const handleNavigateToUploadCover = () => setAuthView('upload-cover');
     const handleNavigateToNotifications = () => setAuthView('notifications');
+    const handleNavigateToEvents = () => setAuthView('events');
+    const handleNavigateToLuckRoyale = () => setAuthView('luck-royale');
 
 
     const handleViewProfile = (userId: string) => {
@@ -219,13 +211,12 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         );
     } else {
         const CurrentPage = {
-            home: <HomePage session={session} onViewProfile={handleViewProfile} refreshKey={refreshFeedKey} onOpenSearch={() => setIsSearchOpen(true)} onOpenNotifications={handleNavigateToNotifications} unreadNotificationCount={unreadNotificationCount} />,
             discover: <UsersPage session={session} onViewProfile={handleViewProfile} />,
             messages: <MessagesPage session={session} onStartChat={setChattingWith} />,
             profile: <Profile 
                         session={session} 
                         userId={viewingProfileId || session.user.id} 
-                        onBack={viewingProfileId ? () => { setViewingProfileId(null); setAuthView('home');} : undefined}
+                        onBack={viewingProfileId ? () => { setViewingProfileId(null); setAuthView('discover');} : undefined}
                         onMessage={(user) => setChattingWith(user)}
                         onNavigateToSettings={handleNavigateToSettings}
                         onNavigateToTools={handleNavigateToTools}
@@ -262,6 +253,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         onNavigateToCollection={handleNavigateToCollection} 
                         onNavigateToInfo={handleNavigateToInfo} 
                         onNavigateToEarnXp={handleNavigateToEarnXp}
+                        onNavigateToEvents={handleNavigateToEvents}
                    />,
             anime: <AnimePage 
                         key={refreshAnimeKey}
@@ -284,13 +276,15 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
             info: <InfoPage onBack={() => setAuthView('tools')} />,
             'earn-xp': <EarnXpPage onBack={() => setAuthView('tools')} session={session} />,
             'upload-cover': <UploadCoverPage onBack={() => setAuthView('store')} session={session} />,
-            'notifications': <NotificationsPage session={session} onBack={() => setAuthView('home')} onMarkAllRead={() => setUnreadNotificationCount(0)} />,
+            'notifications': <NotificationsPage session={session} onBack={() => setAuthView('discover')} onMarkAllRead={() => setUnreadNotificationCount(0)} />,
+            events: <EventsPage onBack={() => setAuthView('tools')} onNavigateToLuckRoyale={handleNavigateToLuckRoyale} />,
+            'luck-royale': <LuckRoyalePage onBack={() => setAuthView('events')} session={session} showNotification={showNotification} />
         }[authView];
 
         const isFullScreenPage = [
             'profile', 'music-library', 'tools', 'anime', 'anime-series', 'create-series', 'create-episode',
             'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile',
-            'store', 'collection', 'info', 'earn-xp', 'upload-cover', 'notifications'
+            'store', 'collection', 'info', 'earn-xp', 'upload-cover', 'notifications', 'events', 'luck-royale'
         ].includes(authView);
 
         pageContent = (
@@ -314,12 +308,6 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                 <BottomNav
                     activeView={authView}
                     setAuthView={handleSetAuthView}
-                    onAddPost={() => setCreatePostOpen(true)}
-                />
-                <CreatePost
-                    isOpen={isCreatePostOpen}
-                    onClose={() => setCreatePostOpen(false)}
-                    onPostCreated={handlePostCreated}
                 />
                 <AnimatePresence>
                   {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} onViewProfile={handleViewProfile} />}

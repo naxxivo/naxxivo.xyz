@@ -68,35 +68,38 @@ const AppSettingsPage: React.FC = () => {
     if (error) return <p className="text-red-500">{error}</p>;
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
-            <h2 className="text-xl font-bold dark:text-gray-200">Application Settings</h2>
-            {settings.map(setting => (
-                <div key={setting.key} className="p-4 border dark:border-gray-700 rounded-md">
-                    <h3 className="font-semibold text-lg capitalize dark:text-gray-200">{setting.key.replace(/_/g, ' ')}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{setting.description}</p>
-                    {editingKey === setting.key ? (
-                        <div className="space-y-2">
-                            <textarea
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-md font-mono text-sm"
-                                rows={8}
-                            />
-                            <div className="flex space-x-2">
-                                <Button onClick={() => handleSave(setting.key)} size="small" className="w-auto">Save</Button>
-                                <Button onClick={handleCancel} variant="secondary" size="small" className="w-auto">Cancel</Button>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+             <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Application Settings</h2>
+             <p className="text-slate-500 dark:text-slate-400 mt-1">Manage global settings for the application. Be careful, these changes are live.</p>
+            <div className="space-y-6 pt-6">
+                {settings.map(setting => (
+                    <div key={setting.key} className="p-4 border dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <h3 className="font-semibold text-lg capitalize text-slate-800 dark:text-slate-200">{setting.key.replace(/_/g, ' ')}</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{setting.description}</p>
+                        {editingKey === setting.key ? (
+                            <div className="space-y-2">
+                                <textarea
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-slate-900 text-green-400 rounded-md font-mono text-sm shadow-inner"
+                                    rows={8}
+                                />
+                                <div className="flex space-x-2">
+                                    <Button onClick={() => handleSave(setting.key)} size="small" className="w-auto px-4">Save</Button>
+                                    <Button onClick={handleCancel} variant="secondary" size="small" className="w-auto px-4">Cancel</Button>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div>
-                            <pre className="bg-gray-100 dark:bg-gray-900 p-3 rounded-md text-sm overflow-x-auto text-gray-800 dark:text-gray-200">
-                                {JSON.stringify(setting.value, null, 2)}
-                            </pre>
-                            <button onClick={() => handleEdit(setting)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm mt-2">Edit</button>
-                        </div>
-                    )}
-                </div>
-            ))}
+                        ) : (
+                            <div>
+                                <pre className="bg-slate-100 dark:bg-slate-900 p-3 rounded-md text-sm overflow-x-auto text-slate-800 dark:text-slate-200">
+                                    {JSON.stringify(setting.value, null, 2)}
+                                </pre>
+                                <button onClick={() => handleEdit(setting)} className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 text-sm font-semibold mt-2">Edit</button>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };

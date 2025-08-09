@@ -111,15 +111,16 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
             console.error("Failed to update user:", error);
             let detailMessage = 'An unknown error occurred.';
             if (error) {
-                if (typeof error.message === 'string' && error.message) {
-                    detailMessage = error.message;
+                if (error.message) {
+                    detailMessage = `Message: ${error.message}`;
                     if (error.details) detailMessage += `\nDetails: ${error.details}`;
                     if (error.hint) detailMessage += `\nHint: ${error.hint}`;
+                    if (error.code) detailMessage += `\nCode: ${error.code}`;
                 } else {
                     try {
                         detailMessage = JSON.stringify(error, null, 2);
                     } catch {
-                        detailMessage = String(error);
+                        detailMessage = "Could not stringify the error object. Check the console for more details.";
                     }
                 }
             }
@@ -129,57 +130,57 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ session }) => {
 
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
             <div className="mb-4">
                 <input
                     type="text"
                     placeholder="Search by name, username, or ID..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                    className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-shadow"
                 />
             </div>
             {loading ? (
-                <div className="flex justify-center items-center"><LoadingSpinner /></div>
+                <div className="flex justify-center items-center py-10"><LoadingSpinner /></div>
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                        <thead className="bg-slate-50 dark:bg-slate-700/50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">XP Balance</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">User</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">XP Balance</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                             {users.map(user => (
-                                <tr key={user.id}>
+                                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 h-10 w-10">
                                                 <img className="h-10 w-10 rounded-full object-cover" src={user.photo_url || generateAvatar(user.username)} alt="" />
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-gray-200">{user.name || user.username}</div>
-                                                <div className="text-sm text-gray-500 dark:text-gray-400">@{user.username}</div>
+                                                <div className="text-sm font-medium text-slate-900 dark:text-slate-200">{user.name || user.username}</div>
+                                                <div className="text-sm text-slate-500 dark:text-slate-400">@{user.username}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                            user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                        <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                            user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
                                         }`}>
                                             {user.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.xp_balance}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{user.xp_balance.toLocaleString()}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400 capitalize">
                                         {user.is_admin ? 'Admin' : 'User'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => handleEditClick(user)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</button>
+                                        <button onClick={() => handleEditClick(user)} className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 font-semibold">Edit</button>
                                     </td>
                                 </tr>
                             ))}

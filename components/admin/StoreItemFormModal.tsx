@@ -19,7 +19,7 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
     const [formData, setFormData] = useState<Partial<StoreItem>>({
         name: '',
         description: '',
-        category: 'PROFILE_FX',
+        category: 'PROFILE_COVER',
         price: 0,
         preview_url: '',
         asset_details: null,
@@ -36,8 +36,8 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
             setAssetDetailsStr(JSON.stringify(itemToEdit.asset_details, null, 2));
         } else {
             setFormData({
-                name: '', description: '', category: 'PROFILE_FX', price: 0,
-                preview_url: '', asset_details: null, is_active: true,
+                name: '', description: '', category: 'PROFILE_COVER', price: 0,
+                preview_url: '', asset_details: null, is_active: true, is_approved: true
             });
             setAssetDetailsStr('null');
         }
@@ -82,7 +82,7 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
         }
 
         setIsSaving(true);
-        await onSave({ ...formData, asset_details: parsedAssetDetails });
+        await onSave({ ...formData, asset_details: parsedAssetDetails, category: 'PROFILE_COVER' });
         setIsSaving(false);
     };
 
@@ -90,35 +90,35 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
         <>
             <AnimatePresence>
                 {isOpen && !isEditorOpen && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
+                    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
                         <motion.div
                             {...{
                                 initial: { opacity: 0, y: -50 },
                                 animate: { opacity: 1, y: 0 },
                                 exit: { opacity: 0, y: 50 },
                             } as any}
-                            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full"
+                            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full flex flex-col"
                             onClick={e => e.stopPropagation()}
                         >
                             <form onSubmit={handleSubmit}>
-                                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                                    <h2 className="text-xl font-bold dark:text-gray-200">{itemToEdit ? 'Edit Item' : 'Create New Item'}</h2>
+                                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{itemToEdit ? 'Edit Item' : 'Create New Item'}</h2>
                                 </div>
                                 <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                                     <Input id="name" label="Item Name" name="name" value={formData.name || ''} onChange={handleChange} required />
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                                        <textarea name="description" value={formData.description || ''} onChange={handleChange} rows={2} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 dark:border-gray-600" />
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Description</label>
+                                        <textarea name="description" value={formData.description || ''} onChange={handleChange} rows={2} className="w-full p-2 border rounded-md bg-white dark:bg-slate-700 dark:border-slate-600" />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                                            <select name="category" value={formData.category} onChange={handleChange} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 dark:border-gray-600">
-                                                <option value="PROFILE_FX">Profile FX</option>
-                                                <option value="PROFILE_COVER">Profile Cover</option>
-                                                <option value="THEME">Theme</option>
-                                                <option value="BADGE">Badge</option>
-                                            </select>
+                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Category</label>
+                                            <input 
+                                                type="text" 
+                                                value="Profile Cover" 
+                                                readOnly 
+                                                className="w-full p-2.5 border rounded-md bg-slate-100 dark:bg-slate-700 dark:border-slate-600 text-slate-500" 
+                                            />
                                         </div>
                                         <Input id="price" label="Price (XP)" name="price" type="number" value={String(formData.price) || '0'} onChange={handleChange} required />
                                     </div>
@@ -133,29 +133,29 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
                                     )}
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Asset Details (JSON)</label>
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Asset Details (JSON)</label>
                                         <textarea 
                                             name="asset_details" 
                                             value={assetDetailsStr} 
                                             onChange={handleAssetDetailsChange} 
                                             rows={4} 
-                                            className={`w-full p-2 border rounded-md bg-white dark:bg-gray-700 font-mono text-sm ${jsonError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'dark:border-gray-600'}`} 
+                                            className={`w-full p-2 border rounded-md bg-slate-900 text-green-400 font-mono text-sm ${jsonError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-slate-600'}`} 
                                         />
                                         {jsonError && <p className="text-xs text-red-500 mt-1">{jsonError}</p>}
                                     </div>
                                     <div className="flex items-center">
-                                        <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active || false} onChange={e => setFormData(p => ({...p, is_active: e.target.checked}))} className="h-4 w-4 rounded" />
-                                        <label htmlFor="is_active" className="ml-2 block text-sm dark:text-gray-300">Item is Active</label>
+                                        <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active || false} onChange={e => setFormData(p => ({...p, is_active: e.target.checked}))} className="h-4 w-4 rounded text-violet-600 focus:ring-violet-500" />
+                                        <label htmlFor="is_active" className="ml-2 block text-sm dark:text-slate-300">Item is Active</label>
                                     </div>
                                     <div className="flex items-center">
-                                        <input id="is_approved" name="is_approved" type="checkbox" checked={formData.is_approved || false} onChange={e => setFormData(p => ({...p, is_approved: e.target.checked}))} className="h-4 w-4 rounded" />
-                                        <label htmlFor="is_approved" className="ml-2 block text-sm dark:text-gray-300">Item is Approved</label>
+                                        <input id="is_approved" name="is_approved" type="checkbox" checked={formData.is_approved || false} onChange={e => setFormData(p => ({...p, is_approved: e.target.checked}))} className="h-4 w-4 rounded text-violet-600 focus:ring-violet-500" />
+                                        <label htmlFor="is_approved" className="ml-2 block text-sm dark:text-slate-300">Item is Approved</label>
                                     </div>
                                 </div>
-                                <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex justify-end space-x-3 border-t">
+                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 flex justify-end space-x-3 border-t border-slate-200 dark:border-slate-700">
                                     <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving} className="w-auto">Cancel</Button>
-                                    <Button type="submit" disabled={isSaving} className="w-auto">
-                                        {isSaving ? <LoadingSpinner /> : 'Save Item'}
+                                    <Button type="submit" disabled={isSaving} className="w-auto px-6">
+                                        {isSaving ? <LoadingSpinner /> : 'Save'}
                                     </Button>
                                 </div>
                             </form>

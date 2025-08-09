@@ -32,6 +32,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [username, setUsername] = useState('');
+    const [gender, setGender] = useState<'male' | 'female' | ''>('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -45,11 +46,22 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
         setLoading(true);
 
         if (isSignUp) {
+            if (!gender) {
+                setError("Please select a gender.");
+                setLoading(false);
+                return;
+            }
+
+            const MALE_AVATAR = "https://i.pinimg.com/736x/01/7d/62/017d6298b0df4bc489d1a71857e6712a.jpg";
+            const FEMALE_AVATAR = "https://i.pinimg.com/736x/82/59/37/825937c65e1e21ae4aaf25f167706c60.jpg";
+            
+            const photoUrl = gender === 'male' ? MALE_AVATAR : FEMALE_AVATAR;
+
             const { data, error: signUpError } = await (supabase.auth as any).signUp({
                 email,
                 password,
                 options: {
-                    data: { name, username, photo_url: `https://api.dicebear.com/8.x/adventurer/svg?seed=${username}` },
+                    data: { name, username, photo_url: photoUrl, gender: gender },
                 },
             });
             if (signUpError) {
@@ -127,6 +139,28 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
                                 <>
                                     <motion.div {...{ variants: itemVariants } as any}><Input id="name" label="Full Name" type="text" value={name} onChange={e => setName(e.target.value)} required disabled={loading} /></motion.div>
                                     <motion.div {...{ variants: itemVariants } as any}><Input id="username" label="Username" type="text" value={username} onChange={e => setUsername(e.target.value)} required disabled={loading} /></motion.div>
+                                    <motion.div {...{ variants: itemVariants } as any}>
+                                        <label className="block text-sm text-[var(--theme-text-secondary)] mb-2">Gender</label>
+                                        <div className="flex gap-4">
+                                            {(['male', 'female'] as const).map((g) => (
+                                                <label key={g} className="flex items-center gap-2 cursor-pointer p-1">
+                                                    <input
+                                                        type="radio"
+                                                        name="gender"
+                                                        value={g}
+                                                        checked={gender === g}
+                                                        onChange={(e) => setGender(e.target.value as 'male' | 'female')}
+                                                        className="hidden peer"
+                                                        required
+                                                    />
+                                                    <div className="w-5 h-5 border-2 border-[var(--theme-input-border)] rounded-full flex items-center justify-center transition-all peer-checked:border-[var(--theme-primary)]">
+                                                       <div className="w-2.5 h-2.5 bg-transparent rounded-full peer-checked:bg-[var(--theme-primary)] transition-colors"></div>
+                                                    </div>
+                                                    <span className="capitalize text-[var(--theme-text)]">{g}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </motion.div>
                                 </>
                             )}
                             <motion.div {...{ variants: itemVariants } as any}><Input id="email" label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} autoComplete="email" /></motion.div>

@@ -100,27 +100,20 @@ export interface Database {
       },
       comments: {
         Row: {
-          content: string
-          created_at: string
           id: number
-          parent_comment_id: number | null
-          post_id: number
-          status: Database["public"]["Enums"]["comment_status"]
+          created_at: string
+          content: string
           user_id: string
+          post_id: number
         }
         Insert: {
+          id?: number
           content: string
-          parent_comment_id?: number | null
-          post_id: number
-          status?: Database["public"]["Enums"]["comment_status"]
           user_id: string
+          post_id: number
         }
         Update: {
           content?: string
-          parent_comment_id?: number | null
-          post_id?: number
-          status?: Database["public"]["Enums"]["comment_status"]
-          user_id?: string
         }
       },
       daily_claims: {
@@ -160,22 +153,6 @@ export interface Database {
           following_id?: string
         }
       },
-      likes: {
-        Row: {
-          created_at: string
-          id: number
-          post_id: number
-          user_id: string
-        }
-        Insert: {
-          post_id: number
-          user_id: string
-        }
-        Update: {
-          post_id?: number
-          user_id?: string
-        }
-      },
       manual_payments: {
         Row: {
           admin_notes: string | null
@@ -212,6 +189,18 @@ export interface Database {
           status?: Database["public"]["Enums"]["payment_status"]
           user_id?: string
         }
+      },
+      likes: {
+        Row: {
+          user_id: string
+          post_id: number
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          post_id: number
+        }
+        Update: {}
       },
       messages: {
         Row: {
@@ -263,24 +252,22 @@ export interface Database {
       },
       posts: {
         Row: {
+          id: number
+          created_at: string
           caption: string | null
           content_url: string | null
-          created_at: string
-          id: number
-          status: Database["public"]["Enums"]["post_status"]
           user_id: string
+          status: Database["public"]["Enums"]["post_status"]
         }
         Insert: {
           caption?: string | null
           content_url?: string | null
-          status?: Database["public"]["Enums"]["post_status"]
           user_id: string
+          status?: Database["public"]["Enums"]["post_status"]
         }
         Update: {
           caption?: string | null
           content_url?: string | null
-          status?: Database["public"]["Enums"]["post_status"]
-          user_id?: string
         }
       },
       products: {
@@ -366,13 +353,15 @@ export interface Database {
           username: string
           xp_balance: number
           has_seen_welcome_bonus: boolean
-          active_fx_id: number | null
-          active_badge_id: number | null
           is_admin: boolean | null
           active_cover_id: number | null
           website_url: string | null
           youtube_url: string | null
           facebook_url: string | null
+          gold_coins: number | null
+          diamond_coins: number | null
+          silver_coins: number | null
+          gender: string | null
         }
         Insert: {
           id: string
@@ -386,13 +375,15 @@ export interface Database {
           status?: Database["public"]["Enums"]["profile_status"]
           xp_balance?: number
           has_seen_welcome_bonus?: boolean
-          active_fx_id?: number | null
-          active_badge_id?: number | null
           is_admin?: boolean | null
           active_cover_id?: number | null
           website_url?: string | null
           youtube_url?: string | null
           facebook_url?: string | null
+          gold_coins?: number | null
+          diamond_coins?: number | null
+          silver_coins?: number | null
+          gender?: string | null
         }
         Update: {
           bio?: string | null
@@ -405,13 +396,15 @@ export interface Database {
           username?: string
           xp_balance?: number
           has_seen_welcome_bonus?: boolean
-          active_fx_id?: number | null
-          active_badge_id?: number | null
           is_admin?: boolean | null
           active_cover_id?: number | null
           website_url?: string | null
           youtube_url?: string | null
           facebook_url?: string | null
+          gold_coins?: number | null
+          diamond_coins?: number | null
+          silver_coins?: number | null
+          gender?: string | null
         }
       },
       user_subscriptions: {
@@ -608,6 +601,61 @@ export interface Database {
           item_id: number;
         };
         Update: {};
+      },
+      luck_royale_prizes: {
+        Row: {
+          id: number
+          item_id: number | null
+          rarity: Database["public"]["Enums"]["luck_royale_rarity"]
+          is_active: boolean
+          created_at: string
+          prize_type: Database["public"]["Enums"]["luck_royale_prize_type"]
+          currency_type: Database["public"]["Enums"]["currency"] | null
+          currency_amount: number | null
+          currency: Database["public"]["Enums"]["currency"]
+        }
+        Insert: {
+          item_id?: number | null
+          rarity: Database["public"]["Enums"]["luck_royale_rarity"]
+          is_active?: boolean
+          prize_type?: Database["public"]["Enums"]["luck_royale_prize_type"]
+          currency_type?: Database["public"]["Enums"]["currency"] | null
+          currency_amount?: number | null
+          currency?: Database["public"]["Enums"]["currency"]
+        }
+        Update: {
+          item_id?: number | null
+          rarity?: Database["public"]["Enums"]["luck_royale_rarity"]
+          is_active?: boolean
+          prize_type?: Database["public"]["Enums"]["luck_royale_prize_type"]
+          currency_type?: Database["public"]["Enums"]["currency"] | null
+          currency_amount?: number | null
+          currency?: Database["public"]["Enums"]["currency"]
+        }
+      },
+      luck_royale_spins: {
+        Row: {
+          id: number;
+          user_id: string;
+          prize_won_item_id: number | null;
+          is_duplicate: boolean;
+          consolation_prize: Json | null;
+          cost_in_gold: number;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          prize_won_item_id?: number | null;
+          is_duplicate?: boolean;
+          consolation_prize?: Json | null;
+          cost_in_gold: number;
+        };
+        Update: {
+          prize_won_item_id?: number | null;
+          is_duplicate?: boolean;
+          consolation_prize?: Json | null;
+          cost_in_gold?: number;
+        };
       }
     }
     Views: {
@@ -644,7 +692,7 @@ export interface Database {
       }
       equip_inventory_item: {
         Args: {
-          p_inventory_id: number
+          p_inventory_id: bigint
         }
         Returns: string
       }
@@ -695,26 +743,43 @@ export interface Database {
           p_task_type: string
         }
         Returns: undefined
+      },
+      spin_luck_royale: {
+        Args: {
+          spin_count: number
+          p_currency: Enums<'currency'>
+        }
+        Returns: Json
       }
     }
     Enums: {
       comment_status: "live" | "hidden"
       notification_type:
         | "NEW_FOLLOWER"
-        | "POST_LIKE"
-        | "POST_COMMENT"
         | "NEW_MESSAGE"
         | "PAYMENT_APPROVED"
         | "PAYMENT_REJECTED"
         | "XP_REWARD"
+        | "POST_LIKE"
+        | "POST_COMMENT"
       payment_status: "pending" | "approved" | "rejected"
       post_status: "live" | "suspended" | "under_review"
       product_type: "package" | "subscription"
       profile_status: "active" | "banned"
-      store_item_category: "PROFILE_FX" | "THEME" | "BADGE" | "PROFILE_COVER"
+      store_item_category: "PROFILE_COVER"
+      luck_royale_rarity: "COMMON" | "RARE" | "LEGENDARY"
+      currency: "GOLD" | "SILVER" | "DIAMOND"
+      luck_royale_prize_type: "ITEM" | "CURRENCY"
     }
     CompositeTypes: {
-      [_ in never]: never
+      luck_royale_prize_with_weight: {
+        id: number | null
+        item_id: number | null
+        prize_type: Enums<'luck_royale_prize_type'> | null
+        currency_type: Enums<'currency'> | null
+        currency_amount: number | null
+        weight: number | null
+      }
     }
   }
 }
@@ -767,9 +832,6 @@ export const Constants = {
         Banned: "banned",
       },
       store_item_category: {
-        ProfileFx: "PROFILE_FX",
-        Theme: "THEME",
-        Badge: "BADGE",
         ProfileCover: "PROFILE_COVER"
       },
     },

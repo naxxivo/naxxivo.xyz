@@ -68,9 +68,11 @@ const CoverEditorModal: React.FC<CoverEditorModalProps> = ({ isOpen, onClose, on
             {isOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" onClick={onClose}>
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
+                        {...{
+                            initial: { opacity: 0, scale: 0.9 },
+                            animate: { opacity: 1, scale: 1 },
+                            exit: { opacity: 0, scale: 0.9 },
+                        } as any}
                         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full flex flex-col md:flex-row"
                         onClick={e => e.stopPropagation()}
                     >

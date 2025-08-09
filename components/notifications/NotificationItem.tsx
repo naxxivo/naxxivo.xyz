@@ -39,11 +39,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
             message = <>{actorName} started following you.</>;
             break;
         case 'POST_LIKE':
-            icon = <HeartIcon filled className="text-red-500" />;
+            icon = <HeartIcon filled={true} className="text-red-500" />;
             message = <>{actorName} liked your post.</>;
             break;
         case 'POST_COMMENT':
-            icon = <CommentIcon className="text-gray-500" />;
+            icon = <CommentIcon className="text-indigo-500" />;
             message = <>{actorName} commented on your post.</>;
             break;
         case 'PAYMENT_APPROVED':

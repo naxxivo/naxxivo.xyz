@@ -23,16 +23,20 @@ const ConnectivityStatusOverlay: React.FC<ConnectivityStatusOverlayProps> = ({ i
         <AnimatePresence>
             {shouldShow && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    {...{
+                        initial: { opacity: 0 },
+                        animate: { opacity: 1 },
+                        exit: { opacity: 0 },
+                    } as any}
                     className="fixed inset-0 bg-[var(--theme-bg)]/95 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
                 >
                     <div className="text-center text-[var(--theme-text-secondary)]">
                         <motion.div 
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2, type: 'spring' }}
+                            {...{
+                                initial: { scale: 0.5, opacity: 0 },
+                                animate: { scale: 1, opacity: 1 },
+                                transition: { delay: 0.2, type: 'spring' },
+                            } as any}
                             className="flex justify-center mb-4"
                         >
                             {content.icon}

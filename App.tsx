@@ -22,20 +22,29 @@ const App: React.FC = () => {
     const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [isServerDown, setIsServerDown] = useState(false);
+    const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
 
     useEffect(() => {
         // Ensure light mode is always active by removing the dark class if it exists.
         document.documentElement.classList.remove('dark');
         
-        // Setup auth listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: Session | null) => {
-            setSession(session);
-        });
-
         // Initial session fetch
         supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null }}) => {
             setSession(session);
+            setIsUserLoggedIn(!!session);
             setLoading(false); // Initial loading is done after first session check
+        });
+
+        // Setup auth listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setSession(session);
+            // Only change logged in status on explicit sign in or sign out events
+            if (event === 'SIGNED_OUT') {
+                setIsUserLoggedIn(false);
+                setAuthMode('onboarding'); // Reset auth flow
+            } else if (event === 'SIGNED_IN') {
+                setIsUserLoggedIn(true);
+            }
         });
 
         // Cleanup function
@@ -135,7 +144,7 @@ const App: React.FC = () => {
         <>
             <ConnectivityStatusOverlay isOffline={isOffline} isServerDown={!isOffline && isServerDown} />
             
-            {!session ? (
+            {!isUserLoggedIn ? (
                 <div className="w-full min-h-screen flex items-center justify-center">
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -153,7 +162,7 @@ const App: React.FC = () => {
                         </motion.div>
                     </AnimatePresence>
                 </div>
-            ) : (
+            ) : (session && (
                 <>
                     <AnimatePresence>
                         {isAdminView ? (
@@ -171,7 +180,7 @@ const App: React.FC = () => {
                         onClose={() => setShowWelcomeBonus(false)}
                     />
                 </>
-            )}
+            ))}
         </>
     );
 };

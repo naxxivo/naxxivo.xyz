@@ -43,54 +43,70 @@ const AdminTasksPage: React.FC = () => {
             if (error) throw error;
             setIsModalOpen(false);
             await fetchTasks();
-        } catch (err: any) {
-            alert(`Save failed: ${err.message}`);
+        } catch (error: any) {
+            console.error('Save failed:', error);
+            let detailMessage = 'An unknown error occurred.';
+            if (error) {
+                if (error.message) {
+                    detailMessage = `Message: ${error.message}`;
+                    if (error.details) detailMessage += `\nDetails: ${error.details}`;
+                    if (error.hint) detailMessage += `\nHint: ${error.hint}`;
+                    if (error.code) detailMessage += `\nCode: ${error.code}`;
+                } else {
+                    try {
+                        detailMessage = JSON.stringify(error, null, 2);
+                    } catch {
+                        detailMessage = "Could not stringify the error object. Check the console for more details.";
+                    }
+                }
+            }
+            alert(`Save failed: ${detailMessage}`);
         }
     };
 
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold dark:text-gray-200">Task Management</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Task Management</h2>
                 <button
                     onClick={handleCreateNew}
-                    className="bg-violet-500 hover:bg-violet-600 text-white px-4 py-2 rounded-md transition-colors"
+                    className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm"
                 >
                     Create New Task
                 </button>
             </div>
             {loading ? (
-                <div className="flex justify-center items-center"><LoadingSpinner /></div>
+                <div className="flex justify-center items-center py-10"><LoadingSpinner /></div>
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                        <thead className="bg-slate-50 dark:bg-slate-700/50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Title</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Type</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Reward</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Goal</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Interval</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Type</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Reward</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Goal</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Interval</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                         <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                              {tasks.map(task => (
-                                <tr key={task.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">{task.title}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono">{task.type}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{task.xp_reward} XP</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{task.required_count}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize">{task.reset_interval.toLowerCase()}</td>
+                                <tr key={task.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-200">{task.title}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400 font-mono">{task.type}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{task.xp_reward} XP</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{task.required_count}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400 capitalize">{task.reset_interval.toLowerCase()}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${task.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                        <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${task.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-600 dark:text-slate-200'}`}>
                                             {task.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => handleEdit(task)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                        <button onClick={() => handleEdit(task)} className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 font-semibold">Edit</button>
                                     </td>
                                 </tr>
                             ))}

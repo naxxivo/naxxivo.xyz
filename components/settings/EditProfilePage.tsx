@@ -196,16 +196,21 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
             <AnimatePresence>
                 {modalFor && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        {...{
+                            initial: { opacity: 0 },
+                            animate: { opacity: 1 },
+                            exit: { opacity: 0 },
+                        } as any}
                         className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
                         onClick={() => setModalFor(null)}
                     >
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
+                            {...{
+                                initial: { scale: 0.9, opacity: 0 },
+                                animate: { scale: 1, opacity: 1 },
+                                exit: { scale: 0.9, opacity: 0 },
+                                transition: { type: 'spring', stiffness: 300, damping: 30 },
+                            } as any}
                             className="bg-[var(--theme-card-bg)] rounded-2xl p-6 w-full max-w-sm"
                             onClick={e => e.stopPropagation()}
                         >
