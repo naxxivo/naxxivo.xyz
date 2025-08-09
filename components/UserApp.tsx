@@ -71,6 +71,8 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
     const [notification, setNotification] = useState<NotificationDetails | null>(null);
     const [showPermissionBanner, setShowPermissionBanner] = useState(false);
     
+    const isLuckRoyale = authView === 'luck-royale';
+    
     useEffect(() => {
         // Fetch initial unread count
         const fetchUnreadCount = async () => {
@@ -289,7 +291,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
 
         pageContent = (
             <>
-                <main className={`pb-20 ${!isFullScreenPage ? 'pt-4 px-4' : ''}`}>
+                <main className={`${isLuckRoyale ? '' : `pb-20 ${!isFullScreenPage ? 'pt-4 px-4' : ''}`}`}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={authView + (viewingProfileId || '') + (viewingSeriesId || '')}
@@ -305,10 +307,10 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         </motion.div>
                     </AnimatePresence>
                 </main>
-                <BottomNav
+                {!isLuckRoyale && <BottomNav
                     activeView={authView}
                     setAuthView={handleSetAuthView}
-                />
+                />}
                 <AnimatePresence>
                   {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} onViewProfile={handleViewProfile} />}
                 </AnimatePresence>
@@ -327,7 +329,7 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
 
     return (
         <div className="w-full min-h-screen bg-gray-200 dark:bg-black flex justify-center">
-            <div className="w-full max-w-sm bg-[var(--theme-bg)] min-h-screen shadow-2xl relative overflow-x-hidden">
+            <div className={`w-full max-w-sm bg-[var(--theme-bg)] min-h-screen shadow-2xl relative overflow-x-hidden ${isLuckRoyale ? 'h-screen overflow-hidden' : ''}`}>
                 {showPermissionBanner && (
                     <div className="absolute top-0 left-0 right-0 bg-[var(--theme-primary)] text-[var(--theme-primary-text)] p-3 z-[101] text-center shadow-lg">
                         <p className="text-sm">Want to get notified about rewards? Enable notifications!</p>

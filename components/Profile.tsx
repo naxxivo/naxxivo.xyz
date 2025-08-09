@@ -115,9 +115,9 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 const profileBase = profileRes.data;
 
                 const [musicRes, gifRes, coverRes] = await Promise.all([
-                    profileBase.selected_music_id ? supabase.from('profile_music').select('music_url').eq('id', profileBase.selected_music_id).single() : Promise.resolve({ data: null, error: null }),
-                    profileBase.active_gif_id ? supabase.from('profile_gifs').select('gif_url').eq('id', profileBase.active_gif_id).single() : Promise.resolve({ data: null, error: null }),
-                    profileBase.active_cover_id ? supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_cover_id).single() : Promise.resolve({ data: null, error: null }),
+                    profileBase.selected_music_id ? supabase.from('profile_music').select('music_url').eq('id', profileBase.selected_music_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+                    profileBase.active_gif_id ? supabase.from('profile_gifs').select('gif_url').eq('id', profileBase.active_gif_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+                    profileBase.active_cover_id ? supabase.from('store_items').select('id, asset_details, preview_url').eq('id', profileBase.active_cover_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
                 ]);
 
                 const fullProfileData: ProfileData = {

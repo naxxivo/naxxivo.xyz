@@ -112,7 +112,7 @@ const App: React.FC = () => {
                     .from('profiles')
                     .select('has_seen_welcome_bonus')
                     .eq('id', session.user.id)
-                    .single();
+                    .maybeSingle();
 
                 if (profile && !profile.has_seen_welcome_bonus) {
                     setShowWelcomeBonus(true);

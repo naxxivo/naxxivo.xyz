@@ -43,7 +43,7 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                     .from('profiles')
                     .select('name, username, bio, photo_url, cover_url, website_url, youtube_url, facebook_url')
                     .eq('id', session.user.id)
-                    .single();
+                    .maybeSingle();
                 if (error) throw error;
                 
                 if (data) {

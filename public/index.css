@@ -1,107 +1,219 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Krona+One&display=swap');
 
-/* New Binance-Inspired Yellow/White Theme */
 :root {
-    --theme-bg: #ffffff;
-    --theme-text: #2c3e50;
-    --theme-text-secondary: #7f8c8d;
-    --theme-primary: #f0b90b;
-    --theme-primary-hover: #f8d33a;
-    --theme-primary-text: #000000;
-    --theme-secondary: #e8e8e8;
-    --theme-secondary-hover: #d0d0d0;
-    --theme-secondary-text: #2c3e50;
-    --theme-card-bg: #f9f9f9;
-    --theme-card-bg-alt: #ffffff;
-    --theme-header-bg: #ffffff;
-    --theme-header-text: #2c3e50;
-    --theme-ring: #f0b90b;
-    --theme-input-border: #d0d0d0;
-    --theme-button-shadow: rgba(240, 185, 11, 0.4);
+  /* Font Families */
+  --font-sans: 'Poppins', sans-serif;
+  --font-logo: 'Krona One', sans-serif;
+
+  /* Light Theme Colors */
+  --theme-bg: #F9FAFB;
+  --theme-card-bg: #FFFFFF;
+  --theme-card-bg-alt: #F3F4F6;
+  --theme-text: #111827;
+  --theme-text-secondary: #6B7280;
+  --theme-primary: #FFC300; /* Vibrant Yellow */
+  --theme-primary-hover: #E6B000;
+  --theme-primary-text: #111827;
+  --theme-secondary: #E5E7EB;
+  --theme-secondary-text: #374151;
+  --theme-secondary-hover: #F3F4F6;
+  --theme-input-border: #D1D5DB;
+  --theme-ring: #FFC300;
+  --theme-button-shadow: rgba(255, 195, 0, 0.4);
+  --theme-interactive: #00C853; /* Green */
+  --theme-star-rating: #FFB400; /* Amber */
+  --theme-header-bg: #FFFFFF;
+  --theme-header-text: #111827;
 }
 
-@keyframes rotate {
-    from { transform: rotate(0deg) translate(-50%, -50%); }
-    to { transform: rotate(360deg) translate(-50%, -50%); }
+/* Dark Theme as requested by user */
+html.dark {
+  --theme-bg: #000000; /* Black Background */
+  --theme-card-bg: #111827; /* Dark Charcoal */
+  --theme-card-bg-alt: #1F2937; /* Lighter Charcoal */
+  --theme-text: #FFFFFF; /* White Text */
+  --theme-text-secondary: #9CA3AF;
+  --theme-primary: #FFC300; /* Vibrant Yellow Accent */
+  --theme-primary-hover: #E6B000;
+  --theme-primary-text: #111827;
+  --theme-secondary: #374151;
+  --theme-secondary-text: #E5E7EB;
+  --theme-secondary-hover: #1F2937;
+  --theme-input-border: #4B5563;
+  --theme-ring: #FFC300;
+  --theme-button-shadow: rgba(255, 195, 0, 0.5);
+  --theme-interactive: #00C853; /* Green */
+  --theme-star-rating: #FFB400; /* Amber */
+  --theme-header-bg: #000000;
+  --theme-header-text: #FFFFFF;
 }
 
-/* Base styles */
-html {
-    background-color: transparent;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
+
 body {
-    font-family: 'Poppins', sans-serif;
-    background-color: var(--theme-bg);
-    color: var(--theme-text);
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 200vw;
-    height: 200vh;
-    z-index: -1;
-    background: conic-gradient(from 0deg, var(--theme-primary), var(--theme-secondary), var(--theme-primary));
-    animation: rotate 40s linear infinite;
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .font-logo {
-    font-family: 'Pacifico', cursive;
-}
-.hide-scrollbar::-webkit-scrollbar {
-   display: none;
-}
-.hide-scrollbar {
-   -ms-overflow-style: none;
-   scrollbar-width: none;
-}
-
-.glass-overlay {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(4px) saturate(150%);
-    -webkit-backdrop-filter: blur(4px) saturate(150%);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-}
-
-@keyframes spin-glow {
-    0%, 100% {
-        box-shadow: 0 0 5px rgba(192, 132, 252, 0.4), 0 0 10px rgba(192, 132, 252, 0.3), 0 0 15px rgba(192, 132, 252, 0.2);
-    }
-    50% {
-        box-shadow: 0 0 15px rgba(192, 132, 252, 0.6), 0 0 25px rgba(192, 132, 252, 0.5), 0 0 35px rgba(192, 132, 252, 0.4);
-    }
-}
-
-@keyframes subtle-pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
-}
-
-@keyframes shine {
-    0% { transform: translateX(-100%) skewX(-30deg); opacity: 0.1; }
-    30% { transform: translateX(200%) skewX(-30deg); opacity: 0.5; }
-    100% { transform: translateX(200%) skewX(-30deg); opacity: 0; }
-}
-
-@keyframes shimmer {
-    0% { background-position: -468px 0; }
-    100% { background-position: 468px 0; }
+    font-family: var(--font-logo);
 }
 
 .shimmer-effect {
-    animation-duration: 1.2s;
-    animation-fill-mode: forwards;
-    animation-iteration-count: infinite;
-    animation-name: shimmer;
-    animation-timing-function: linear;
-    background: linear-gradient(to right, transparent 8%, rgba(255, 255, 255, 0.2) 18%, transparent 33%);
-    background-size: 800px 104px;
-    position: relative;
-    color: transparent !important;
-    border-radius: 8px; /* To make it look nice */
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Custom scrollbar for webkit browsers */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+@keyframes spin-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 195, 0, 0.4), 0 0 20px rgba(255, 195, 0, 0.2); transform: rotate(0deg); }
+  50% { box-shadow: 0 0 20px rgba(255, 195, 0, 0.8), 0 0 40px rgba(255, 195, 0, 0.4); transform: rotate(180deg); }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 195, 0, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 0 15px 10px rgba(255, 195, 0, 0); }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+  20% { transform: translateX(-100%) skewX(-20deg); opacity: 0.5; }
+  100% { transform: translateX(100%) skewX(-20deg); opacity: 0; }
+}
+
+/* --- NEW CINEMATIC LUCK ROYALE ANIMATIONS --- */
+.charge-up-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 70%);
+    animation: charge-up-pulse 2s infinite ease-in-out;
+}
+
+@keyframes charge-up-pulse {
+  0%, 100% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+.portal {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  position: relative;
+  animation: portal-materialize 1s cubic-bezier(0.19, 1, 0.22, 1) forwards, portal-swirl 10s linear infinite 1s;
+  background: radial-gradient(circle, #3b0764, transparent 60%);
+}
+.portal::before, .portal::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #a855f7;
+  animation: portal-rotate 3s linear infinite;
+}
+.portal::after {
+  border-top-color: #d8b4fe;
+  animation-delay: -0.75s;
+}
+
+@keyframes portal-materialize {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes portal-rotate {
+  to { transform: rotate(360deg); }
+}
+@keyframes portal-swirl {
+  to { background-position: 200% center; }
+}
+
+.orb {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  position: absolute;
+  opacity: 0;
+  animation: orb-appear 0.5s forwards, orb-crack 0.5s 0.5s forwards;
+}
+
+@keyframes orb-appear {
+  from { transform: scale(0.2); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes orb-crack {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.5); opacity: 0; }
+}
+
+.item-reveal {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  opacity: 0;
+  animation: item-pop-in 0.5s 0.7s forwards;
+}
+
+@keyframes item-pop-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Rarity Glows for Orbs/Items */
+.rarity-glow-COMMON { box-shadow: 0 0 15px 5px rgba(156, 163, 175, 0.5); background-color: rgba(156, 163, 175, 0.8); }
+.rarity-glow-RARE { box-shadow: 0 0 25px 8px rgba(96, 165, 250, 0.6); background-color: rgba(96, 165, 250, 0.9); }
+.rarity-glow-LEGENDARY { box-shadow: 0 0 40px 12px rgba(250, 204, 21, 0.7); background-color: rgba(250, 204, 21, 1); }
+
+
+/* Legendary Reveal Animations */
+.legendary-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0,0,0,0);
+  backdrop-filter: blur(0px);
+  animation: legendary-spotlight-fade-in 1s forwards;
+}
+
+@keyframes legendary-spotlight-fade-in {
+  to { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
+}
+
+.legendary-text-slam {
+  font-family: var(--font-logo);
+  font-weight: 800;
+  font-size: 3rem;
+  background: linear-gradient(135deg, #fef08a, #facc15, #b45309);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 25px rgba(250, 204, 21, 0.6);
+  opacity: 0;
+  animation: legendary-text-slam-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes legendary-text-slam-in {
+  from { transform: translateY(-50px) scale(1.5); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }

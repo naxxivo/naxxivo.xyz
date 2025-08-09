@@ -48,7 +48,7 @@ const MusicLibraryPage: React.FC<MusicLibraryPageProps> = ({ session, onBack, sh
             const [musicRes, gifsRes, profileRes] = await Promise.all([
                 supabase.from('profile_music').select('*').eq('profile_id', myId),
                 supabase.from('profile_gifs').select('*').eq('user_id', myId),
-                supabase.from('profiles').select('active_gif_id, selected_music_id').eq('id', myId).single()
+                supabase.from('profiles').select('active_gif_id, selected_music_id').eq('id', myId).maybeSingle()
             ]);
 
             if (musicRes.error) throw musicRes.error;
