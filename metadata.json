@@ -1,8 +1,6 @@
 {
-  "name": "NAXXIVO",
-  "description": "NAXXIVO is a social platform for users to share posts, images, and connect with a vibrant community. It features a clean, modern user interface with animations and interactive elements, powered by a Supabase backend.",
-  "requestFramePermissions": [
-    "microphone"
-  ],
+  "name": "Blank Website",
+  "description": "A clean and simple starting point for a new web application, ready for development.",
+  "requestFramePermissions": [],
   "prompt": ""
 }
