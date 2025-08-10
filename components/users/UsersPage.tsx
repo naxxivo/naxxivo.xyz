@@ -18,59 +18,84 @@ type Profile = Pick<Tables<'profiles'>, 'id' | 'name' | 'username' | 'photo_url'
 };
 type LeaderboardCategory = 'xp' | 'gold' | 'silver' | 'diamond';
 
-const UserRow: React.FC<{ user: Profile, rank: number, category: LeaderboardCategory, onViewProfile: (userId: string) => void }> = ({ user, rank, category, onViewProfile }) => {
-    const isTopThree = rank <= 3;
-    const rankIcon = [
-        <GoldMedalIcon className="w-8 h-8" />,
-        <SilverMedalIcon className="w-8 h-8" />,
-        <BronzeMedalIcon className="w-8 h-8" />
-    ][rank - 1];
+const getCategoryData = (user: Profile, category: LeaderboardCategory) => {
+    switch(category) {
+        case 'gold': return { value: user.gold_coins ?? 0, icon: <GoldCoinIcon className="w-5 h-5 text-yellow-500"/>, label: 'Gold' };
+        case 'silver': return { value: user.silver_coins ?? 0, icon: <SilverCoinIcon className="w-5 h-5 text-gray-400"/>, label: 'Silver' };
+        case 'diamond': return { value: user.diamond_coins ?? 0, icon: <DiamondIcon className="w-5 h-5 text-cyan-400"/>, label: 'Diamonds' };
+        case 'xp':
+        default: return { value: user.xp_balance, icon: <TrophyIcon className="w-5 h-5 text-violet-500"/>, label: 'XP' };
+    }
+};
+
+const PodiumUser: React.FC<{user: Profile, rank: number, category: LeaderboardCategory, onViewProfile: (userId: string) => void}> = ({ user, rank, category, onViewProfile }) => {
+    const isFirst = rank === 1;
+    const categoryData = getCategoryData(user, category);
+    const medalIcon = [<GoldMedalIcon className="medal-icon" />, <SilverMedalIcon className="medal-icon" />, <BronzeMedalIcon className="medal-icon" />][rank - 1];
     
-    const cardBgClass = isTopThree ? 'bg-gradient-to-r from-purple-500/10 to-indigo-500/10' : 'bg-[var(--theme-card-bg)]';
+    return (
+        <motion.div
+            onClick={() => onViewProfile(user.id)}
+            className="flex flex-col items-center w-1/3 cursor-pointer"
+            {...{
+                initial: { opacity: 0, y: 50 },
+                animate: { opacity: 1, y: 0 },
+                transition: { type: 'spring', stiffness: 200, damping: 15, delay: rank * 0.1 },
+            } as any}
+        >
+            <div className={`relative ${isFirst ? 'mb-2' : ''}`}>
+                 <div className="podium-avatar-shine">
+                    <Avatar
+                        photoUrl={user.photo_url}
+                        name={user.username}
+                        activeCover={user.active_cover}
+                        size={isFirst ? "xl" : "lg"}
+                        containerClassName="shadow-lg rounded-full"
+                        imageClassName="border-4 border-[var(--theme-card-bg)]"
+                    />
+                </div>
+                {medalIcon}
+            </div>
+            <p className="podium-user-name font-bold text-sm text-[var(--theme-text)] mt-2 truncate w-full">{user.name || user.username}</p>
+            <div className="score-badge">{formatXp(categoryData.value)}</div>
+            <div className={`podium-base w-full mt-3 ${isFirst ? 'h-24' : (rank === 2 ? 'h-16' : 'h-12')}`}>
+                <span className="podium-rank-number">{rank}</span>
+            </div>
+        </motion.div>
+    );
+};
 
-    const categoryData = useMemo(() => {
-        switch(category) {
-            case 'gold': return { value: user.gold_coins ?? 0, icon: <GoldCoinIcon className="w-5 h-5 text-yellow-500"/>, label: 'Gold' };
-            case 'silver': return { value: user.silver_coins ?? 0, icon: <SilverCoinIcon className="w-5 h-5 text-gray-400"/>, label: 'Silver' };
-            case 'diamond': return { value: user.diamond_coins ?? 0, icon: <DiamondIcon className="w-5 h-5 text-cyan-400"/>, label: 'Diamonds' };
-            case 'xp':
-            default:
-                return { value: user.xp_balance, icon: <TrophyIcon className="w-5 h-5 text-violet-500"/>, label: 'XP' };
-        }
-    }, [category, user]);
 
+const ListUserRow: React.FC<{ user: Profile, rank: number, category: LeaderboardCategory, onViewProfile: (userId: string) => void }> = ({ user, rank, category, onViewProfile }) => {
+    const categoryData = getCategoryData(user, category);
     return (
         <motion.button
-            layout
             onClick={() => onViewProfile(user.id)}
-            className={`w-full flex items-center p-3 rounded-xl hover:bg-opacity-80 transition-all text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)] shadow-sm ${cardBgClass}`}
+            className="w-full flex items-center p-2 rounded-xl hover:bg-[var(--theme-card-bg-alt)] transition-all text-left"
             {...{
-                initial: { opacity: 0, y: 20 },
-                animate: { opacity: 1, y: 0 },
-                exit: { opacity: 0, y: -20 },
+                initial: { opacity: 0, x: -20 },
+                animate: { opacity: 1, x: 0 },
+                exit: { opacity: 0, x: 20 },
                 transition: { type: 'spring', stiffness: 300, damping: 25 },
             } as any}
         >
-            <div className="font-bold text-lg w-10 text-center text-[var(--theme-text-secondary)] flex items-center justify-center">
-                 {isTopThree ? rankIcon : <span className="text-xl">{rank}</span>}
-            </div>
+            <div className="font-semibold text-base w-8 text-center text-[var(--theme-text-secondary)]">{rank}</div>
             <Avatar
                 photoUrl={user.photo_url}
                 name={user.username}
                 activeCover={user.active_cover}
-                size="lg"
+                size="md"
                 containerClassName="ml-2"
             />
-            <div className="ml-4 flex-grow overflow-hidden">
-                <p className="truncate font-bold text-[var(--theme-text)]">{user.name || user.username}</p>
+            <div className="ml-3 flex-grow overflow-hidden">
+                <p className="truncate font-semibold text-[var(--theme-text)]">{user.name || user.username}</p>
                 <p className="text-sm truncate text-[var(--theme-text-secondary)]">@{user.username}</p>
             </div>
             <div className="ml-2 text-right">
-                <p className="font-bold text-lg text-[var(--theme-primary)] flex items-center justify-end gap-1">
-                    {categoryData.icon}
+                <p className="font-bold text-base text-[var(--theme-text)] flex items-center justify-end gap-1.5">
+                    <span className="text-[var(--theme-star-rating)]">⭐</span>
                     {formatXp(categoryData.value)}
                 </p>
-                <p className="text-xs text-[var(--theme-text-secondary)]">{categoryData.label}</p>
             </div>
         </motion.button>
     );
@@ -134,30 +159,24 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
     }, [profiles, searchTerm, activeTab]);
     
     if (loading) {
-        return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+        return <div className="flex justify-center items-center h-screen bg-[var(--theme-bg)]"><LoadingSpinner /></div>;
     }
     
     if (error) {
         return <div className="text-center pt-20 text-red-500" role="alert"><p>Error loading users: {error}</p></div>;
     }
 
+    const topThree = sortedAndFilteredUsers.slice(0, 3);
+    const otherUsers = sortedAndFilteredUsers.slice(3);
+    const user1 = topThree.length > 0 ? topThree[0] : null;
+    const user2 = topThree.length > 1 ? topThree[1] : null;
+    const user3 = topThree.length > 2 ? topThree[2] : null;
+
     return (
-        <div className="bg-[var(--theme-bg)] min-h-screen">
-            <header className="sticky top-0 z-20 bg-[var(--theme-header-bg)]/80 backdrop-blur-lg rounded-b-3xl shadow-lg border-b border-[var(--theme-secondary)]/30">
+        <div className="bg-[var(--theme-bg)] text-[var(--theme-text)] min-h-screen">
+            <header className="sticky top-0 z-20 bg-[var(--theme-bg)]/80 backdrop-blur-lg">
                 <div className="p-4 pt-6 text-center">
-                    <h1 className="text-2xl font-bold text-[var(--theme-header-text)]">Leaderboard</h1>
-                </div>
-                <div className="relative px-4 pb-4">
-                     <div className="absolute inset-y-0 left-0 pl-8 flex items-center pointer-events-none text-[var(--theme-text-secondary)]">
-                        <SearchIcon />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Search Users"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[var(--theme-secondary)] border-transparent rounded-full text-[var(--theme-text)] placeholder-[var(--theme-text-secondary)] px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)]"
-                    />
+                    <h1 className="text-2xl font-bold">Leaderboard</h1>
                 </div>
                  <div className="px-4 pb-3">
                     <div className="p-1 bg-[var(--theme-card-bg-alt)] rounded-full flex items-center justify-between gap-1">
@@ -169,9 +188,11 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
                             >
                                 {activeTab === tab.id && (
                                     <motion.div
-                                        layoutId="active-tab-indicator"
+                                        {...{
+                                            layoutId: "active-tab-indicator",
+                                            transition: { type: 'spring', stiffness: 400, damping: 30 },
+                                        } as any}
                                         className="absolute inset-0 bg-[var(--theme-primary)] rounded-full z-0"
-                                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                                     />
                                 )}
                                 <span className="relative z-10 flex items-center justify-center gap-1.5">{tab.icon} {tab.label}</span>
@@ -180,29 +201,41 @@ const UsersPage: React.FC<UsersPageProps> = ({ session, onViewProfile }) => {
                     </div>
                 </div>
             </header>
+            
+            <AnimatePresence>
+                {topThree.length > 0 && (
+                    <div className="flex items-end justify-center gap-2 px-4 py-8">
+                        {user2 && <PodiumUser user={user2} rank={2} category={activeTab} onViewProfile={onViewProfile} />}
+                        {user1 && <PodiumUser user={user1} rank={1} category={activeTab} onViewProfile={onViewProfile} />}
+                        {user3 && <PodiumUser user={user3} rank={3} category={activeTab} onViewProfile={onViewProfile} />}
+                    </div>
+                )}
+            </AnimatePresence>
 
-            <div className="p-4 space-y-3">
+            <div className="px-2 space-y-2">
                 <AnimatePresence>
-                    {sortedAndFilteredUsers.length > 0 ? (
-                        sortedAndFilteredUsers.map((profile, index) => (
-                            <UserRow
-                                key={profile.id} // Stable key
+                    {otherUsers.length > 0 ? (
+                        otherUsers.map((profile, index) => (
+                            <ListUserRow
+                                key={profile.id}
                                 user={profile}
-                                rank={index + 1}
+                                rank={index + 4}
                                 category={activeTab}
                                 onViewProfile={onViewProfile}
                             />
                         ))
-                    ) : (
+                    ) : topThree.length === 0 ? (
                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-16 px-4 bg-[var(--theme-card-bg-alt)] rounded-2xl"
+                            {...{
+                                initial: { opacity: 0, y: 20 },
+                                animate: { opacity: 1, y: 0 },
+                            } as any}
+                            className="text-center py-16 px-4"
                          >
                             <h2 className="text-xl font-semibold text-[var(--theme-text)]">No users found</h2>
                             <p className="text-[var(--theme-text-secondary)] mt-2">Try adjusting your search!</p>
                         </motion.div>
-                    )}
+                    ) : null}
                 </AnimatePresence>
             </div>
         </div>

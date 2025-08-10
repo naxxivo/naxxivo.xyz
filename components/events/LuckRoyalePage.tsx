@@ -180,7 +180,7 @@ const LuckRoyalePage: React.FC<LuckRoyalePageProps> = ({ onBack, session, showNo
             <div className="relative z-10 flex justify-center p-1 bg-slate-800/50 rounded-full my-2 mx-auto">
                 {(['GOLD', 'SILVER', 'DIAMOND'] as Currency[]).map(currency => (
                     <button key={currency} onClick={() => setActiveCurrency(currency)} className={`relative px-5 py-2 text-sm font-semibold rounded-full transition-colors ${activeCurrency === currency ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
-                        {activeCurrency === currency && <motion.div layoutId="active-currency-pill" className="absolute inset-0 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-full shadow-lg" />}
+                        {activeCurrency === currency && <motion.div {...{layoutId: "active-currency-pill"} as any} className="absolute inset-0 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-full shadow-lg" />}
                         <span className="relative z-10 capitalize">{currency.toLowerCase()}</span>
                     </button>
                 ))}
@@ -189,7 +189,7 @@ const LuckRoyalePage: React.FC<LuckRoyalePageProps> = ({ onBack, session, showNo
             <main className="relative z-10 flex-grow flex flex-col items-center justify-center p-4">
                  <AnimatePresence>
                     {animationState === 'idle' && (
-                        <motion.div key="idle" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="flex flex-col items-center">
+                        <motion.div key="idle" {...{initial:{opacity:0}, animate:{opacity:1}, exit:{opacity:0}} as any} className="flex flex-col items-center">
                             {grandPrize && grandPrize.store_items && 
                                 <img src={grandPrize.store_items.preview_url || ''} alt={grandPrize.store_items.name || ''} className="w-48 h-48 object-contain drop-shadow-lg" />
                             }
@@ -220,7 +220,7 @@ const LuckRoyalePage: React.FC<LuckRoyalePageProps> = ({ onBack, session, showNo
                     )}
 
                     {animationState === 'finished' && spinResult && (
-                         <motion.div key="finished" initial={{opacity:0}} animate={{opacity:1}} className="w-full h-full flex flex-col items-center justify-center gap-4">
+                         <motion.div key="finished" {...{initial:{opacity:0}, animate:{opacity:1}} as any} className="w-full h-full flex flex-col items-center justify-center gap-4">
                             <h2 className="text-3xl font-bold">Your Rewards!</h2>
                             <div className="w-full max-w-sm grid grid-cols-5 gap-2">
                                 {spinResult.map((item, index) => (

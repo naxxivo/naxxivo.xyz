@@ -39,33 +39,33 @@ const PaymentQueuePage: React.FC<{ session: Session }> = ({ session }) => {
     }, [fetchPendingPayments]);
 
     return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Payment Review Queue</h2>
+        <div className="bg-[var(--theme-card-bg)] p-6 rounded-xl shadow-lg border border-[var(--theme-secondary)]">
+            <h2 className="text-2xl font-bold text-[var(--theme-text)] mb-4">Payment Review Queue</h2>
             {loading ? (
                 <div className="flex justify-center items-center py-10"><LoadingSpinner /></div>
             ) : payments.length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400">No pending payments to review.</p>
+                <p className="text-[var(--theme-text-secondary)]">No pending payments to review.</p>
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                        <thead className="bg-slate-50 dark:bg-slate-700/50">
+                    <table className="admin-table">
+                        <thead className="admin-thead">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">User</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Product</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Amount</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Actions</th>
+                                <th className="admin-th">User</th>
+                                <th className="admin-th">Product</th>
+                                <th className="admin-th">Amount</th>
+                                <th className="admin-th">Date</th>
+                                <th className="admin-th text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        <tbody className="admin-tbody">
                             {payments.map(payment => (
-                                <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-200">{payment.profiles?.name || 'N/A'}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{payment.products?.name || 'N/A'}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${payment.amount.toFixed(2)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{new Date(payment.created_at).toLocaleString()}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => setSelectedPayment(payment)} className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 font-semibold">Review</button>
+                                <tr key={payment.id} className="admin-tr">
+                                    <td className="admin-td text-[var(--theme-text)]">{payment.profiles?.name || 'N/A'}</td>
+                                    <td className="admin-td text-[var(--theme-text-secondary)]">{payment.products?.name || 'N/A'}</td>
+                                    <td className="admin-td text-[var(--theme-text-secondary)]">${payment.amount.toFixed(2)}</td>
+                                    <td className="admin-td text-[var(--theme-text-secondary)]">{new Date(payment.created_at).toLocaleString()}</td>
+                                    <td className="admin-td text-right">
+                                        <button onClick={() => setSelectedPayment(payment)} className="btn-edit">Review</button>
                                     </td>
                                 </tr>
                             ))}

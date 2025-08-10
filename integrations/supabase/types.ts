@@ -358,6 +358,10 @@ export interface Database {
           website_url: string | null
           youtube_url: string | null
           facebook_url: string | null
+          instagram_url: string | null
+          twitter_url: string | null
+          tiktok_url: string | null
+          discord_url: string | null
           gold_coins: number | null
           diamond_coins: number | null
           silver_coins: number | null
@@ -380,6 +384,10 @@ export interface Database {
           website_url?: string | null
           youtube_url?: string | null
           facebook_url?: string | null
+          instagram_url?: string | null
+          twitter_url?: string | null
+          tiktok_url?: string | null
+          discord_url?: string | null
           gold_coins?: number | null
           diamond_coins?: number | null
           silver_coins?: number | null
@@ -401,6 +409,10 @@ export interface Database {
           website_url?: string | null
           youtube_url?: string | null
           facebook_url?: string | null
+          instagram_url?: string | null
+          twitter_url?: string | null
+          tiktok_url?: string | null
+          discord_url?: string | null
           gold_coins?: number | null
           diamond_coins?: number | null
           silver_coins?: number | null

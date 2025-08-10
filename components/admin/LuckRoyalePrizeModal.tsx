@@ -81,40 +81,42 @@ const LuckRoyalePrizeModal: React.FC<LuckRoyalePrizeModalProps> = ({ isOpen, onC
     return (
         <AnimatePresence>
             {isOpen && (
-                 <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
+                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={onClose}>
                      <motion.div
-                        initial={{ opacity: 0, y: -50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 50 }}
-                        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-lg w-full flex flex-col"
+                        {...{
+                            initial: { opacity: 0, y: -50 },
+                            animate: { opacity: 1, y: 0 },
+                            exit: { opacity: 0, y: 50 },
+                        } as any}
+                        className="bg-[var(--theme-card-bg)] rounded-lg shadow-xl max-w-lg w-full flex flex-col border border-[var(--theme-secondary)]"
                         onClick={e => e.stopPropagation()}
                      >
                         <form onSubmit={handleSubmit}>
-                            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Add Prize to Pool</h2>
+                            <div className="p-6 border-b border-[var(--theme-secondary)]">
+                                <h2 className="text-xl font-bold text-[var(--theme-text)]">Add Prize to Pool</h2>
                             </div>
                             <div className="p-6 space-y-4">
                                 {loadingItems ? <LoadingSpinner/> : (
                                     <>
                                         <div>
-                                            <label className="block text-sm font-medium">Prize Type</label>
-                                            <select value={prizeType} onChange={e => setPrizeType(e.target.value as any)} className="w-full p-2.5 mt-1 border rounded-md bg-white dark:bg-slate-700 dark:border-slate-600">
+                                            <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Prize Type</label>
+                                            <select value={prizeType} onChange={e => setPrizeType(e.target.value as any)} className="admin-select">
                                                 <option value="ITEM">Store Item</option>
                                                 <option value="CURRENCY">Currency</option>
                                             </select>
                                         </div>
                                         {prizeType === 'ITEM' ? (
                                             <div>
-                                                <label className="block text-sm font-medium">Store Item</label>
-                                                <select value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)} className="w-full p-2.5 mt-1 border rounded-md bg-white dark:bg-slate-700 dark:border-slate-600">
+                                                <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Store Item</label>
+                                                <select value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)} className="admin-select">
                                                     {storeItems.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                                                 </select>
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium">Currency</label>
-                                                     <select value={currencyType} onChange={e => setCurrencyType(e.target.value as any)} className="w-full p-2.5 mt-1 border rounded-md bg-white dark:bg-slate-700 dark:border-slate-600">
+                                                    <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Currency</label>
+                                                     <select value={currencyType} onChange={e => setCurrencyType(e.target.value as any)} className="admin-select">
                                                         <option value="GOLD">Gold</option>
                                                         <option value="SILVER">Silver</option>
                                                         <option value="DIAMOND">Diamond</option>
@@ -124,16 +126,16 @@ const LuckRoyalePrizeModal: React.FC<LuckRoyalePrizeModalProps> = ({ isOpen, onC
                                             </div>
                                         )}
                                         <div>
-                                            <label className="block text-sm font-medium">Rarity</label>
-                                            <select value={rarity} onChange={e => setRarity(e.target.value as any)} className="w-full p-2.5 mt-1 border rounded-md bg-white dark:bg-slate-700 dark:border-slate-600">
+                                            <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Rarity</label>
+                                            <select value={rarity} onChange={e => setRarity(e.target.value as any)} className="admin-select">
                                                 <option value="COMMON">COMMON (High Chance)</option>
                                                 <option value="RARE">RARE (Medium Chance)</option>
                                                 <option value="LEGENDARY">LEGENDARY (Low Chance)</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium">Add to Pool</label>
-                                            <select value={poolCurrency} onChange={e => setPoolCurrency(e.target.value as any)} className="w-full p-2.5 mt-1 border rounded-md bg-white dark:bg-slate-700 dark:border-slate-600">
+                                            <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Add to Pool</label>
+                                            <select value={poolCurrency} onChange={e => setPoolCurrency(e.target.value as any)} className="admin-select">
                                                 <option value="GOLD">Gold Pool</option>
                                                 <option value="SILVER">Silver Pool</option>
                                                 <option value="DIAMOND">Diamond Pool</option>
@@ -142,7 +144,7 @@ const LuckRoyalePrizeModal: React.FC<LuckRoyalePrizeModalProps> = ({ isOpen, onC
                                     </>
                                 )}
                             </div>
-                            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 flex justify-end space-x-3 border-t border-slate-200 dark:border-slate-700">
+                            <div className="p-4 bg-black/20 flex justify-end space-x-3 border-t border-[var(--theme-secondary)]">
                                 <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving} className="w-auto">Cancel</Button>
                                 <Button type="submit" disabled={isSaving || loadingItems} className="w-auto px-6">
                                     {isSaving ? <LoadingSpinner/> : 'Add Prize'}

@@ -55,12 +55,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
     const currentNavItem = navItems.find(item => item.id === view);
 
     return (
-        <div className="min-h-screen flex bg-slate-100 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200">
+        <div className="min-h-screen flex bg-[var(--theme-bg)] font-sans text-[var(--theme-text)]">
             {/* Sidebar */}
-            <aside className="w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col flex-shrink-0">
-                <div className="p-5 text-2xl font-bold font-logo text-center border-b border-slate-200 dark:border-slate-700 text-[var(--theme-primary)]">
+            <aside className="w-64 bg-white shadow-md flex flex-col flex-shrink-0 border-r border-[var(--theme-secondary)]">
+                <div className="p-5 text-2xl font-bold font-logo text-center border-b border-[var(--theme-secondary)] text-[var(--theme-text)]">
                     Naxxivo
-                    <span className="block text-xs font-sans font-semibold text-slate-400 dark:text-slate-500 tracking-wider">ADMIN</span>
+                    <span className="block text-xs font-sans font-semibold text-gray-400 tracking-wider">ADMIN</span>
                 </div>
                 <nav className="flex-1 px-4 py-4 space-y-2">
                     {navItems.map(item => (
@@ -69,8 +69,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
                             onClick={() => setView(item.id)}
                             className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
                                 view === item.id 
-                                ? 'bg-[var(--theme-primary)] text-[var(--theme-primary-text)] shadow-md' 
-                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                ? 'bg-[var(--theme-primary)] text-[var(--theme-primary-text)] shadow-lg shadow-[var(--theme-primary)]/30' 
+                                : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-secondary-hover)]'
                             }`}
                         >
                             {item.icon}
@@ -78,8 +78,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
                         </button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-                    <button onClick={onExitAdminView} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm font-medium">
+                <div className="p-4 border-t border-[var(--theme-secondary)]">
+                    <button onClick={onExitAdminView} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors text-sm font-medium">
                         <LogoutIcon className="w-5 h-5" />
                         <span>Return to App</span>
                     </button>
@@ -88,9 +88,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col overflow-hidden">
-                 <header className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-sm p-5 border-b border-slate-200 dark:border-slate-700 flex items-center space-x-4">
-                    {currentNavItem && <div className="text-violet-500">{currentNavItem.icon}</div>}
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 capitalize">
+                 <header className="bg-white/80 backdrop-blur-sm shadow-sm p-5 border-b border-[var(--theme-secondary)] flex items-center space-x-4">
+                    {currentNavItem && <div className="text-[var(--theme-primary)]">{currentNavItem.icon}</div>}
+                    <h1 className="text-xl font-bold text-[var(--theme-text)] capitalize">
                         {currentNavItem?.label || view.replace(/_/g, ' ')}
                     </h1>
                 </header>
@@ -104,6 +104,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
                                 exit: { opacity: 0, y: -20 },
                                 transition: { duration: 0.2 },
                             } as any}
+                             className="bg-white p-6 rounded-lg shadow-sm"
                         >
                             {pages[view]}
                         </motion.div>

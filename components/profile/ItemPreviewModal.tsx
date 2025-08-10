@@ -17,17 +17,21 @@ const ItemPreviewModal: React.FC<ItemPreviewModalProps> = ({ isOpen, onClose, it
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    {...{
+                        initial: { opacity: 0 },
+                        animate: { opacity: 1 },
+                        exit: { opacity: 0 },
+                    } as any}
                     className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex justify-center items-center p-4"
                     onClick={onClose}
                 >
                     <motion.div
-                        initial={{ scale: 0.9, y: 20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        exit={{ scale: 0.9, y: 20 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        {...{
+                            initial: { scale: 0.9, y: 20 },
+                            animate: { scale: 1, y: 0 },
+                            exit: { scale: 0.9, y: 20 },
+                            transition: { type: 'spring', stiffness: 300, damping: 30 },
+                        } as any}
                         className="bg-[var(--theme-card-bg)] w-full max-w-sm rounded-2xl shadow-xl p-6 relative flex flex-col items-center text-center"
                         onClick={e => e.stopPropagation()}
                     >

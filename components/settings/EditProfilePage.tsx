@@ -5,7 +5,7 @@ import Button from '../common/Button';
 import Input from '../common/Input';
 import type { Tables, TablesUpdate } from '../../integrations/supabase/types';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { BackArrowIcon } from '../common/AppIcons';
+import { BackArrowIcon, PencilSquareIcon } from '../common/AppIcons';
 import { generateAvatar } from '../../utils/helpers';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,6 +27,10 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
     const [websiteUrl, setWebsiteUrl] = useState('');
     const [youtubeUrl, setYoutubeUrl] = useState('');
     const [facebookUrl, setFacebookUrl] = useState('');
+    const [instagramUrl, setInstagramUrl] = useState('');
+    const [twitterUrl, setTwitterUrl] = useState('');
+    const [tiktokUrl, setTiktokUrl] = useState('');
+    const [discordUrl, setDiscordUrl] = useState('');
     
     const [modalFor, setModalFor] = useState<'avatar' | 'cover' | null>(null);
     const [tempUrl, setTempUrl] = useState('');
@@ -41,7 +45,7 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
             try {
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('name, username, bio, photo_url, cover_url, website_url, youtube_url, facebook_url')
+                    .select('name, username, bio, photo_url, cover_url, website_url, youtube_url, facebook_url, instagram_url, twitter_url, tiktok_url, discord_url')
                     .eq('id', session.user.id)
                     .maybeSingle();
                 if (error) throw error;
@@ -55,6 +59,10 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                     setWebsiteUrl(data.website_url || '');
                     setYoutubeUrl(data.youtube_url || '');
                     setFacebookUrl(data.facebook_url || '');
+                    setInstagramUrl(data.instagram_url || '');
+                    setTwitterUrl(data.twitter_url || '');
+                    setTiktokUrl(data.tiktok_url || '');
+                    setDiscordUrl(data.discord_url || '');
                 } else {
                     throw new Error("Profile not found");
                 }
@@ -109,6 +117,10 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                 website_url: websiteUrl,
                 youtube_url: youtubeUrl,
                 facebook_url: facebookUrl,
+                instagram_url: instagramUrl,
+                twitter_url: twitterUrl,
+                tiktok_url: tiktokUrl,
+                discord_url: discordUrl,
             };
 
             const { error: updateError } = await supabase
@@ -140,50 +152,57 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ session, onBack, onPr
                 <div className="w-6"></div> {/* Placeholder */}
              </header>
             
-             <div>
-                <div className="relative h-36 bg-gray-200 dark:bg-gray-700">
+             <div className="relative mb-20">
+                <div className="h-40 bg-gray-200 dark:bg-gray-700 relative">
                     {coverUrl ? <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-primary)]"></div>}
-                    <Button size="small" variant="secondary" onClick={() => openUrlModal('cover')} className="absolute bottom-2 right-2 w-auto px-3 py-1 text-xs bg-black/30 text-white border-white/50 hover:bg-black/50">Change Cover</Button>
+                    <button onClick={() => openUrlModal('cover')} className="absolute bottom-2 right-2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors">
+                        <PencilSquareIcon className="w-5 h-5" />
+                    </button>
                 </div>
-
-                <div className="relative">
-                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                        <div className="relative">
-                            <img src={photoUrl || generateAvatar(username)} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-[var(--theme-bg)] shadow-lg" />
-                        </div>
-                    </div>
-                    <div className="pt-14 px-4 text-center">
-                        <Button variant="secondary" size="small" onClick={() => openUrlModal('avatar')} className="w-auto px-4">Change Photo</Button>
+                 <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="relative group">
+                        <img src={photoUrl || generateAvatar(username)} alt="Profile" className="w-32 h-32 rounded-full object-cover border-8 border-[var(--theme-bg)] shadow-lg" />
+                        <button onClick={() => openUrlModal('avatar')} className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                           <PencilSquareIcon className="w-8 h-8"/>
+                        </button>
                     </div>
                 </div>
              </div>
 
-             <form className="space-y-6 px-4 mt-6" onSubmit={handleSaveChanges}>
-                 <Input id="name" label="Name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} required />
-                 <Input id="username" label="Username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={isSaving} required />
-                 <div>
-                    <label htmlFor="bio" className="absolute text-sm text-[var(--theme-text-secondary)] -z-10">Bio</label>
-                    <textarea
-                        id="bio"
-                        value={bio}
-                        onChange={(e) => setBio(e.target.value)}
-                        placeholder="Tell us about yourself..."
-                        rows={4}
-                        className="appearance-none block w-full px-4 py-3 bg-[var(--theme-card-bg-alt)] border border-transparent rounded-lg text-[var(--theme-text)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)] sm:text-sm"
-                        disabled={isSaving}
-                    />
-                </div>
+             <form className="space-y-8 px-4" onSubmit={handleSaveChanges}>
+                 <section className="bg-[var(--theme-card-bg)] p-6 rounded-2xl shadow-sm">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Input id="name" label="Name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} required />
+                        <Input id="username" label="Username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={isSaving} required />
+                     </div>
+                     <div className="mt-6">
+                        <label htmlFor="bio" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Bio</label>
+                        <textarea
+                            id="bio"
+                            value={bio}
+                            onChange={(e) => setBio(e.target.value)}
+                            placeholder="Tell us about yourself..."
+                            rows={3}
+                            className="appearance-none block w-full px-4 py-3 bg-[var(--theme-bg)] border border-transparent rounded-lg text-[var(--theme-text)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-ring)] sm:text-sm"
+                            disabled={isSaving}
+                        />
+                    </div>
+                 </section>
                 
-                <div className="pt-4 border-t border-[var(--theme-input-border)]">
-                    <h3 className="text-lg font-semibold text-[var(--theme-text)] mb-4">Social Links</h3>
-                    <div className="space-y-6">
+                <section className="bg-[var(--theme-card-bg)] p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-lg font-bold text-[var(--theme-text)] mb-4">Social Links</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                         <Input id="websiteUrl" label="Website URL" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} disabled={isSaving} />
                         <Input id="youtubeUrl" label="YouTube URL" value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)} disabled={isSaving} />
                         <Input id="facebookUrl" label="Facebook URL" value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} disabled={isSaving} />
+                        <Input id="instagramUrl" label="Instagram URL" value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} disabled={isSaving} />
+                        <Input id="twitterUrl" label="X (Twitter) URL" value={twitterUrl} onChange={e => setTwitterUrl(e.target.value)} disabled={isSaving} />
+                        <Input id="tiktokUrl" label="TikTok URL" value={tiktokUrl} onChange={e => setTiktokUrl(e.target.value)} disabled={isSaving} />
+                        <Input id="discordUrl" label="Discord Invite URL" value={discordUrl} onChange={e => setDiscordUrl(e.target.value)} disabled={isSaving} />
                     </div>
-                </div>
+                </section>
                 
-                 <div className="pt-4">
+                 <div className="pt-2">
                     <Button type="submit" disabled={isSaving}>
                         {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>

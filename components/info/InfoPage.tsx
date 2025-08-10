@@ -62,43 +62,48 @@ const InfoPage: React.FC<InfoPageProps> = ({ onBack }) => {
             </header>
 
             <main className="flex-grow overflow-y-auto p-4 space-y-3">
-                <AccordionItem title="Getting Started" i={0}>
-                    <p>Welcome to NAXXIVO! Here's how to get started:</p>
+                <AccordionItem title="Welcome to NAXXIVO!" i={0}>
+                    <p>Your journey of self-expression starts here. Get to know the basics:</p>
                     <ul>
-                        <li><strong>XP (Experience Points):</strong> You earn XP by being active in the community. You can use XP to buy cool items from The Bazaar.</li>
-                        <li><strong>Posting:</strong> Share your thoughts and media from the Home page. Use the '+' button to open the full post creator.</li>
-                        <li><strong>Following:</strong> See a traveler you like? Hit the "Follow" button on their post or profile to see more from them.</li>
+                        <li><strong>XP (Experience Points):</strong> This is your social currency. Earn it by completing daily tasks, engaging with the community, and participating in events.</li>
+                        <li><strong>Currencies:</strong> Gold, Silver, and Diamond coins are special tokens used for exclusive events like Luck Royale. Earn them through subscriptions or special promotions.</li>
+                        <li><strong>Leaderboards:</strong> Compete with other travelers! Climb the ranks by earning the most XP or special currencies each season.</li>
+                         <li><strong>Your Profile:</strong> This is your personal space. Customize it with animated covers, profile music, and more to show off your unique style.</li>
                     </ul>
                 </AccordionItem>
-                <AccordionItem title="The Bazaar & Your Satchel" i={1}>
-                    <p>Customize your experience with unique items.</p>
+                <AccordionItem title="Customization Hub" i={1}>
+                    <p>Make your profile uniquely yours.</p>
                     <ul>
-                        <li><strong>The Bazaar:</strong> This is the official store. Use your XP to purchase profile effects, themes, badges and more.</li>
-                        <li><strong>My Satchel:</strong> This is your personal collection. After buying an item, find it here and click "Equip" to apply it to your profile.</li>
+                        <li><strong>The Bazaar:</strong> The official marketplace for exclusive profile items. Discover animated covers, profile music, and rare badges. New items are added regularly!</li>
+                        <li><strong>My Satchel:</strong> This is your personal inventory. After buying an item, find it here and click "Equip" to apply it to your profile instantly.</li>
+                        <li><strong>Become a Creator:</strong> Don't just buy, create! You can design and submit your own Profile Covers. If approved, they'll appear in the Bazaar for other users to purchase, earning you recognition.</li>
                     </ul>
                 </AccordionItem>
-                 <AccordionItem title="XP & Subscriptions" i={2}>
-                    <p>Level up your journey with more XP.</p>
+                 <AccordionItem title="Events & Rewards" i={2}>
+                    <p>Participate in exciting activities to earn rewards.</p>
                     <ul>
-                        <li><strong>Top Up XP:</strong> Need more XP? Visit the "Top Up XP" tool to buy packages.</li>
-                        <li><strong>Subscriptions:</strong> Get the best value by subscribing! You get a large amount of XP upfront and can claim free XP every single day.</li>
+                        <li><strong>Daily Tasks:</strong> The best way to earn free XP. New tasks are available every day, so check back often to maximize your earnings.</li>
+                        <li><strong>Luck Royale:</strong> Test your luck! Use your Gold, Silver, or Diamond coins to spin for ultra-rare and exclusive items that cannot be found anywhere else.</li>
+                        <li><strong>Top-Up Center:</strong> Need a boost? Securely purchase XP packages or subscribe for the best value. Subscriptions include a large amount of XP upfront and free daily XP claims.</li>
                     </ul>
                 </AccordionItem>
-                 <AccordionItem title="Community Rules" i={3}>
-                    <p>Help us keep NAXXIVO a safe and positive place.</p>
+                 <AccordionItem title="Community Guidelines" i={3}>
+                    <p>Help us keep NAXXIVO a safe and positive space for everyone.</p>
                     <ol>
-                        <li><strong>Be Kind & Respectful:</strong> Treat everyone with respect. Harassment, bullying, and hate speech are not tolerated.</li>
-                        <li><strong>No Spam:</strong> Do not post repetitive content or unsolicited advertisements.</li>
-                        <li><strong>Respect Privacy:</strong> Do not share private information about others without their consent.</li>
+                        <li><strong>Be Respectful:</strong> Treat everyone with kindness. Harassment, bullying, and hate speech will not be tolerated.</li>
+                        <li><strong>Keep it Authentic:</strong> Do not post spam, repetitive content, or unsolicited advertisements.</li>
+                        <li><strong>Protect Privacy:</strong> Do not share private information about others without their explicit consent.</li>
+                        <li><strong>Report, Don't Retaliate:</strong> If you see something that violates the rules, please report it to our team.</li>
                     </ol>
                 </AccordionItem>
-                 <AccordionItem title="What's Next? (Roadmap)" i={4}>
-                    <p>We're always building! Here's a peek at what's coming soon:</p>
+                 <AccordionItem title="The Future of NAXXIVO" i={4}>
+                    <p>We are constantly working to make your journey more exciting. Here's a sneak peek at what's on the horizon:</p>
                     <ul>
-                        <li><strong>Gifting:</strong> Send items from The Bazaar to your friends.</li>
-                        <li><strong>Albums:</strong> Organize your posts and memories into beautiful, shareable albums.</li>
-                        <li><strong>Profile Polls:</strong> Let your followers vote on questions you post.</li>
-                         <li><strong>Health Hub:</strong> Track your wellness and fitness goals.</li>
+                        <li><strong>Gifting System:</strong> Send items from The Bazaar directly to your friends to celebrate milestones or just because!</li>
+                        <li><strong>Profile Achievements:</strong> Earn unique badges for your profile by reaching milestones, completing challenges, and participating in events.</li>
+                        <li><strong>Enhanced Messaging:</strong> Look forward to voice notes and fun stickers in your private chats.</li>
+                        <li><strong>Interactive Community Events:</strong> Participate in platform-wide events with unique stories and collaborative goals to earn massive rewards.</li>
+                        <li><strong>Profile Themes:</strong> Unlock complete visual overhauls for your profile page, changing colors, layouts, and more.</li>
                     </ul>
                 </AccordionItem>
             </main>

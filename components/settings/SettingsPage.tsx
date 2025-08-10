@@ -90,9 +90,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, 
             
             <main className="flex-grow overflow-y-auto px-4">
                 <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
+                    {...{
+                        initial: { opacity: 0, y: -20 },
+                        animate: { opacity: 1, y: 0 },
+                        transition: { delay: 0.1 },
+                    } as any}
                 >
                     <button 
                         onClick={onNavigateToEditProfile}
@@ -113,9 +115,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, 
                 </motion.div>
 
                 <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
+                    {...{
+                        initial: { opacity: 0, y: -20 },
+                        animate: { opacity: 1, y: 0 },
+                        transition: { delay: 0.2 },
+                    } as any}
                     className="bg-[var(--theme-card-bg)] rounded-2xl shadow-sm"
                 >
                     {accountSettings.map((item, index) => (
@@ -126,9 +130,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, 
                 </motion.div>
                 
                  <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
+                    {...{
+                        initial: { opacity: 0, y: -20 },
+                        animate: { opacity: 1, y: 0 },
+                        transition: { delay: 0.3 },
+                    } as any}
                     className="bg-[var(--theme-card-bg)] rounded-2xl shadow-sm mt-6"
                 >
                     {moreSettings.map((item) => (
@@ -140,9 +146,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, 
                 
                 {canAccessAdmin && (
                     <motion.div 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
+                        {...{
+                            initial: { opacity: 0, y: -20 },
+                            animate: { opacity: 1, y: 0 },
+                            transition: { delay: 0.4 },
+                        } as any}
                         className="bg-[var(--theme-card-bg)] rounded-2xl shadow-sm mt-6"
                     >
                         <SettingsItem

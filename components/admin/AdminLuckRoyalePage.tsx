@@ -106,24 +106,24 @@ const AdminLuckRoyalePage: React.FC<{ session: Session }> = ({ session }) => {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Event Configuration</h2>
+            <div className="bg-[var(--theme-card-bg)] p-6 rounded-xl shadow-lg border border-[var(--theme-secondary)]">
+                <h2 className="text-2xl font-bold text-[var(--theme-text)] mb-4">Event Configuration</h2>
                  <div className="space-y-4">
                     {(['GOLD', 'SILVER', 'DIAMOND'] as Currency[]).map(currency => (
-                        <div key={currency} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md">
-                            <h3 className="font-semibold capitalize">{currency.toLowerCase()} Spin Costs</h3>
+                        <div key={currency} className="p-3 bg-[var(--theme-card-bg-alt)]/50 rounded-md">
+                            <h3 className="font-semibold capitalize text-[var(--theme-text)]/90">{currency.toLowerCase()} Spin Costs</h3>
                             <div className="grid grid-cols-2 gap-4 mt-2">
                                 <Input id={`${currency}-single-spin`} label="Single Spin" type="number" value={config.costs[currency]?.single || 0} onChange={e => handleCostChange(currency, 'single', Number(e.target.value))} />
                                 <Input id={`${currency}-ten-spin`} label="10-Spin" type="number" value={config.costs[currency]?.ten || 0} onChange={e => handleCostChange(currency, 'ten', Number(e.target.value))} />
                             </div>
                         </div>
                     ))}
-                     <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md">
-                        <h3 className="font-semibold">Duplicate Consolation Prize</h3>
+                     <div className="p-3 bg-[var(--theme-card-bg-alt)]/50 rounded-md">
+                        <h3 className="font-semibold text-[var(--theme-text)]/90">Duplicate Consolation Prize</h3>
                         <div className="grid grid-cols-2 gap-4 mt-2">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Type</label>
-                                <select value={config.duplicate_consolation.type} onChange={e => handleConsolationChange('type', e.target.value)} className="w-full p-2.5 border rounded-md bg-white dark:bg-slate-700 dark:border-slate-600">
+                                <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Type</label>
+                                <select value={config.duplicate_consolation.type} onChange={e => handleConsolationChange('type', e.target.value)} className="admin-select">
                                     <option value="XP">XP</option>
                                     <option value="GOLD">Gold</option>
                                     <option value="SILVER">Silver</option>
@@ -133,9 +133,9 @@ const AdminLuckRoyalePage: React.FC<{ session: Session }> = ({ session }) => {
                             <Input id="consolation_amount" label="Amount" type="number" value={config.duplicate_consolation.amount} onChange={e => handleConsolationChange('amount', Number(e.target.value))} />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-700/50 p-3 rounded-md">
-                         <label htmlFor="is_active" className="text-sm font-medium">Event is Active</label>
-                         <button type="button" onClick={() => setConfig(p => p ? {...p, is_active: !p.is_active} : null)} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${config.is_active ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'}`}>
+                    <div className="flex items-center justify-between bg-[var(--theme-card-bg-alt)]/50 p-3 rounded-md">
+                         <label htmlFor="is_active" className="text-sm font-medium text-[var(--theme-text)]/90">Event is Active</label>
+                         <button type="button" onClick={() => setConfig(p => p ? {...p, is_active: !p.is_active} : null)} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${config.is_active ? 'bg-[var(--theme-primary)]' : 'bg-gray-600'}`}>
                             <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
@@ -145,44 +145,44 @@ const AdminLuckRoyalePage: React.FC<{ session: Session }> = ({ session }) => {
                 </Button>
             </div>
             
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+            <div className="bg-[var(--theme-card-bg)] p-6 rounded-xl shadow-lg border border-[var(--theme-secondary)]">
                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Prize Pool</h2>
+                    <h2 className="text-2xl font-bold text-[var(--theme-text)]">Prize Pool</h2>
                     <Button onClick={() => setIsModalOpen(true)}>Add Prize</Button>
                 </div>
-                <div className="border-b border-slate-200 dark:border-slate-700 mb-4">
+                <div className="border-b border-[var(--theme-secondary)] mb-4">
                     <nav className="-mb-px flex space-x-6">
                         {(['GOLD', 'SILVER', 'DIAMOND'] as Currency[]).map(currency => (
-                            <button key={currency} onClick={() => setActiveTab(currency)} className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === currency ? 'border-violet-500 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
+                            <button key={currency} onClick={() => setActiveTab(currency)} className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === currency ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]' : 'border-transparent text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)] hover:border-gray-500'}`}>
                                 {currency} POOL
                             </button>
                         ))}
                     </nav>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                         <thead className="bg-slate-50 dark:bg-slate-700/50">
+                    <table className="admin-table">
+                         <thead className="admin-thead">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Prize</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Type</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Rarity</th>
-                                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Actions</th>
+                                <th className="admin-th">Prize</th>
+                                <th className="admin-th">Type</th>
+                                <th className="admin-th">Rarity</th>
+                                <th className="admin-th text-right">Actions</th>
                             </tr>
                         </thead>
-                         <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                         <tbody className="admin-tbody">
                              {filteredPrizes.map(prize => (
-                                <tr key={prize.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                <tr key={prize.id} className="admin-tr">
+                                    <td className="admin-td">
                                         <div className="flex items-center">
                                              {prize.prize_type === 'ITEM' && prize.store_items ? (
                                                 <>
-                                                    <div className="flex-shrink-0 h-10 w-10 bg-slate-200 rounded-md flex items-center justify-center">
+                                                    <div className="flex-shrink-0 h-10 w-10 bg-[var(--theme-card-bg-alt)] rounded-md flex items-center justify-center">
                                                         <img src={prize.store_items?.preview_url || ''} alt="" className="h-8 w-8 object-contain" />
                                                     </div>
-                                                    <div className="ml-4 text-sm font-medium">{prize.store_items?.name}</div>
+                                                    <div className="ml-4 text-sm font-medium text-[var(--theme-text)]">{prize.store_items?.name}</div>
                                                 </>
                                             ) : (
-                                                 <div className="flex items-center gap-2">
+                                                 <div className="flex items-center gap-2 text-[var(--theme-text)]">
                                                     {prize.currency_type === 'GOLD' && <GoldCoinIcon className="text-yellow-500"/>}
                                                     {prize.currency_type === 'SILVER' && <SilverCoinIcon className="text-gray-400"/>}
                                                     {prize.currency_type === 'DIAMOND' && <DiamondIcon className="text-cyan-400"/>}
@@ -191,10 +191,10 @@ const AdminLuckRoyalePage: React.FC<{ session: Session }> = ({ session }) => {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">{prize.prize_type}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{prize.rarity}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => handleRemovePrize(prize.id)} className="text-red-600 hover:text-red-900">Remove</button>
+                                    <td className="admin-td font-mono text-[var(--theme-text-secondary)]">{prize.prize_type}</td>
+                                    <td className="admin-td text-[var(--theme-text-secondary)]">{prize.rarity}</td>
+                                    <td className="admin-td text-right">
+                                        <button onClick={() => handleRemovePrize(prize.id)} className="text-red-500 hover:text-red-400 font-semibold">Remove</button>
                                     </td>
                                 </tr>
                             ))}

@@ -3,14 +3,14 @@ import { supabase } from '../../integrations/supabase/client';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { ProfileIcon, CreditCardIcon, CoinIcon, CheckCircleIcon } from '../common/AppIcons';
 
-const StatCard = ({ title, value, icon, color }: { title: string, value: string | number, icon: React.ReactNode, color: string }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 flex items-center space-x-4 transition-all hover:shadow-xl hover:-translate-y-1">
-        <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-3xl ${color}`}>
+const StatCard = ({ title, value, icon, iconClass }: { title: string, value: string | number, icon: React.ReactNode, iconClass: string }) => (
+    <div className="bg-[var(--theme-card-bg)] p-6 rounded-xl shadow-sm border border-[var(--theme-secondary)] flex items-center space-x-4 transition-all hover:shadow-lg hover:-translate-y-1">
+        <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-3xl ${iconClass}`}>
             {icon}
         </div>
         <div>
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{title}</p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{value}</p>
+            <p className="text-[var(--theme-text-secondary)] text-sm font-medium">{title}</p>
+            <p className="text-3xl font-bold text-[var(--theme-text)]">{value}</p>
         </div>
     </div>
 );
@@ -56,7 +56,7 @@ const AdminDashboard: React.FC = () => {
 
     if (error) {
         return (
-            <div className="bg-red-100 dark:bg-red-900/50 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded-lg" role="alert">
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
                 <p className="font-bold">Error Loading Dashboard</p>
                 <p>{error}</p>
                 <p className="text-sm mt-2">This is likely due to incorrect database permissions (RLS). Please ensure you have run the latest SQL script provided to fix database policies and functions.</p>
@@ -66,10 +66,10 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="Total Users" value={stats.totalUsers} icon={<ProfileIcon className="w-8 h-8"/>} color="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400" />
-            <StatCard title="Pending Payments" value={stats.pendingPayments} icon={<CreditCardIcon className="w-8 h-8"/>} color="bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400" />
-            <StatCard title="Total Revenue" value={`$${stats.totalRevenue.toFixed(2)}`} icon={<CoinIcon className="w-8 h-8"/>} color="bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400" />
-            <StatCard title="Active Subscriptions" value={stats.activeSubscriptions} icon={<CheckCircleIcon className="w-8 h-8"/>} color="bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400" />
+            <StatCard title="Total Users" value={stats.totalUsers} icon={<ProfileIcon className="w-8 h-8"/>} iconClass="bg-blue-100 text-blue-600" />
+            <StatCard title="Pending Payments" value={stats.pendingPayments} icon={<CreditCardIcon className="w-8 h-8"/>} iconClass="bg-yellow-100 text-yellow-600" />
+            <StatCard title="Total Revenue" value={`$${stats.totalRevenue.toFixed(2)}`} icon={<CoinIcon className="w-8 h-8"/>} iconClass="bg-green-100 text-green-600" />
+            <StatCard title="Active Subscriptions" value={stats.activeSubscriptions} icon={<CheckCircleIcon className="w-8 h-8"/>} iconClass="bg-purple-100 text-purple-600" />
         </div>
     );
 };

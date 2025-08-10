@@ -57,19 +57,19 @@ const GiftCodeFormModal: React.FC<GiftCodeFormModalProps> = ({ isOpen, onClose, 
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={onClose}>
                     <motion.div
                         {...{
                             initial: { opacity: 0, y: -50 },
                             animate: { opacity: 1, y: 0 },
                             exit: { opacity: 0, y: 50 },
                         } as any}
-                        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full flex flex-col"
+                        className="bg-[var(--theme-card-bg)] rounded-lg shadow-xl max-w-2xl w-full flex flex-col border border-[var(--theme-secondary)]"
                         onClick={e => e.stopPropagation()}
                     >
                         <form onSubmit={handleSubmit}>
-                            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Create New Gift Code</h2>
+                            <div className="p-6 border-b border-[var(--theme-secondary)]">
+                                <h2 className="text-xl font-bold text-[var(--theme-text)]">Create New Gift Code</h2>
                             </div>
                             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                                 <Input
@@ -81,7 +81,7 @@ const GiftCodeFormModal: React.FC<GiftCodeFormModalProps> = ({ isOpen, onClose, 
                                     required
                                     maxLength={7}
                                     rightElement={
-                                        <button type="button" onClick={() => setFormData(p => ({...p, code: generateRandomCode()}))} className="text-xs text-violet-500 hover:text-violet-700 font-semibold">
+                                        <button type="button" onClick={() => setFormData(p => ({...p, code: generateRandomCode()}))} className="text-xs text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] font-semibold">
                                             Generate
                                         </button>
                                     }
@@ -97,11 +97,11 @@ const GiftCodeFormModal: React.FC<GiftCodeFormModalProps> = ({ isOpen, onClose, 
                                 <Input id="expires_at" label="Expires At (optional)" name="expires_at" type="date" value={String(formData.expires_at).split('T')[0] || ''} onChange={handleChange} />
                                 
                                 <div className="flex items-center">
-                                    <input id="is_active" name="is_active" type="checkbox" checked={!!formData.is_active} onChange={handleChange} className="h-4 w-4 rounded text-violet-600 focus:ring-violet-500" />
-                                    <label htmlFor="is_active" className="ml-2 block text-sm text-slate-700 dark:text-slate-300">Code is Active</label>
+                                    <input id="is_active" name="is_active" type="checkbox" checked={!!formData.is_active} onChange={handleChange} className="h-4 w-4 rounded text-[var(--theme-primary)] bg-transparent border-[var(--theme-secondary)] focus:ring-[var(--theme-primary)]" />
+                                    <label htmlFor="is_active" className="ml-2 block text-sm text-[var(--theme-text)]/90">Code is Active</label>
                                 </div>
                             </div>
-                            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 flex justify-end space-x-3 border-t border-slate-200 dark:border-slate-700">
+                            <div className="p-4 bg-black/20 flex justify-end space-x-3 border-t border-[var(--theme-secondary)]">
                                 <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving} className="w-auto">Cancel</Button>
                                 <Button type="submit" disabled={isSaving} className="w-auto px-6">
                                     {isSaving ? <LoadingSpinner /> : 'Save'}

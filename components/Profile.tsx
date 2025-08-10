@@ -3,33 +3,16 @@ import type { Session } from '@supabase/auth-js';
 import { supabase } from '../integrations/supabase/client';
 import Button from './common/Button';
 import type { Tables, TablesInsert, Json } from '../integrations/supabase/types';
-import { formatXp, loadGoogleFont, urlToBase64 } from '../utils/helpers';
+import { formatXp } from '../utils/helpers';
 import LoadingSpinner from './common/LoadingSpinner';
-import { BackArrowIcon, SettingsIcon, MusicNoteIcon, ToolsIcon, GoldCoinIcon, SilverCoinIcon, DiamondIcon, WebsiteIcon, YouTubeIcon, FacebookIcon, TrophyIcon } from './common/AppIcons';
-import { motion, useScroll, useTransform, type Variants } from 'framer-motion';
+import { 
+    BackArrowIcon, SettingsIcon, MusicNoteIcon, ToolsIcon, GoldCoinIcon, SilverCoinIcon, 
+    DiamondIcon, WebsiteIcon, YouTubeIcon, FacebookIcon, TrophyIcon,
+    InstagramIcon, TwitterIcon, TikTokIcon, DiscordIcon
+} from './common/AppIcons';
+import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import ItemPreviewModal from './profile/ItemPreviewModal';
-import { GoogleGenAI, Type } from "@google/genai";
 
-
-// --- Gemini AI Setup --- //
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const dynamicStyleSchema = {
-  type: Type.OBJECT,
-  properties: {
-    fontStyle: {
-      type: Type.OBJECT,
-      properties: {
-        fontFamily: { type: Type.STRING, description: "A Google Font family name." },
-        color: { type: Type.STRING, description: "A hex color code." },
-        fontWeight: { type: Type.INTEGER, description: "A font weight." },
-        textShadow: { type: Type.STRING, description: "A valid CSS text-shadow value." },
-      },
-      required: ["fontFamily", "color", "fontWeight", "textShadow"],
-      description: "CSS styles for the user's name.",
-    },
-  },
-  required: ["fontStyle"],
-};
 
 // --- Types --- //
 type UserInventoryItem = Tables<'user_inventory'> & {
@@ -59,6 +42,23 @@ const ensureProtocol = (url: string) => {
     return url;
 };
 
+const SocialLink = ({ href, children, brandColorClass }: { href: string, children: React.ReactNode, brandColorClass: string }) => (
+    <motion.a 
+        href={ensureProtocol(href)} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className={`w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] text-[var(--theme-text-secondary)] rounded-full transition-all duration-300 ${brandColorClass}`}
+        {...{
+            variants: {
+                hidden: { opacity: 0, scale: 0.5 },
+                visible: { opacity: 1, scale: 1 },
+            }
+        } as any}
+    >
+        {children}
+    </motion.a>
+);
+
 const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, onNavigateToSettings, onNavigateToTools, onViewProfile }) => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -72,8 +72,6 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
 
-    const [aiFontStyles, setAiFontStyles] = useState<React.CSSProperties | null>(null);
-    const [isAiLoading, setIsAiLoading] = useState(false);
     
     const isMyProfile = userId === session.user.id;
     
@@ -98,7 +96,6 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             setLoading(true);
             setError(null);
             setIsPlaying(false);
-            setAiFontStyles(null);
             if(audioRef.current) {
                 audioRef.current.pause();
                 audioRef.current = null;
@@ -107,7 +104,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             try {
                 setIsCollectionLoading(true);
                 const [profileRes, inventoryRes] = await Promise.all([
-                    supabase.from('profiles').select('*').eq('id', userId).single(),
+                    supabase.from('profiles').select('*, instagram_url, twitter_url, tiktok_url, discord_url').eq('id', userId).single(),
                     supabase.from('user_inventory').select('*, store_items(id, name, preview_url, description)').eq('user_id', userId),
                 ]);
 
@@ -151,44 +148,6 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
             audioRef.current = null;
         }
     }, [userId, session.user.id, isMyProfile]);
-
-    useEffect(() => {
-        const generateDynamicStylesForCover = async () => {
-            if (!profile?.cover_url) return;
-            setIsAiLoading(true);
-            setAiFontStyles(null);
-            try {
-                const base64Data = await urlToBase64(profile.cover_url);
-                const imagePart = { inlineData: { mimeType: 'image/jpeg', data: base64Data } };
-                
-                const prompt = "Analyze this cover image. Provide a JSON object with 'fontStyle'. For 'fontStyle', generate CSS for the user's name: a legible Google Font 'fontFamily', a 'fontWeight', a 'color' with high contrast against the image, and a strong 'textShadow' (e.g., '0px 2px 5px rgba(0,0,0,0.6)') to guarantee readability.";
-
-                const response = await ai.models.generateContent({
-                    model: "gemini-2.5-flash",
-                    contents: { parts: [imagePart, { text: prompt }] },
-                    config: {
-                        responseMimeType: "application/json",
-                        responseSchema: dynamicStyleSchema,
-                    },
-                });
-                
-                const styleData = JSON.parse(response.text);
-
-                if (styleData.fontStyle && styleData.fontStyle.fontFamily) {
-                    loadGoogleFont(styleData.fontStyle.fontFamily);
-                    setAiFontStyles(styleData.fontStyle);
-                }
-
-            } catch (error) {
-                console.error("Gemini style generation failed:", error);
-                setAiFontStyles(null);
-            } finally {
-                setIsAiLoading(false);
-            }
-        };
-
-        generateDynamicStylesForCover();
-    }, [profile?.cover_url]);
 
     const handleAvatarClick = async () => {
         const musicUrl = profile?.selected_music?.music_url;
@@ -259,8 +218,8 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
         <>
             <div ref={scrollRef} className="bg-[var(--theme-bg)] h-screen overflow-y-auto hide-scrollbar relative">
                 {/* --- BACKGROUND COVER --- */}
-                <motion.div style={{ y: coverY }} className="absolute top-0 left-0 right-0 h-52 z-0">
-                    <motion.div style={{ scale: coverScale }} className="w-full h-full relative">
+                <motion.div style={{ y: coverY } as any} className="absolute top-0 left-0 right-0 h-52 z-0">
+                    <motion.div style={{ scale: coverScale } as any} className="w-full h-full relative">
                         {profile.cover_url && <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover" />}
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[var(--theme-card-bg)] to-transparent" />
@@ -279,7 +238,9 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                 {/* --- MAIN CONTENT (SCROLLABLE) --- */}
                 <div className="relative z-10 mt-36">
                     <motion.div
-                        variants={containerVariants} initial="hidden" animate="visible"
+                        {...{
+                            variants: containerVariants, initial: "hidden", animate: "visible"
+                        } as any}
                         className="bg-[var(--theme-card-bg)] rounded-t-3xl p-6 text-center relative"
                     >
                          {/* --- AVATAR --- */}
@@ -297,41 +258,44 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
 
                         <div className="pt-20">
                             <motion.h1
-                               variants={itemVariants}
-                               style={aiFontStyles || {}}
-                               className={`text-3xl font-bold flex items-center justify-center gap-2 transition-all duration-500 ${isAiLoading ? 'shimmer-effect h-10 w-48 mx-auto' : 'text-[var(--theme-text)]'}`}
+                               {...{variants:itemVariants} as any}
+                               className="text-3xl font-bold text-[var(--theme-text)]"
                             >
                                {profile.name}
                             </motion.h1>
-                            <motion.p variants={itemVariants} className="text-[var(--theme-text-secondary)] mt-1">@{profile.username}</motion.p>
-                            {profile.bio && <motion.p variants={itemVariants} className="text-sm text-[var(--theme-text)] mt-4 max-w-md mx-auto">{profile.bio}</motion.p>}
+                            <motion.p {...{variants:itemVariants} as any} className="text-[var(--theme-text-secondary)] mt-1">@{profile.username}</motion.p>
+                            {profile.bio && <motion.p {...{variants:itemVariants} as any} className="text-sm text-[var(--theme-text)] mt-4 max-w-md mx-auto">{profile.bio}</motion.p>}
 
-                            <motion.div variants={itemVariants} className="flex justify-center gap-4 my-6">
-                                {profile.website_url && <a href={ensureProtocol(profile.website_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><WebsiteIcon/></a>}
-                                {profile.youtube_url && <a href={ensureProtocol(profile.youtube_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><YouTubeIcon/></a>}
-                                {profile.facebook_url && <a href={ensureProtocol(profile.facebook_url)} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-[var(--theme-card-bg-alt)] hover:bg-opacity-70 text-[var(--theme-text)] rounded-full transition-all"><FacebookIcon className="w-6 h-6"/></a>}
+                            <motion.div {...{variants:containerVariants} as any} className="flex justify-center flex-wrap gap-3 my-6">
+                                {profile.website_url && <SocialLink href={profile.website_url} brandColorClass="hover:bg-gray-500"><WebsiteIcon className="w-6 h-6"/></SocialLink>}
+                                {profile.youtube_url && <SocialLink href={profile.youtube_url} brandColorClass="hover:bg-[#FF0000]"><YouTubeIcon className="w-6 h-6"/></SocialLink>}
+                                {profile.facebook_url && <SocialLink href={profile.facebook_url} brandColorClass="hover:bg-[#1877F2]"><FacebookIcon className="w-6 h-6"/></SocialLink>}
+                                {profile.instagram_url && <SocialLink href={profile.instagram_url} brandColorClass="hover:bg-[#E4405F]"><InstagramIcon className="w-6 h-6"/></SocialLink>}
+                                {profile.twitter_url && <SocialLink href={profile.twitter_url} brandColorClass="hover:bg-[#1DA1F2] dark:hover:bg-white dark:hover:text-black"><TwitterIcon className="w-6 h-6"/></SocialLink>}
+                                {profile.tiktok_url && <SocialLink href={profile.tiktok_url} brandColorClass="hover:bg-black"><TikTokIcon className="w-6 h-6"/></SocialLink>}
+                                {profile.discord_url && <SocialLink href={profile.discord_url} brandColorClass="hover:bg-[#5865F2]"><DiscordIcon className="w-6 h-6"/></SocialLink>}
                             </motion.div>
                             
                             <motion.div
-                                 variants={containerVariants}
+                                 {...{variants:containerVariants} as any}
                                  className="grid grid-cols-4 gap-x-2 gap-y-4 items-start border-t border-b border-gray-200 dark:border-gray-700 py-5 my-6"
                             >
-                                <motion.div className="text-center" variants={itemVariants}>
+                                <motion.div className="text-center" {...{variants:itemVariants} as any}>
                                     <TrophyIcon className="h-7 w-7 text-violet-500 mx-auto mb-1" />
                                     <p className="text-lg font-bold text-[var(--theme-text)] leading-tight">{formatXp(profile.xp_balance ?? 0)}</p>
                                     <p className="text-[10px] tracking-wide text-[var(--theme-text-secondary)] uppercase">XP</p>
                                 </motion.div>
-                                <motion.div className="text-center" variants={itemVariants}>
+                                <motion.div className="text-center" {...{variants:itemVariants} as any}>
                                     <GoldCoinIcon className="h-7 w-7 text-yellow-500 mx-auto mb-1" />
                                     <p className="text-lg font-bold text-[var(--theme-text)] leading-tight">{formatXp(profile.gold_coins ?? 0)}</p>
                                     <p className="text-[10px] tracking-wide text-[var(--theme-text-secondary)] uppercase">GOLD</p>
                                 </motion.div>
-                                <motion.div className="text-center" variants={itemVariants}>
+                                <motion.div className="text-center" {...{variants:itemVariants} as any}>
                                     <SilverCoinIcon className="h-7 w-7 text-gray-400 mx-auto mb-1" />
                                     <p className="text-lg font-bold text-[var(--theme-text)] leading-tight">{formatXp(profile.silver_coins ?? 0)}</p>
                                     <p className="text-[10px] tracking-wide text-[var(--theme-text-secondary)] uppercase">SILVER</p>
                                 </motion.div>
-                                <motion.div className="text-center" variants={itemVariants}>
+                                <motion.div className="text-center" {...{variants:itemVariants} as any}>
                                     <DiamondIcon className="h-7 w-7 text-cyan-400 mx-auto mb-1" />
                                     <p className="text-lg font-bold text-[var(--theme-text)] leading-tight">{formatXp(profile.diamond_coins ?? 0)}</p>
                                     <p className="text-[10px] tracking-wide text-[var(--theme-text-secondary)] uppercase">DIAMOND</p>
@@ -339,7 +303,7 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                             </motion.div>
 
                             {!isMyProfile && (
-                                <motion.div variants={itemVariants} className="px-4 flex items-center gap-3">
+                                <motion.div {...{variants:itemVariants} as any} className="px-4 flex items-center gap-3">
                                     <Button onClick={handleFollowToggle} disabled={isUpdatingFollow} variant={isFollowing ? 'secondary' : 'primary'} className="flex-1">
                                         {isUpdatingFollow ? '...' : (isFollowing ? 'Unfollow' : 'Follow')}
                                     </Button>
@@ -349,18 +313,20 @@ const Profile: React.FC<ProfileProps> = ({ session, userId, onBack, onMessage, o
                                 </motion.div>
                             )}
 
-                            <motion.div variants={itemVariants} className="text-left mt-8">
+                            <motion.div {...{variants:itemVariants} as any} className="text-left mt-8">
                                 <h2 className="text-xl font-bold text-[var(--theme-text)] mb-4">Collection ({collectionItems.length})</h2>
                                 {isCollectionLoading ? (
                                     <div className="flex justify-center"><LoadingSpinner /></div>
                                 ) : collectionItems.length > 0 ? (
-                                    <motion.div variants={containerVariants} className="grid grid-cols-3 gap-3">
+                                    <motion.div {...{variants:containerVariants} as any} className="grid grid-cols-3 gap-3">
                                         {collectionItems.map((item) => item.store_items && (
                                             <motion.button
                                                 key={item.id}
-                                                variants={itemVariants}
-                                                whileHover={{ y: -5, scale: 1.05 }}
-                                                whileTap={{ scale: 0.98 }}
+                                                {...{
+                                                    variants: itemVariants,
+                                                    whileHover: { y: -5, scale: 1.05 },
+                                                    whileTap: { scale: 0.98 },
+                                                } as any}
                                                 onClick={() => item.store_items && setSelectedItem(item.store_items)}
                                                 className="group relative aspect-square bg-[var(--theme-bg)] rounded-xl overflow-hidden flex items-center justify-center shadow-sm hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-ring)]"
                                             >

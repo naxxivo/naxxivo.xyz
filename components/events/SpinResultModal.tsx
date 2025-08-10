@@ -48,9 +48,11 @@ const ResultCard = ({ result, delay }: { result: ResultItem, delay: number }) =>
     if (result.type === 'item') {
         return (
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: delay * 0.15 }}
+                {...{
+                    initial: { opacity: 0, y: 20 },
+                    animate: { opacity: 1, y: 0 },
+                    transition: { delay: delay * 0.15 },
+                } as any}
                 className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center"
             >
                 <div className={`aspect-square flex items-center justify-center rounded-lg p-2 ${rarityStyles[rarity].bg} border ${rarityStyles[rarity].border}`}>
@@ -66,9 +68,11 @@ const ResultCard = ({ result, delay }: { result: ResultItem, delay: number }) =>
         const Icon = currencyIcons[result.details.type!];
         return (
              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: delay * 0.15 }}
+                {...{
+                    initial: { opacity: 0, y: 20 },
+                    animate: { opacity: 1, y: 0 },
+                    transition: { delay: delay * 0.15 },
+                } as any}
                 className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center"
             >
                 <div className={`aspect-square flex flex-col items-center justify-center rounded-lg p-2 ${rarityStyles[rarity].bg} border ${rarityStyles[rarity].border}`}>
@@ -86,9 +90,11 @@ const ResultCard = ({ result, delay }: { result: ResultItem, delay: number }) =>
         const color = result.details.type ? currencyColors[result.details.type] : 'text-gray-400';
         return (
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: delay * 0.15 }}
+                {...{
+                    initial: { opacity: 0, y: 20 },
+                    animate: { opacity: 1, y: 0 },
+                    transition: { delay: delay * 0.15 },
+                } as any}
                 className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center"
             >
                 <div className="aspect-square flex flex-col items-center justify-center rounded-lg bg-slate-700">
@@ -110,17 +116,21 @@ const SpinResultModal: React.FC<SpinResultModalProps> = ({ isOpen, onClose, resu
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    {...{
+                        initial: { opacity: 0 },
+                        animate: { opacity: 1 },
+                        exit: { opacity: 0 },
+                    } as any}
                     className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex justify-center items-center p-4"
                     onClick={onClose}
                 >
                     <motion.div
-                        initial={{ scale: 0.9, y: 20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        exit={{ scale: 0.9, y: 20 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        {...{
+                            initial: { scale: 0.9, y: 20 },
+                            animate: { scale: 1, y: 0 },
+                            exit: { scale: 0.9, y: 20 },
+                            transition: { type: 'spring', stiffness: 300, damping: 30 },
+                        } as any}
                         className="bg-slate-800 border border-purple-500/30 w-full max-w-md rounded-2xl shadow-2xl p-6 relative flex flex-col items-center"
                         onClick={e => e.stopPropagation()}
                     >

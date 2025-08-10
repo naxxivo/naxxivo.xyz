@@ -58,7 +58,7 @@ const CoverEditorModal: React.FC<CoverEditorModalProps> = ({ isOpen, onClose, on
 
 
     const ControlButton = ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
-        <button type="button" onClick={onClick} className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center font-mono text-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+        <button type="button" onClick={onClick} className="w-10 h-10 bg-[var(--theme-card-bg-alt)] rounded-md flex items-center justify-center font-mono text-lg hover:bg-[var(--theme-secondary-hover)] transition-colors">
             {children}
         </button>
     );
@@ -66,19 +66,19 @@ const CoverEditorModal: React.FC<CoverEditorModalProps> = ({ isOpen, onClose, on
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" onClick={onClose}>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={onClose}>
                     <motion.div
                         {...{
                             initial: { opacity: 0, scale: 0.9 },
                             animate: { opacity: 1, scale: 1 },
                             exit: { opacity: 0, scale: 0.9 },
                         } as any}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full flex flex-col md:flex-row"
+                        className="bg-[var(--theme-card-bg)] rounded-lg shadow-xl max-w-4xl w-full flex flex-col md:flex-row"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Preview Pane */}
-                        <div className="flex-1 p-6 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900/50 rounded-l-lg">
-                            <h3 className="font-bold mb-4 dark:text-gray-200">Live Preview</h3>
+                        <div className="flex-1 p-6 flex flex-col items-center justify-center bg-black/20 rounded-l-lg">
+                            <h3 className="font-bold mb-4 text-[var(--theme-text)]">Live Preview</h3>
                             <div className="relative w-48 h-48">
                                 {/* Sample Avatar */}
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32">
@@ -93,10 +93,10 @@ const CoverEditorModal: React.FC<CoverEditorModalProps> = ({ isOpen, onClose, on
 
                         {/* Controls Pane */}
                         <div className="w-full md:w-64 p-6 space-y-6">
-                            <h3 className="text-xl font-bold dark:text-gray-200">Adjust Cover</h3>
+                            <h3 className="text-xl font-bold text-[var(--theme-text)]">Adjust Cover</h3>
                             {/* Position Controls */}
                             <div>
-                                <label className="text-sm font-medium dark:text-gray-300">Position</label>
+                                <label className="text-sm font-medium text-[var(--theme-text-secondary)]">Position</label>
                                 <div className="grid grid-cols-3 gap-2 mt-2 justify-items-center">
                                     <div></div>
                                     <ControlButton onClick={() => setTranslateY(y => y - 5)}>↑</ControlButton>
@@ -111,15 +111,15 @@ const CoverEditorModal: React.FC<CoverEditorModalProps> = ({ isOpen, onClose, on
                             </div>
                             {/* Zoom Controls */}
                             <div>
-                                <label className="text-sm font-medium dark:text-gray-300">Scale</label>
+                                <label className="text-sm font-medium text-[var(--theme-text-secondary)]">Scale</label>
                                 <div className="flex gap-2 mt-2">
                                     <ControlButton onClick={() => setScale(s => s - 0.05)}>-</ControlButton>
-                                    <div className="flex-grow flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-md text-sm">{scale.toFixed(2)}</div>
+                                    <div className="flex-grow flex items-center justify-center bg-[var(--theme-card-bg-alt)] rounded-md text-sm">{scale.toFixed(2)}</div>
                                     <ControlButton onClick={() => setScale(s => s + 0.05)}>+</ControlButton>
                                 </div>
                             </div>
 
-                            <div className="border-t pt-4 space-y-2">
+                            <div className="border-t pt-4 space-y-2 border-[var(--theme-secondary)]">
                                 <Button onClick={handleSave} className="w-full">Save Changes</Button>
                                 <Button onClick={handleReset} variant="secondary" className="w-full">Reset</Button>
                                 <Button onClick={onClose} variant="secondary" className="w-full">Close</Button>
