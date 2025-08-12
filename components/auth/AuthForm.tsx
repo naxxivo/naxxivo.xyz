@@ -3,29 +3,11 @@ import { supabase } from '../../integrations/supabase/client';
 import Button from '../common/Button';
 import { BackArrowIcon, GoogleIcon, FacebookIcon, AppleIcon } from '../common/AppIcons';
 import Input from '../common/Input';
-import { motion } from 'framer-motion';
 
 interface AuthFormProps {
     mode: 'login' | 'signup';
     onSetMode: (mode: 'onboarding' | 'login' | 'signup') => void;
 }
-
-const containerVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: {
-        opacity: 1,
-        scale: 1,
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
-
-const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-};
-
 
 const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
     const [email, setEmail] = useState('');
@@ -102,45 +84,32 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
     };
 
     return (
-        <div className="min-h-screen w-full text-[var(--theme-text)] flex flex-col justify-center items-center p-4">
-             <motion.div
-                {...{
-                    variants: containerVariants,
-                    initial: "hidden",
-                    animate: "visible",
-                    exit: "hidden",
-                } as any}
-                className="bg-[var(--theme-card-bg)]/80 backdrop-blur-xl w-full max-w-md rounded-3xl shadow-2xl border border-white/20 flex flex-col"
-            >
-                <motion.header {...{ variants: itemVariants } as any} className="flex items-center p-6">
-                    <button onClick={() => onSetMode('onboarding')} className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text)]">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-[var(--theme-bg)]">
+            <div className="w-full max-w-md bg-[var(--theme-card-bg)] rounded-2xl shadow-lg border border-[var(--theme-secondary)]">
+                <header className="flex items-center p-4 border-b border-[var(--theme-secondary)]">
+                    <button onClick={() => onSetMode('onboarding')} className="p-2 rounded-full hover:bg-[var(--theme-secondary)] transition-colors">
                         <BackArrowIcon />
                     </button>
-                </motion.header>
+                    <h1 className="text-xl font-bold text-center flex-grow text-[var(--theme-text)]">
+                        {isSignUp ? "Create Account" : "Welcome Back"}
+                    </h1>
+                    <div className="w-10"></div> {/* Spacer */}
+                </header>
 
-                <main className="flex-grow flex flex-col justify-center px-8 pb-8">
-                    <motion.div {...{ variants: itemVariants } as any} className="text-left mb-8">
-                        <h1 className="text-4xl font-bold text-[var(--theme-text)]">
-                            {isSignUp ? "Hi!" : "Welcome!"}
-                        </h1>
-                        <p className="text-[var(--theme-text-secondary)] mt-1">
-                            {isSignUp ? "Create a new account" : "Sign in to continue"}
-                        </p>
-                    </motion.div>
-
+                <main className="p-8">
                     {message ? (
-                        <motion.div {...{ variants: itemVariants } as any} className="text-[var(--theme-primary)] bg-[var(--theme-primary)]/10 p-4 rounded-lg my-4 text-center">
+                        <div className="text-green-700 bg-green-100 p-4 rounded-lg my-4 text-center">
                             <p className="font-semibold">Success!</p>
                             <p>{message}</p>
-                        </motion.div>
+                        </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             {isSignUp && (
                                 <>
-                                    <motion.div {...{ variants: itemVariants } as any}><Input id="name" label="Full Name" type="text" value={name} onChange={e => setName(e.target.value)} required disabled={loading} /></motion.div>
-                                    <motion.div {...{ variants: itemVariants } as any}><Input id="username" label="Username" type="text" value={username} onChange={e => setUsername(e.target.value)} required disabled={loading} /></motion.div>
-                                    <motion.div {...{ variants: itemVariants } as any}>
-                                        <label className="block text-sm text-[var(--theme-text-secondary)] mb-2">Gender</label>
+                                    <Input id="name" label="Full Name" type="text" value={name} onChange={e => setName(e.target.value)} required disabled={loading} />
+                                    <Input id="username" label="Username" type="text" value={username} onChange={e => setUsername(e.target.value)} required disabled={loading} />
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-2">Gender</label>
                                         <div className="flex gap-4">
                                             {(['male', 'female'] as const).map((g) => (
                                                 <label key={g} className="flex items-center gap-2 cursor-pointer p-1">
@@ -150,59 +119,55 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSetMode }) => {
                                                         value={g}
                                                         checked={gender === g}
                                                         onChange={(e) => setGender(e.target.value as 'male' | 'female')}
-                                                        className="hidden peer"
+                                                        className="h-4 w-4 text-[var(--theme-primary)] border-[var(--theme-input-border)] focus:ring-[var(--theme-primary)]"
                                                         required
                                                     />
-                                                    <div className="w-5 h-5 border-2 border-[var(--theme-input-border)] rounded-full flex items-center justify-center transition-all peer-checked:border-[var(--theme-primary)]">
-                                                       <div className="w-2.5 h-2.5 bg-transparent rounded-full peer-checked:bg-[var(--theme-primary)] transition-colors"></div>
-                                                    </div>
                                                     <span className="capitalize text-[var(--theme-text)]">{g}</span>
                                                 </label>
                                             ))}
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 </>
                             )}
-                            <motion.div {...{ variants: itemVariants } as any}><Input id="email" label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} autoComplete="email" /></motion.div>
-                            <motion.div {...{ variants: itemVariants } as any}><Input id="password" label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required disabled={loading} autoComplete={isSignUp ? "new-password" : "current-password"} /></motion.div>
+                            <Input id="email" label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} autoComplete="email" />
+                            <Input id="password" label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required disabled={loading} autoComplete={isSignUp ? "new-password" : "current-password"} />
                             
-                            {!isSignUp && <motion.a {...{ variants: itemVariants } as any} href="#" className="block text-right text-sm text-[var(--theme-primary)] hover:underline">Forgot Password?</motion.a>}
+                            {!isSignUp && <a href="#" className="block text-right text-sm text-[var(--theme-primary)] hover:underline">Forgot Password?</a>}
 
-                            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                            {error && <p className="text-red-500 text-sm text-center pt-2">{error}</p>}
 
-                            <motion.div {...{ variants: itemVariants } as any} className="pt-2">
+                            <div className="pt-2">
                                 <Button type="submit" disabled={loading} variant="primary">
-                                    {loading ? "Processing..." : (isSignUp ? "SIGN UP" : "LOGIN")}
+                                    {loading ? "Processing..." : (isSignUp ? "Sign Up" : "Login")}
                                 </Button>
-                            </motion.div>
+                            </div>
                         </form>
                     )}
 
                     {!message && (
                         <>
-                            <motion.div {...{ variants: itemVariants } as any} className="relative flex py-6 items-center">
-                                <div className="flex-grow border-t border-[var(--theme-input-border)]"></div>
-                                <span className="flex-shrink mx-4 text-gray-400 text-sm">or</span>
-                                <div className="flex-grow border-t border-[var(--theme-input-border)]"></div>
-                            </motion.div>
+                            <div className="relative flex py-5 items-center">
+                                <div className="flex-grow border-t border-[var(--theme-secondary)]"></div>
+                                <span className="flex-shrink mx-4 text-xs uppercase text-[var(--theme-text-secondary)]">Or continue with</span>
+                                <div className="flex-grow border-t border-[var(--theme-secondary)]"></div>
+                            </div>
                             
-                            <motion.div {...{ variants: itemVariants } as any} className="text-center text-sm text-[var(--theme-text-secondary)] mb-4">{isSignUp ? 'Signup with' : 'Login with'}</motion.div>
-                            <motion.div {...{ variants: itemVariants } as any} className="flex items-center justify-center space-x-4">
-                                <motion.button {...{ whileTap: { scale: 0.95 }, whileHover: {y:-2} } as any} onClick={() => handleOAuthSignIn('google')} disabled={loading} className="w-14 h-14 flex items-center justify-center rounded-2xl border border-[var(--theme-input-border)] hover:bg-[var(--theme-secondary)]"><GoogleIcon /></motion.button>
-                                <motion.button {...{ whileTap: { scale: 0.95 }, whileHover: {y:-2} } as any} onClick={() => handleOAuthSignIn('facebook')} disabled={loading} className="w-14 h-14 flex items-center justify-center rounded-2xl border border-[var(--theme-input-border)] hover:bg-[var(--theme-secondary)]"><FacebookIcon /></motion.button>
-                                <motion.button {...{ whileTap: { scale: 0.95 }, whileHover: {y:-2} } as any} onClick={() => handleOAuthSignIn('apple')} disabled={loading} className="w-14 h-14 flex items-center justify-center rounded-2xl border border-[var(--theme-input-border)] hover:bg-[var(--theme-secondary)]"><AppleIcon /></motion.button>
-                            </motion.div>
+                            <div className="flex items-center justify-center space-x-3">
+                                <button onClick={() => handleOAuthSignIn('google')} disabled={loading} className="w-12 h-12 flex items-center justify-center rounded-full border border-[var(--theme-secondary)] hover:bg-[var(--theme-secondary)] transition-colors"><GoogleIcon /></button>
+                                <button onClick={() => handleOAuthSignIn('facebook')} disabled={loading} className="w-12 h-12 flex items-center justify-center rounded-full border border-[var(--theme-secondary)] hover:bg-[var(--theme-secondary)] transition-colors"><FacebookIcon /></button>
+                                <button onClick={() => handleOAuthSignIn('apple')} disabled={loading} className="w-12 h-12 flex items-center justify-center rounded-full border border-[var(--theme-secondary)] hover:bg-[var(--theme-secondary)] transition-colors"><AppleIcon /></button>
+                            </div>
                         </>
                     )}
                 </main>
-
-                <motion.footer {...{ variants: itemVariants } as any} className="text-center text-sm text-[var(--theme-text-secondary)] p-6 border-t border-white/10">
+                
+                <footer className="text-center text-sm text-[var(--theme-text-secondary)] p-6 bg-[var(--theme-card-bg-alt)] rounded-b-2xl">
                     {isSignUp ? "Already have an account?" : "Don't have an account?"}{' '}
                     <button onClick={toggleMode} className="font-semibold text-[var(--theme-primary)] hover:underline">
-                        {isSignUp ? "Sign in" : "Sign up"}
+                        {isSignUp ? "Log in" : "Sign up"}
                     </button>
-                </motion.footer>
-            </motion.div>
+                </footer>
+            </div>
         </div>
     );
 };

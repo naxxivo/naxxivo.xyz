@@ -25,23 +25,18 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
         asset_details: null,
         is_active: true,
     });
-    const [assetDetailsStr, setAssetDetailsStr] = useState('null');
-    const [jsonError, setJsonError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
-
+    
     useEffect(() => {
         if (itemToEdit) {
             setFormData(itemToEdit);
-            setAssetDetailsStr(JSON.stringify(itemToEdit.asset_details, null, 2));
         } else {
             setFormData({
                 name: '', description: '', category: 'PROFILE_COVER', price: 0,
                 preview_url: '', asset_details: null, is_active: true, is_approved: true
             });
-            setAssetDetailsStr('null');
         }
-        setJsonError(null);
     }, [itemToEdit, isOpen]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -54,35 +49,10 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
         }
     };
 
-    const handleAssetDetailsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const value = e.target.value;
-        setAssetDetailsStr(value);
-        try {
-            JSON.parse(value);
-            setJsonError(null);
-        } catch (error) {
-            setJsonError('Invalid JSON format.');
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (jsonError) {
-            alert('Cannot save. Asset Details contains invalid JSON.');
-            return;
-        }
-
-        let parsedAssetDetails: Json;
-        try {
-            parsedAssetDetails = JSON.parse(assetDetailsStr);
-        } catch (error) {
-            setJsonError('Invalid JSON format. Please fix before saving.');
-            return;
-        }
-
         setIsSaving(true);
-        await onSave({ ...formData, asset_details: parsedAssetDetails, category: 'PROFILE_COVER' });
+        await onSave({ ...formData, category: formData.category || 'PROFILE_COVER' });
         setIsSaving(false);
     };
 
@@ -113,18 +83,15 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Category</label>
-                                            <input 
-                                                type="text" 
-                                                value="Profile Cover" 
-                                                readOnly 
-                                                className="w-full p-2.5 border rounded-md bg-[var(--theme-card-bg-alt)]/50 border-[var(--theme-secondary)] text-[var(--theme-text-secondary)]" 
-                                            />
+                                            <select name="category" value={formData.category} onChange={handleChange} className="admin-select">
+                                                <option value="PROFILE_COVER">Profile Cover</option>
+                                            </select>
                                         </div>
                                         <Input id="price" label="Price (XP)" name="price" type="number" value={String(formData.price) || '0'} onChange={handleChange} required />
                                     </div>
                                     <Input id="preview_url" label="Preview URL" name="preview_url" value={formData.preview_url || ''} onChange={handleChange} />
                                     
-                                    {formData.category === 'PROFILE_COVER' && (
+                                    {formData.category === 'PROFILE_COVER' && itemToEdit && (
                                         <div className="text-center py-2">
                                             <Button type="button" variant="secondary" onClick={() => setIsEditorOpen(true)} className="w-auto">
                                                 Open Visual Editor
@@ -132,17 +99,6 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
                                         </div>
                                     )}
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Asset Details (JSON)</label>
-                                        <textarea 
-                                            name="asset_details" 
-                                            value={assetDetailsStr} 
-                                            onChange={handleAssetDetailsChange} 
-                                            rows={4} 
-                                            className={`json-textarea ${jsonError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[var(--theme-secondary)]'}`} 
-                                        />
-                                        {jsonError && <p className="text-xs text-red-500 mt-1">{jsonError}</p>}
-                                    </div>
                                     <div className="flex items-center">
                                         <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active || false} onChange={e => setFormData(p => ({...p, is_active: e.target.checked}))} className="h-4 w-4 rounded bg-transparent border-[var(--theme-secondary)] text-[var(--theme-primary)] focus:ring-[var(--theme-primary)]" />
                                         <label htmlFor="is_active" className="ml-2 block text-sm text-[var(--theme-text)]/90">Item is Active</label>
@@ -164,14 +120,13 @@ const StoreItemFormModal: React.FC<StoreItemFormModalProps> = ({ isOpen, onClose
                 )}
             </AnimatePresence>
             
-            {isEditorOpen && (
+            {isEditorOpen && itemToEdit && (
                 <CoverEditorModal
                     isOpen={isEditorOpen}
                     onClose={() => setIsEditorOpen(false)}
-                    item={formData as StoreItem}
+                    item={itemToEdit}
                     onSave={(newAssetDetails) => {
                         setFormData(prev => ({ ...prev, asset_details: newAssetDetails }));
-                        setAssetDetailsStr(JSON.stringify(newAssetDetails, null, 2));
                         setIsEditorOpen(false);
                     }}
                 />

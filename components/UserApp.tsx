@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/auth-js';
 import { supabase } from '../integrations/supabase/client';
-import AuthPage from './auth/AuthPage';
-import AuthForm from './auth/AuthForm';
 import Profile from './Profile';
 import BottomNav from './layout/BottomNav';
 import MessagesPage from './messages/MessagesPage';
@@ -22,6 +20,7 @@ import SubscriptionClaimPage from './xp/SubscriptionClaimPage';
 import ManualPaymentPage from './xp/ManualPaymentPage';
 import StorePage from './store/StorePage';
 import CollectionPage from './store/CollectionPage';
+import SellPage from './store/SellPage';
 import InfoPage from './info/InfoPage';
 import EarnXpPage from './xp/EarnXpPage';
 import PasswordModal from './common/PasswordModal';
@@ -29,16 +28,20 @@ import UploadCoverPage from './store/UploadCoverPage';
 import NotificationsPage from './notifications/NotificationsPage';
 import EventsPage from './events/EventsPage';
 import LuckRoyalePage from './events/LuckRoyalePage';
+import ReversiPage from './game/ReversiPage';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationPopup, { type NotificationDetails } from './common/NotificationPopup';
 import Button from './common/Button';
 import type { Json } from '../integrations/supabase/types';
+import PasswordSecurityPage from './settings/PasswordSecurityPage';
+import PrivacyPage from './settings/PrivacyPage';
 
 export type AuthView =
     'discover' | 'profile' | 'settings' | 'messages' | 'edit-profile' | 'music-library' |
     'tools' | 'anime' | 'anime-series' | 'create-series' | 'create-episode' |
     'top-up' | 'subscriptions' | 'manual-payment' |
-    'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover' | 'notifications' | 'events' | 'luck-royale';
+    'store' | 'collection' | 'info' | 'earn-xp' | 'upload-cover' | 'notifications' | 'events' | 'luck-royale' | 'sell-page' |
+    'password-security' | 'privacy' | 'reversi';
 
 const pageVariants = {
     initial: { opacity: 0, y: 20 },
@@ -148,52 +151,30 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
         setAuthView('settings');
     }
 
-    const handleNavigateToMusicLibrary = () => {
-        setAuthView('music-library');
-    }
-    
-     const handleNavigateToEditProfile = () => {
-        setAuthView('edit-profile');
-    }
-
-    const handleNavigateToTools = () => {
-        setAuthView('tools');
-    };
-
-    const handleNavigateToAnime = () => {
-        setAuthView('anime');
-    }
-    
-    const handleNavigateToCreateSeries = () => {
-        setAuthView('create-series');
-    }
-
-    const handleNavigateToCreateEpisode = () => {
-        setAuthView('create-episode');
-    }
-
-    const handleNavigateToTopUp = () => {
-        setAuthView('top-up');
-    }
-
-    const handleNavigateToSubscriptions = () => {
-        setAuthView('subscriptions');
-    }
-    
+    const handleNavigateToMusicLibrary = () => setAuthView('music-library');
+    const handleNavigateToEditProfile = () => setAuthView('edit-profile');
+    const handleNavigateToTools = () => setAuthView('tools');
+    const handleNavigateToAnime = () => setAuthView('anime');
+    const handleNavigateToCreateSeries = () => setAuthView('create-series');
+    const handleNavigateToCreateEpisode = () => setAuthView('create-episode');
+    const handleNavigateToTopUp = () => setAuthView('top-up');
+    const handleNavigateToSubscriptions = () => setAuthView('subscriptions');
     const handleNavigateToManualPayment = (productId: number) => {
         setPaymentProductId(productId);
         setAuthView('manual-payment');
     }
-
     const handleNavigateToStore = () => setAuthView('store');
     const handleNavigateToCollection = () => setAuthView('collection');
+    const handleNavigateToSellPage = () => setAuthView('sell-page');
     const handleNavigateToInfo = () => setAuthView('info');
     const handleNavigateToEarnXp = () => setAuthView('earn-xp');
     const handleNavigateToUploadCover = () => setAuthView('upload-cover');
     const handleNavigateToNotifications = () => setAuthView('notifications');
     const handleNavigateToEvents = () => setAuthView('events');
     const handleNavigateToLuckRoyale = () => setAuthView('luck-royale');
-
+    const handleNavigateToReversi = () => setAuthView('reversi');
+    const handleNavigateToPasswordSecurity = () => setAuthView('password-security');
+    const handleNavigateToPrivacy = () => setAuthView('privacy');
 
     const handleViewProfile = (userId: string) => {
         setIsSearchOpen(false);
@@ -231,6 +212,11 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         onNavigateToMusicLibrary={handleNavigateToMusicLibrary}
                         onLogout={handleLogout}
                         onNavigateToAdminPanel={() => setIsPasswordModalOpen(true)}
+                        onNavigateToSubscriptions={handleNavigateToSubscriptions}
+                        onNavigateToNotifications={handleNavigateToNotifications}
+                        onNavigateToInfo={handleNavigateToInfo}
+                        onNavigateToPasswordSecurity={handleNavigateToPasswordSecurity}
+                        onNavigateToPrivacy={handleNavigateToPrivacy}
                       />,
             'edit-profile': <EditProfilePage 
                                 session={session} 
@@ -252,10 +238,12 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
                         onNavigateToTopUp={handleNavigateToTopUp} 
                         onNavigateToMusicLibrary={handleNavigateToMusicLibrary} 
                         onNavigateToStore={handleNavigateToStore} 
-                        onNavigateToCollection={handleNavigateToCollection} 
+                        onNavigateToCollection={handleNavigateToCollection}
+                        onNavigateToSellPage={handleNavigateToSellPage}
                         onNavigateToInfo={handleNavigateToInfo} 
                         onNavigateToEarnXp={handleNavigateToEarnXp}
                         onNavigateToEvents={handleNavigateToEvents}
+                        onNavigateToReversi={handleNavigateToReversi}
                    />,
             anime: <AnimePage 
                         key={refreshAnimeKey}
@@ -275,18 +263,22 @@ const UserApp: React.FC<UserAppProps> = ({ session, onEnterAdminView }) => {
             'manual-payment': <ManualPaymentPage onBack={() => setAuthView('top-up')} session={session} productId={paymentProductId!} onSubmit={() => setAuthView('top-up')} showNotification={showNotification} />,
             store: <StorePage onBack={() => setAuthView('tools')} session={session} onNavigateToUploadCover={handleNavigateToUploadCover} showNotification={showNotification} />,
             collection: <CollectionPage onBack={() => setAuthView('tools')} session={session} showNotification={showNotification} />,
+            'sell-page': <SellPage onBack={() => setAuthView('tools')} session={session} showNotification={showNotification} />,
             info: <InfoPage onBack={() => setAuthView('tools')} />,
             'earn-xp': <EarnXpPage onBack={() => setAuthView('tools')} session={session} />,
             'upload-cover': <UploadCoverPage onBack={() => setAuthView('store')} session={session} />,
-            'notifications': <NotificationsPage session={session} onBack={() => setAuthView('discover')} onMarkAllRead={() => setUnreadNotificationCount(0)} />,
+            notifications: <NotificationsPage session={session} onBack={() => setAuthView('discover')} onMarkAllRead={() => setUnreadNotificationCount(0)} />,
             events: <EventsPage onBack={() => setAuthView('tools')} onNavigateToLuckRoyale={handleNavigateToLuckRoyale} />,
-            'luck-royale': <LuckRoyalePage onBack={() => setAuthView('events')} session={session} showNotification={showNotification} />
+            'luck-royale': <LuckRoyalePage onBack={() => setAuthView('events')} session={session} showNotification={showNotification} />,
+            reversi: <ReversiPage onBack={() => setAuthView('tools')} />,
+            'password-security': <PasswordSecurityPage onBack={() => setAuthView('settings')} showNotification={showNotification} />,
+            'privacy': <PrivacyPage onBack={() => setAuthView('settings')} />,
         }[authView];
 
         const isFullScreenPage = [
             'profile', 'music-library', 'tools', 'anime', 'anime-series', 'create-series', 'create-episode',
-            'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile',
-            'store', 'collection', 'info', 'earn-xp', 'upload-cover', 'notifications', 'events', 'luck-royale'
+            'top-up', 'subscriptions', 'manual-payment', 'settings', 'edit-profile', 'password-security', 'privacy',
+            'store', 'collection', 'sell-page', 'info', 'earn-xp', 'upload-cover', 'notifications', 'events', 'luck-royale', 'reversi'
         ].includes(authView);
 
         pageContent = (

@@ -12,7 +12,6 @@ import type { Tables, TablesUpdate } from './integrations/supabase/types';
 import ConnectivityStatusOverlay from './components/common/ConnectivityStatusOverlay';
 
 type AuthMode = 'onboarding' | 'login' | 'signup';
-type UserRole = 'user' | 'admin';
 
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
@@ -112,7 +111,7 @@ const App: React.FC = () => {
                     .from('profiles')
                     .select('has_seen_welcome_bonus')
                     .eq('id', session.user.id)
-                    .maybeSingle();
+                    .single();
 
                 if (profile && !profile.has_seen_welcome_bonus) {
                     setShowWelcomeBonus(true);
@@ -142,22 +141,9 @@ const App: React.FC = () => {
             <ConnectivityStatusOverlay isOffline={isOffline} isServerDown={!isOffline && isServerDown} />
             
             {!isUserLoggedIn ? (
-                <div className="w-full min-h-screen flex items-center justify-center">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={authMode}
-                            {...{
-                                initial: { opacity: 0 },
-                                animate: { opacity: 1 },
-                                exit: { opacity: 0 },
-                                transition: { duration: 0.3 },
-                            } as any}
-                            className="w-full h-full"
-                        >
-                            {authMode === 'onboarding' && <AuthPage onSetMode={setAuthMode} />}
-                            {(authMode === 'login' || authMode === 'signup') && <AuthForm mode={authMode} onSetMode={setAuthMode} />}
-                        </motion.div>
-                    </AnimatePresence>
+                 <div className="w-full min-h-screen flex items-center justify-center bg-[var(--theme-bg)]">
+                    {authMode === 'onboarding' && <AuthPage onSetMode={setAuthMode} />}
+                    {(authMode === 'login' || authMode === 'signup') && <AuthForm mode={authMode} onSetMode={setAuthMode} />}
                 </div>
             ) : (session && (
                 <>

@@ -577,6 +577,9 @@ export interface Database {
           created_at: string;
           created_by_user_id: string | null;
           is_approved: boolean | null;
+          sellable: boolean | null;
+          sell_price: number | null;
+          sell_currency: Enums<'currency'> | null;
         };
         Insert: {
           name: string;
@@ -588,6 +591,9 @@ export interface Database {
           is_active?: boolean;
           created_by_user_id?: string | null;
           is_approved?: boolean | null;
+          sellable?: boolean | null;
+          sell_price?: number | null;
+          sell_currency?: Enums<'currency'> | null;
         };
         Update: {
           name?: string;
@@ -599,6 +605,9 @@ export interface Database {
           is_active?: boolean;
           created_by_user_id?: string | null;
           is_approved?: boolean | null;
+          sellable?: boolean | null;
+          sell_price?: number | null;
+          sell_currency?: Enums<'currency'> | null;
         };
       },
       user_inventory: {
@@ -742,10 +751,26 @@ export interface Database {
           products: any
         }[]
       }
+      get_sellable_inventory_items: {
+        Args: Record<string, never>
+        Returns: {
+          id: number
+          user_id: string
+          item_id: number
+          purchased_at: string
+          store_items: Json
+        }[]
+      }
       redeem_gift_code: {
         Args: {
           p_code: string
           p_user_id: string
+        }
+        Returns: string
+      }
+      sell_item_from_inventory: {
+        Args: {
+          p_inventory_id: bigint
         }
         Returns: string
       }

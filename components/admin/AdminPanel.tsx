@@ -10,9 +10,10 @@ import AdminTasksPage from './AdminTasksPage';
 import AdminGiftCodesPage from './AdminGiftCodesPage';
 import AdminCoverApprovalPage from './AdminCoverApprovalPage';
 import AdminLuckRoyalePage from './AdminLuckRoyalePage';
+import AdminSellSettingsPage from './AdminSellSettingsPage';
 import { 
     ToolsIcon, ProfileIcon, CreditCardIcon, StoreIcon, SettingsIcon, 
-    LogoutIcon, ClipboardListIcon, GiftIcon, PaintBrushIcon, CheckCircleIcon, TicketIcon
+    LogoutIcon, ClipboardListIcon, GiftIcon, PaintBrushIcon, CheckCircleIcon, TicketIcon, CoinIcon
 } from '../common/AppIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,7 +22,7 @@ interface AdminPanelProps {
     onExitAdminView: () => void;
 }
 
-type AdminView = 'dashboard' | 'users' | 'payments' | 'products' | 'store_items' | 'settings' | 'tasks' | 'gift_codes' | 'cover_approvals' | 'luck_royale';
+type AdminView = 'dashboard' | 'users' | 'payments' | 'products' | 'store_items' | 'settings' | 'tasks' | 'gift_codes' | 'cover_approvals' | 'luck_royale' | 'sell_settings';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => {
     const [view, setView] = useState<AdminView>('dashboard');
@@ -33,6 +34,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
         { id: 'cover_approvals', label: 'Cover Approvals', icon: <CheckCircleIcon className="w-5 h-5"/> },
         { id: 'products', label: 'Top-Up Products', icon: <PaintBrushIcon className="w-5 h-5"/> },
         { id: 'store_items', label: 'Bazaar Items', icon: <StoreIcon className="w-5 h-5"/> },
+        { id: 'sell_settings', label: 'Sell Settings', icon: <CoinIcon className="w-5 h-5"/> },
         { id: 'luck_royale', label: 'Luck Royale', icon: <TicketIcon className="w-5 h-5"/> },
         { id: 'tasks', label: 'Tasks', icon: <ClipboardListIcon className="w-5 h-5"/> },
         { id: 'gift_codes', label: 'Gift Codes', icon: <GiftIcon className="w-5 h-5"/> },
@@ -50,6 +52,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ session, onExitAdminView }) => 
         settings: <AppSettingsPage />,
         cover_approvals: <AdminCoverApprovalPage session={session} />,
         luck_royale: <AdminLuckRoyalePage session={session} />,
+        sell_settings: <AdminSellSettingsPage />,
     };
 
     const currentNavItem = navItems.find(item => item.id === view);

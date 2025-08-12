@@ -19,6 +19,11 @@ interface SettingsPageProps {
     onNavigateToMusicLibrary: () => void;
     onLogout: () => void;
     onNavigateToAdminPanel: () => void;
+    onNavigateToSubscriptions: () => void;
+    onNavigateToNotifications: () => void;
+    onNavigateToInfo: () => void;
+    onNavigateToPasswordSecurity: () => void;
+    onNavigateToPrivacy: () => void;
 }
 
 const SettingsItem = ({ icon, title, onClick }: { icon: React.ReactNode, title: string, onClick?: () => void }) => (
@@ -33,7 +38,19 @@ const SettingsItem = ({ icon, title, onClick }: { icon: React.ReactNode, title: 
     </button>
 );
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, onNavigateToEditProfile, onNavigateToMusicLibrary, onNavigateToAdminPanel }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ 
+    session, 
+    onBack, 
+    onLogout, 
+    onNavigateToEditProfile, 
+    onNavigateToMusicLibrary, 
+    onNavigateToAdminPanel,
+    onNavigateToSubscriptions,
+    onNavigateToNotifications,
+    onNavigateToInfo,
+    onNavigateToPasswordSecurity,
+    onNavigateToPrivacy
+}) => {
     const [profile, setProfile] = useState<Pick<Tables<'profiles'>, 'is_admin' | 'xp_balance' | 'name' | 'username' | 'photo_url'> | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -56,15 +73,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ session, onBack, onLogout, 
 
     const accountSettings = [
         { icon: <UserCircleIcon className="text-blue-500" />, title: "Account Details", onClick: onNavigateToEditProfile },
-        { icon: <LockIcon className="text-green-500" />, title: "Security & Password", onClick: () => {} },
-        { icon: <CreditCardIcon className="text-purple-500" />, title: "Subscriptions", onClick: () => {} },
-        { icon: <BellIcon className="text-yellow-500" />, title: "Notifications", onClick: () => {} },
+        { icon: <LockIcon className="text-green-500" />, title: "Security & Password", onClick: onNavigateToPasswordSecurity },
+        { icon: <CreditCardIcon className="text-purple-500" />, title: "Subscriptions", onClick: onNavigateToSubscriptions },
+        { icon: <BellIcon className="text-yellow-500" />, title: "Notifications", onClick: onNavigateToNotifications },
     ];
     
     const moreSettings = [
-        { icon: <ShieldCheckIcon className="text-teal-500" />, title: "Privacy Center", onClick: () => {} },
-        { icon: <QuestionMarkCircleIcon className="text-orange-500" />, title: "Help & Support", onClick: () => {} },
-        { icon: <InfoIcon className="text-indigo-500" />, title: "About NAXXIVO", onClick: () => {} },
+        { icon: <ShieldCheckIcon className="text-teal-500" />, title: "Privacy Center", onClick: onNavigateToPrivacy },
+        { icon: <QuestionMarkCircleIcon className="text-orange-500" />, title: "Help & Support", onClick: onNavigateToInfo },
+        { icon: <InfoIcon className="text-indigo-500" />, title: "About NAXXIVO", onClick: onNavigateToInfo },
     ];
 
     if (loading) {

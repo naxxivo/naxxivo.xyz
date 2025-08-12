@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackArrowIcon, StoreIcon, CollectionIcon, InfoIcon, TrophyIcon, TicketIcon } from '../common/AppIcons';
+import { BackArrowIcon, StoreIcon, CollectionIcon, InfoIcon, TrophyIcon, TicketIcon, PuzzleIcon } from '../common/AppIcons';
 import { motion } from 'framer-motion';
 
 interface ToolsPageProps {
@@ -12,6 +12,8 @@ interface ToolsPageProps {
     onNavigateToInfo: () => void;
     onNavigateToEarnXp: () => void;
     onNavigateToEvents: () => void;
+    onNavigateToSellPage: () => void;
+    onNavigateToReversi: () => void;
 }
 
 const ToolCard = ({ title, description, icon, comingSoon, delay, onClick }: { title: string, description: string, icon: React.ReactNode, comingSoon?: boolean, delay: number, onClick?: () => void }) => (
@@ -44,7 +46,7 @@ const ToolCard = ({ title, description, icon, comingSoon, delay, onClick }: { ti
 );
 
 
-const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavigateToTopUp, onNavigateToMusicLibrary, onNavigateToStore, onNavigateToCollection, onNavigateToInfo, onNavigateToEarnXp, onNavigateToEvents }) => {
+const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavigateToTopUp, onNavigateToMusicLibrary, onNavigateToStore, onNavigateToCollection, onNavigateToInfo, onNavigateToEarnXp, onNavigateToEvents, onNavigateToSellPage, onNavigateToReversi }) => {
     
     const allTools = [
         {
@@ -76,6 +78,13 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavi
             comingSoon: false,
         },
         {
+            title: "Pawn Shop",
+            description: "Sell items for currency.",
+            icon: '💰',
+            onClick: onNavigateToSellPage,
+            comingSoon: false,
+        },
+        {
             title: "Event Center",
             description: "Try your luck in special events.",
             icon: <TicketIcon />,
@@ -86,6 +95,13 @@ const ToolsPage: React.FC<ToolsPageProps> = ({ onBack, onNavigateToAnime, onNavi
             description: "Customize your profile.",
             icon: '🎵',
             onClick: onNavigateToMusicLibrary,
+            comingSoon: false,
+        },
+        {
+            title: "Reversi Game",
+            description: "Play a classic board game.",
+            icon: <PuzzleIcon />,
+            onClick: onNavigateToReversi,
             comingSoon: false,
         },
         {
