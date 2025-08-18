@@ -1,5 +1,5 @@
 {
-  "name": "naxxivo",
+  "name": "login-page",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,14 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "path": "^0.12.7",
-    "vite": "^7.0.6",
-    "react-dom": "^19.1.1",
+    "@supabase/supabase-js": "2",
     "react": "^19.1.1",
-    "@supabase/supabase-js": "^2.53.0",
-    "framer-motion": "^12.23.12",
-    "@supabase/auth-js": "^2.71.1",
-    "react-confetti-explosion": "^3.0.3"
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

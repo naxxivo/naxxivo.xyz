@@ -3,93 +3,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light">
-    
-    <title>NAXXIVO - Your World, Your Story</title>
-    <meta name="description" content="A social app for sharing memories, connecting with friends, and discovering new adventures." />
-    <meta name="keywords" content="NAXXIVO, social media, community, posts, images, travel, memories, connect, share" />
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="NAXXIVO - Your World, Your Story" />
-    <meta property="og:description" content="Join the community, connect with friends, and share your moments on NAXXIVO." />
-    <meta property="og:image" content="https://storage.googleapis.com/pai-images/421457c631c34a21a605809823c93e43.jpeg" />
-    <meta property="og:url" content="" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="NAXXIVO - Your World, Your Story" />
-    <meta property="twitter:description" content="Join the community, connect with friends, and share your moments on NAXXIVO." />
-    <meta property="twitter:image" content="https://storage.googleapis.com/pai-images/421457c631c34a21a605809823c93e43.jpeg" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>Login Page</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-/* Clean, Modern Theme */
-:root {
-    --theme-bg: #f8f9fa; /* Softer white */
-    --theme-text: #212529; /* Darker, more readable text */
-    --theme-text-secondary: #6c757d;
-    --theme-primary: #0d6efd; /* A nice bootstrap blue */
-    --theme-primary-hover: #0b5ed7;
-    --theme-primary-text: #ffffff;
-    --theme-secondary: #e9ecef; /* Lighter borders */
-    --theme-secondary-hover: #dee2e6;
-    --theme-secondary-text: #212529;
-    --theme-card-bg: #ffffff;
-    --theme-card-bg-alt: #f8f9fa;
-    --theme-header-bg: #ffffff;
-    --theme-header-text: #212529;
-    --theme-ring: #86b7fe; /* Blue focus ring */
-    --theme-input-border: #ced4da;
-    --theme-button-shadow: rgba(13, 110, 253, 0.25);
-}
-
-/* Base styles */
-html {
-    background-color: transparent;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: var(--theme-bg);
-    color: var(--theme-text);
-}
-
-.font-logo {
-    font-family: 'Pacifico', cursive;
-}
-.hide-scrollbar::-webkit-scrollbar {
-   display: none;
-}
-.hide-scrollbar {
-   -ms-overflow-style: none;
-   scrollbar-width: none;
-}
-    </style>
 <script type="importmap">
 {
   "imports": {
-    "path": "https://esm.sh/path@^0.12.7",
-    "vite": "https://esm.sh/vite@^7.0.6",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
     "react/": "https://esm.sh/react@^19.1.1/",
     "react": "https://esm.sh/react@^19.1.1",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.53.0",
-    "framer-motion": "https://esm.sh/framer-motion@^12.23.12",
-    "@supabase/auth-js": "https://esm.sh/@supabase/auth-js@^2.71.1",
-    "react-confetti-explosion": "https://esm.sh/react-confetti-explosion@^3.0.3"
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/"
   }
 }
 </script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7837194709908029"
-     crossorigin="anonymous"></script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="antialiased">
+<body class="bg-slate-900 text-white">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

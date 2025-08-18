@@ -1,8 +1,8 @@
 {
-  "name": "NAXXIVO",
-  "description": "NAXXIVO is a social platform for users to share posts, images, and connect with a vibrant community. It features a clean, modern user interface with animations and interactive elements, powered by a Supabase backend.",
+  "name": "Login Page",
+  "description": "A sleek and modern login page built with React and Tailwind CSS, featuring a glassmorphism design, social login options, and interactive form states.",
   "requestFramePermissions": [
+    "camera",
     "microphone"
-  ],
-  "prompt": ""
+  ]
 }
