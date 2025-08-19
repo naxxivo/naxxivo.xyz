@@ -1,8 +1,5 @@
 {
-  "name": "Login Page",
-  "description": "A sleek and modern login page built with React and Tailwind CSS, featuring a glassmorphism design, social login options, and interactive form states.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
+  "name": "Nordic Commerce",
+  "description": "A modern e-commerce web application with a clean and premium Nordic-inspired layout. It features a home page, product listings, detailed product views, a shopping cart, and a user profile section.",
+  "requestFramePermissions": []
 }
