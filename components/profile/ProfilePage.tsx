@@ -11,6 +11,8 @@ import type { Profile } from '../../contexts/AuthContext';
 
 interface ProfilePageProps {
   onNavigateHome: () => void;
+  onNavigateToOrders: () => void;
+  onNavigateToWishlist: () => void;
 }
 
 const fetchProfileData = async (userId: string) => {
@@ -42,8 +44,10 @@ const ProfileHeader: React.FC<{
     followerCount: number, 
     followingCount: number,
     onEdit: () => void
-    onNavigateHome: () => void 
-}> = ({ profile, followerCount, followingCount, onEdit, onNavigateHome }) => {
+    onNavigateHome: () => void
+    onNavigateToOrders: () => void
+    onNavigateToWishlist: () => void;
+}> = ({ profile, followerCount, followingCount, onEdit, onNavigateHome, onNavigateToOrders, onNavigateToWishlist }) => {
     const { user } = useAuth();
     return (
         <div className="bg-white shadow-sm rounded-2xl overflow-hidden">
@@ -70,7 +74,13 @@ const ProfileHeader: React.FC<{
                         <p><span className="font-bold">{formatXp(followingCount)}</span> <span className="text-gray-500">Following</span></p>
                     </div>
                 </div>
-                 <div className="absolute top-20 right-4 md:static md:ml-auto">
+                 <div className="absolute top-20 right-4 md:static md:ml-auto flex flex-col md:flex-row gap-2 items-center">
+                    <button onClick={onNavigateToWishlist} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-300 transition-colors">
+                        My Wishlist
+                    </button>
+                     <button onClick={onNavigateToOrders} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-300 transition-colors">
+                        My Orders
+                    </button>
                      <button onClick={onEdit} className="bg-yellow-400 text-black font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-yellow-500 transition-colors">
                         Edit Profile
                     </button>
@@ -80,7 +90,7 @@ const ProfileHeader: React.FC<{
     );
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateHome }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateHome, onNavigateToOrders, onNavigateToWishlist }) => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -111,6 +121,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateHome }) => {
                 followingCount={followingCount}
                 onEdit={() => setIsEditModalOpen(true)}
                 onNavigateHome={onNavigateHome}
+                onNavigateToOrders={onNavigateToOrders}
+                onNavigateToWishlist={onNavigateToWishlist}
             />
             
             <div className="mt-8">

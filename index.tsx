@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as tanstackQuery from '@tanstack/react-query';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -10,17 +10,17 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-const queryClient = new QueryClient();
+const queryClient = new tanstackQuery.QueryClient();
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
+      <tanstackQuery.QueryClientProvider client={queryClient}>
         <AuthProvider>
           <App />
         </AuthProvider>
-      </QueryClientProvider>
+      </tanstackQuery.QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

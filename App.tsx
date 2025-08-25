@@ -1,51 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './components/Auth';
 import Home from './components/Home';
 import LoadingScreen from './components/LoadingScreen';
 import ProfilePage from './components/profile/ProfilePage';
 import AdminDashboard from './components/admin/AdminDashboard';
+import CartPage from './components/cart/CartPage';
+import OrdersPage from './components/orders/OrdersPage';
+import OrderDetailPage from './components/orders/OrderDetailPage';
+import WishlistPage from './components/wishlist/WishlistPage';
+import CheckoutPage from './components/checkout/CheckoutPage';
+import PaymentPage from './components/payment/PaymentPage';
 
-export type View = 'home' | 'profile' | 'admin';
+export type View = 'home' | 'profile' | 'admin' | 'cart' | 'orders' | 'wishlist' | 'checkout' | 'payment' | 'orderDetail';
 
 const App: React.FC = () => {
-  const { session, profile, loading } = useAuth();
-  const [view, setView] = useState<View>('home');
+  const [currentView, setCurrentView] = useState<{ view: View; params: { orderId?: string, productId?: string } }>({ view: 'home', params: {} });
 
-  // When session is lost, navigate back to home
-  React.useEffect(() => {
+  const { session, profile, loading } = useAuth();
+
+  useEffect(() => {
     if (!session) {
-      setView('home');
+      setCurrentView({ view: 'home', params: {} });
     }
   }, [session]);
 
-  const navigate = (newView: View) => {
-    setView(newView);
+  const navigate = (view: View, params: { orderId?: string, productId?: string } = {}) => {
+    setCurrentView({ view, params });
   };
   
-  const renderContent = () => {
-      if (loading) {
-          return <LoadingScreen />;
-      }
-      if (!session || !profile) {
-          return <Auth />;
-      }
-      switch(view) {
+  if (loading) {
+    return <LoadingScreen />;
+  }
+  
+  if (!session || !profile) {
+    return <Auth />;
+  }
+
+  const renderView = () => {
+      switch(currentView.view) {
           case 'admin':
               return profile.is_admin
                 ? <AdminDashboard onNavigateHome={() => navigate('home')} />
-                : <Home onNavigateToProfile={() => navigate('profile')} onNavigateToAdmin={() => navigate('admin')} />;
+                : <Home onNavigateToProfile={() => navigate('profile')} onNavigateToAdmin={() => navigate('admin')} onNavigateToCart={() => navigate('cart')} onNavigateToCheckout={(productId) => navigate('checkout', { productId })} />;
           case 'profile':
-              return <ProfilePage onNavigateHome={() => navigate('home')} />;
+              return <ProfilePage onNavigateHome={() => navigate('home')} onNavigateToOrders={() => navigate('orders')} onNavigateToWishlist={() => navigate('wishlist')} />;
+          case 'cart':
+              return <CartPage onNavigateHome={() => navigate('home')} onNavigateToPayment={(orderId) => navigate('payment', { orderId })} />;
+          case 'orders':
+              return <OrdersPage onNavigateHome={() => navigate('home')} onNavigateToOrder={(orderId) => navigate('orderDetail', { orderId })} />;
+          case 'orderDetail':
+              if (!currentView.params.orderId) return <OrdersPage onNavigateHome={() => navigate('home')} onNavigateToOrder={(orderId) => navigate('orderDetail', { orderId })} />;
+              return <OrderDetailPage orderId={currentView.params.orderId} onNavigateBack={() => navigate('orders')} />;
+          case 'wishlist':
+              return <WishlistPage onNavigateHome={() => navigate('home')} onNavigateToCheckout={(productId) => navigate('checkout', { productId })} />;
+          case 'checkout':
+              if (!currentView.params.productId) return <Home onNavigateToProfile={() => navigate('profile')} onNavigateToAdmin={() => navigate('admin')} onNavigateToCart={() => navigate('cart')} onNavigateToCheckout={(productId) => navigate('checkout', { productId })} />;
+              return <CheckoutPage productId={currentView.params.productId} onNavigateHome={() => navigate('home')} onNavigateToPayment={(orderId) => navigate('payment', { orderId })} />;
+          case 'payment':
+              if (!currentView.params.orderId) return <OrdersPage onNavigateHome={() => navigate('home')} onNavigateToOrder={(orderId) => navigate('orderDetail', { orderId })} />;
+              return <PaymentPage orderId={currentView.params.orderId} onNavigateToOrders={() => navigate('orders')} />;
           case 'home':
           default:
-              return <Home onNavigateToProfile={() => navigate('profile')} onNavigateToAdmin={() => navigate('admin')} />;
+              return <Home onNavigateToProfile={() => navigate('profile')} onNavigateToAdmin={() => navigate('admin')} onNavigateToCart={() => navigate('cart')} onNavigateToCheckout={(productId) => navigate('checkout', { productId })} />;
       }
   }
 
   return (
     <div className="bg-gray-50 text-gray-900 min-h-screen font-sans">
-      {renderContent()}
+      {renderView()}
     </div>
   );
 };

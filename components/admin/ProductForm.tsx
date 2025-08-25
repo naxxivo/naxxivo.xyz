@@ -72,7 +72,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onClose,
                 if (error) throw error;
             } else {
                 // Create new product
-                const { error } = await supabase.from('products').insert(payload);
+                const { error } = await supabase.from('products').insert([payload]);
                 if (error) throw error;
             }
 

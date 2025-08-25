@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import type { ProductWithCategory } from '../types';
 import ProductCard from './ProductCard';
+import { useCart } from '../hooks/useCart';
 
 const NaxStoreLogo: React.FC = () => (
   <h1 className="text-2xl font-bold tracking-tighter">
@@ -30,15 +31,25 @@ const AdminIcon: React.FC = () => (
     </svg>
 );
 
+const CartIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+);
+
 
 interface HeaderProps {
     onNavigateToProfile: () => void;
     onNavigateToAdmin: () => void;
+    onNavigateToCart: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNavigateToProfile, onNavigateToAdmin }) => {
+const Header: React.FC<HeaderProps> = ({ onNavigateToProfile, onNavigateToAdmin, onNavigateToCart }) => {
     const { user, profile, signOut } = useAuth();
+    const { cartItems } = useCart();
     
+    const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
     return (
         <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,8 +62,16 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToProfile, onNavigateToAdmin 
                                 <span className="hidden md:block">Admin</span>
                             </button>
                         )}
+                        <button onClick={onNavigateToCart} className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600" aria-label="Shopping Cart">
+                            <CartIcon />
+                            {cartItemCount > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-xs font-bold text-black">
+                                    {cartItemCount}
+                                </span>
+                            )}
+                        </button>
                         <button onClick={onNavigateToProfile} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                            <span className="text-sm font-medium text-gray-700 hidden md:block max-w-xs truncate" title={user?.email}>{user?.email}</span>
+                            <span className="text-sm font-medium text-gray-700 hidden md:block max-w-[120px] truncate" title={user?.email}>{user?.email}</span>
                             <UserIcon />
                         </button>
                         <button onClick={signOut} className="text-gray-500 hover:text-yellow-500 transition-colors p-2 rounded-lg hover:bg-gray-100" aria-label="Logout">
@@ -98,9 +117,11 @@ const fetchProducts = async (): Promise<ProductWithCategory[]> => {
 interface HomeProps {
     onNavigateToProfile: () => void;
     onNavigateToAdmin: () => void;
+    onNavigateToCart: () => void;
+    onNavigateToCheckout: (productId: string) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin }) => {
+const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin, onNavigateToCart, onNavigateToCheckout }) => {
     const { data: products, isLoading, error } = useQuery({
         queryKey: ['products'],
         queryFn: fetchProducts,
@@ -122,7 +143,7 @@ const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin }) =
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {products.map((product, index) => (
-                    <ProductCard key={product.id} product={product} index={index} />
+                    <ProductCard key={product.id} product={product} index={index} onNavigateToCheckout={onNavigateToCheckout} />
                 ))}
             </div>
         );
@@ -130,9 +151,9 @@ const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin }) =
 
     return (
         <div className="animate-fade-in">
-            <Header onNavigateToProfile={onNavigateToProfile} onNavigateToAdmin={onNavigateToAdmin} />
+            <Header onNavigateToProfile={onNavigateToProfile} onNavigateToAdmin={onNavigateToAdmin} onNavigateToCart={onNavigateToCart} />
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">New Arrivals</h2>
+                <h2 className="text-4xl font-bold tracking-tight text-gray-900 mb-6 pb-4 border-b-2 border-gray-200">New Arrivals</h2>
                 {renderProductGrid()}
             </main>
         </div>
