@@ -6,9 +6,10 @@ import type { ProductWithCategory } from '../../types';
 interface WishlistPageProps {
   onNavigateHome: () => void;
   onNavigateToCheckout: (productId: string) => void;
+  onNavigateToDetail: (productId: string) => void;
 }
 
-const WishlistPage: React.FC<WishlistPageProps> = ({ onNavigateHome, onNavigateToCheckout }) => {
+const WishlistPage: React.FC<WishlistPageProps> = ({ onNavigateHome, onNavigateToCheckout, onNavigateToDetail }) => {
   const { wishlist, isLoading, error } = useWishlist();
 
   const renderContent = () => {
@@ -35,6 +36,7 @@ const WishlistPage: React.FC<WishlistPageProps> = ({ onNavigateHome, onNavigateT
               product={item.products as ProductWithCategory} 
               index={index} 
               onNavigateToCheckout={onNavigateToCheckout}
+              onNavigateToDetail={onNavigateToDetail}
             />
           ) : null
         )}

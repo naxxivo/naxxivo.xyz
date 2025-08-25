@@ -34,3 +34,9 @@ export type UserAddress = Database['public']['Tables']['user_addresses']['Row'];
 
 // Types for Manual Payment feature
 export type ManualPayment = Database['public']['Tables']['manual_payments']['Row'];
+
+// Types for the new Review feature
+export type Review = Database['public']['Tables']['reviews']['Row'];
+export type ReviewWithProfile = Review & {
+  profiles: Pick<Database['public']['Tables']['profiles']['Row'], 'id' | 'name' | 'photo_url'> | null;
+};

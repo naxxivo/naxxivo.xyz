@@ -9,137 +9,68 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      admin_audit_log: {
+      cart_items: {
         Row: {
-          action: string
-          admin_user_id: string
-          created_at: string
-          details: Json | null
-          id: number
-          target_id: string
-        }
-        Insert: {
-          action: string
-          admin_user_id: string
-          details?: Json | null
-          id?: number
-          target_id: string
-        }
-        Update: {
-          action?: string
-          admin_user_id?: string
-          details?: Json | null
-          id?: number
-          target_id?: string
-        }
-      }
-      anime_episodes: {
-        Row: {
-          created_at: string
-          episode_number: number
-          id: number
-          series_id: number
-          title: string | null
-          video_url: string
-        }
-        Insert: {
-          episode_number: number
-          id?: number
-          series_id: number
-          title?: string | null
-          video_url: string
-        }
-        Update: {
-          episode_number?: number
-          id?: number
-          series_id?: number
-          title?: string | null
-          video_url?: string
-        }
-      }
-      anime_series: {
-        Row: {
-          banner_url: string | null
-          created_at: string
-          description: string | null
-          id: number
-          thumbnail_url: string | null
-          title: string
+          id: string
           user_id: string
+          product_id: string
+          quantity: number
+          created_at: string
         }
         Insert: {
-          banner_url?: string | null
-          description?: string | null
-          id?: number
-          thumbnail_url?: string | null
-          title: string
+          id?: string
           user_id: string
+          product_id: string
+          quantity?: number
+          created_at?: string
         }
         Update: {
-          banner_url?: string | null
-          description?: string | null
-          id?: number
-          thumbnail_url?: string | null
-          title?: string
+          id?: string
           user_id?: string
+          product_id?: string
+          quantity?: number
+          created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
-      app_settings: {
+      categories: {
         Row: {
-          key: string
-          value: Json
+          id: string
+          name: string
           description: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          key: string
-          value: Json
-          description?: string | null
-        }
-        Update: {
-          key?: string
-          value?: Json
-          description?: string | null
-        }
-      }
-      daily_claims: {
-        Row: {
-          claim_date: string
-          claimed_xp: number
+          image_url: string | null
           created_at: string
-          id: number
-          user_id: string
-          user_subscription_id: number
         }
         Insert: {
-          claim_date: string
-          claimed_xp: number
-          id?: number
-          user_id: string
-          user_subscription_id: number
+          id?: string
+          name: string
+          description?: string | null
+          image_url?: string | null
+          created_at?: string
         }
         Update: {
-          claim_date?: string
-          claimed_xp?: number
-          id?: number
-          user_id?: string
-          user_subscription_id?: number
+          id?: string
+          name?: string
+          description?: string | null
+          image_url?: string | null
+          created_at?: string
         }
-      }
-      follows: {
-        Row: {
-          created_at: string
-          follower_id: string
-          following_id: string
-        }
-        Insert: {
-          follower_id: string
-          following_id: string
-        }
-        Update: {
-          follower_id?: string
-          following_id?: string
-        }
+        Relationships: []
       }
       manual_payments: {
         Row: {
@@ -182,96 +113,112 @@ export interface Database {
           order_id?: string | null
           payment_method?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "manual_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_payments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
-      messages: {
+      order_items: {
         Row: {
-          content: string
-          created_at: string
-          id: number
-          is_read: boolean
-          recipient_id: string
-          sender_id: string
-          status: string
-        }
-        Insert: {
-          content: string
-          id?: number
-          is_read?: boolean
-          recipient_id: string
-          sender_id: string
-          status?: string
-        }
-        Update: {
-          content?: string
-          id?: number
-          is_read?: boolean
-          recipient_id?: string
-          sender_id?: string
-          status?: string
-        }
-      }
-      notifications: {
-        Row: {
-          id: number
-          user_id: string
-          type: Database["public"]["Enums"]["notification_type"]
-          actor_id: string | null
-          entity_id: string | null
-          content: Json | null
-          is_read: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          user_id: string
-          type: Database["public"]["Enums"]["notification_type"]
-          actor_id?: string | null
-          entity_id?: string | null
-          content?: Json | null
-          is_read?: boolean
-        }
-        Update: {
-          id?: number
-          user_id?: string
-          type?: Database["public"]["Enums"]["notification_type"]
-          actor_id?: string | null
-          entity_id?: string | null
-          content?: Json | null
-          is_read?: boolean
-        }
-      }
-      xp_products: {
-        Row: {
-          created_at: string
-          description: string | null
-          details: Json | null
-          icon: string | null
-          id: number
-          is_active: boolean
-          name: string
+          id: string
+          order_id: string
+          product_id: string
+          quantity: number
           price: number
-          product_type: Database["public"]["Enums"]["xp_product_type"]
+          created_at: string
         }
         Insert: {
-          description?: string | null
-          details?: Json | null
-          icon?: string | null
-          id?: number
-          is_active?: boolean
-          name: string
+          id?: string
+          order_id: string
+          product_id: string
+          quantity: number
           price: number
-          product_type: Database["public"]["Enums"]["xp_product_type"]
+          created_at?: string
         }
         Update: {
-          description?: string | null
-          details?: Json | null
-          icon?: string | null
-          id?: number
-          is_active?: boolean
-          name?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          quantity?: number
           price?: number
-          product_type?: Database["public"]["Enums"]["xp_product_type"]
+          created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      orders: {
+        Row: {
+          id: string
+          user_id: string
+          total_amount: number
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_status: Database["public"]["Enums"]["order_payment_status"]
+          order_status: Database["public"]["Enums"]["order_status"]
+          shipping_address: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          total_amount: number
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_status?: Database["public"]["Enums"]["order_payment_status"]
+          order_status?: Database["public"]["Enums"]["order_status"]
+          shipping_address?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          total_amount?: number
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_status?: Database["public"]["Enums"]["order_payment_status"]
+          order_status?: Database["public"]["Enums"]["order_status"]
+          shipping_address?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       products: {
         Row: {
@@ -313,156 +260,22 @@ export interface Database {
           stock_quantity?: number
           updated_at?: string
         }
-      }
-      categories: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          image_url: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          image_url?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          image_url?: string | null
-          created_at?: string
-        }
-      }
-      cart_items: {
-        Row: {
-          id: string
-          user_id: string
-          product_id: string
-          quantity: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          product_id: string
-          quantity?: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          product_id?: string
-          quantity?: number
-          created_at?: string
-        }
-      }
-      orders: {
-        Row: {
-          id: string
-          user_id: string
-          total_amount: number
-          payment_method: Database["public"]["Enums"]["payment_method"] | null
-          payment_status: Database["public"]["Enums"]["order_payment_status"]
-          order_status: Database["public"]["Enums"]["order_status"]
-          shipping_address: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          total_amount: number
-          payment_method?: Database["public"]["Enums"]["payment_method"] | null
-          payment_status?: Database["public"]["Enums"]["order_payment_status"]
-          order_status?: Database["public"]["Enums"]["order_status"]
-          shipping_address?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          total_amount?: number
-          payment_method?: Database["public"]["Enums"]["payment_method"] | null
-          payment_status?: Database["public"]["Enums"]["order_payment_status"]
-          order_status?: Database["public"]["Enums"]["order_status"]
-          shipping_address?: string | null
-          created_at?: string
-        }
-      }
-      order_items: {
-        Row: {
-          id: string
-          order_id: string
-          product_id: string
-          quantity: number
-          price: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          order_id: string
-          product_id: string
-          quantity: number
-          price: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          order_id?: string
-          product_id?: string
-          quantity?: number
-          price?: number
-          created_at?: string
-        }
-      }
-      profile_gifs: {
-        Row: {
-          id: number
-          user_id: string
-          gif_url: string
-          storage_path: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          user_id: string
-          gif_url: string
-          storage_path: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          user_id?: string
-          gif_url?: string
-          storage_path?: string
-          created_at?: string
-        }
-      }
-      profile_music: {
-        Row: {
-          created_at: string
-          file_name: string | null
-          id: number
-          music_url: string
-          profile_id: string
-        }
-        Insert: {
-          created_at?: string
-          file_name?: string | null
-          id?: number
-          music_url: string
-          profile_id: string
-        }
-        Update: {
-          created_at?: string
-          file_name?: string | null
-          id?: number
-          music_url?: string
-          profile_id?: string
-        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {
@@ -492,25 +305,56 @@ export interface Database {
           created_at?: string
           is_admin?: boolean | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
-      wishlist_items: {
+      reviews: {
         Row: {
           id: string
           user_id: string
           product_id: string
+          rating: number
+          comment: string | null
           created_at: string
         }
         Insert: {
           id?: string
           user_id: string
           product_id: string
+          rating: number
+          comment?: string | null
         }
         Update: {
           id?: string
           user_id?: string
           product_id?: string
+          rating?: number
+          comment?: string | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       user_addresses: {
         Row: {
@@ -552,6 +396,50 @@ export interface Database {
           is_default?: boolean | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "user_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      wishlist_items: {
+        Row: {
+          id: string
+          user_id: string
+          product_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          product_id: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          product_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlist_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Enums: {
@@ -569,8 +457,14 @@ export interface Database {
       xp_product_type: "subscription" | "one_time" | "cosmetic"
     }
     Functions: {
+      approve_payment: {
+        Args: {
+          p_payment_id: number
+        }
+        Returns: undefined
+      }
       create_order_from_cart: {
-        Args: {}
+        Args: Record<string, unknown>
         Returns: string
       }
       create_order_from_single_product: {
@@ -579,6 +473,13 @@ export interface Database {
           p_address_id: string
         }
         Returns: string
+      }
+      reject_payment: {
+        Args: {
+          p_payment_id: number
+          p_admin_notes: string
+        }
+        Returns: undefined
       }
     }
   }

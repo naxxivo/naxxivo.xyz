@@ -8,6 +8,7 @@ interface ProductCardProps {
   product: ProductWithCategory;
   index: number;
   onNavigateToCheckout: (productId: string) => void;
+  onNavigateToDetail: (productId: string) => void;
 }
 
 const HeartIcon: React.FC<{ isWishlisted: boolean }> = ({ isWishlisted }) => (
@@ -22,7 +23,7 @@ const CheckIcon: React.FC = () => (
     </svg>
 );
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, index, onNavigateToCheckout }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, index, onNavigateToCheckout, onNavigateToDetail }) => {
   const fallbackImage = `https://picsum.photos/seed/${product.id}/400/400`;
   const { addToCartMutation, isItemInCart } = useCart();
   const { wishlist, addMutation, removeMutation } = useWishlist();
@@ -41,7 +42,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index, onNavigateToC
     }
   };
   
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     addToCartMutation.mutate(product.id, {
       onSuccess: () => {
         setJustAdded(true);
@@ -50,7 +52,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index, onNavigateToC
     });
   };
   
-  const handleBuyNow = () => {
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onNavigateToCheckout(product.id);
   }
 
@@ -71,7 +74,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index, onNavigateToC
 
   return (
     <div
-      className="bg-white rounded-xl shadow-md overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 opacity-0 animate-fade-in-up flex flex-col"
+      onClick={() => onNavigateToDetail(product.id)}
+      className="bg-white rounded-xl shadow-md overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 opacity-0 animate-fade-in-up flex flex-col cursor-pointer"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative overflow-hidden">

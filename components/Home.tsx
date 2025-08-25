@@ -119,9 +119,10 @@ interface HomeProps {
     onNavigateToAdmin: () => void;
     onNavigateToCart: () => void;
     onNavigateToCheckout: (productId: string) => void;
+    onNavigateToDetail: (productId: string) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin, onNavigateToCart, onNavigateToCheckout }) => {
+const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin, onNavigateToCart, onNavigateToCheckout, onNavigateToDetail }) => {
     const { data: products, isLoading, error } = useQuery({
         queryKey: ['products'],
         queryFn: fetchProducts,
@@ -143,7 +144,7 @@ const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin, onN
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {products.map((product, index) => (
-                    <ProductCard key={product.id} product={product} index={index} onNavigateToCheckout={onNavigateToCheckout} />
+                    <ProductCard key={product.id} product={product} index={index} onNavigateToCheckout={onNavigateToCheckout} onNavigateToDetail={onNavigateToDetail} />
                 ))}
             </div>
         );
