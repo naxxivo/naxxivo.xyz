@@ -1,129 +1,148 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { Product } from '../../types';
-import { TablesInsert, TablesUpdate } from '../../integrations/supabase/types';
+import type { Product, Category } from '../../types';
 
 interface ProductFormProps {
-    product: Partial<Product> | null;
-    onSuccess: () => void;
+    product: Product | null;
+    categories: Category[];
     onClose: () => void;
+    onSave: () => void;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess, onClose }) => {
+const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onClose, onSave }) => {
     const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        price: 0 as number | string,
-        original_price: null as number | string | null,
-        image_url: '',
-        stock_status: 'In Stock',
-        source_url: '',
-        is_external: false,
+        name: product?.name || '',
+        description: product?.description || '',
+        price: product?.price || 0,
+        stock_quantity: product?.stock_quantity || 0,
+        category_id: product?.category_id || '',
+        is_active: product?.is_active ?? true,
     });
-    const [loading, setLoading] = useState(false);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(product?.image_url);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (product) {
-            setFormData({
-                name: product.name || '',
-                description: product.description || '',
-                price: product.price || 0,
-                original_price: product.original_price || null,
-                image_url: product.image_url || '',
-                stock_status: product.stock_status || 'In Stock',
-                source_url: product.source_url || '',
-                is_external: product.is_external || false,
-            });
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+             const { checked } = e.target as HTMLInputElement;
+             setFormData(prev => ({ ...prev, [name]: checked }));
+        } else {
+             setFormData(prev => ({ ...prev, [name]: value }));
         }
-    }, [product]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        
-        // Sanitize data before submission to prevent errors
-        const priceAsNumber = parseFloat(String(formData.price));
-        const originalPriceAsNumber = formData.original_price ? parseFloat(String(formData.original_price)) : null;
+        setIsLoading(true);
+        setError(null);
 
-        const submissionData = {
-            ...formData,
-            price: isNaN(priceAsNumber) ? 0 : priceAsNumber,
-            original_price: originalPriceAsNumber && !isNaN(originalPriceAsNumber) ? originalPriceAsNumber : null,
-        };
+        try {
+            let imageUrl = product?.image_url;
+            if (imageFile) {
+                const fileExt = imageFile.name.split('.').pop();
+                const fileName = `product-${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from('products').upload(fileName, imageFile);
 
-        const { error } = product && product.id
-            ? await supabase.from('products').update(submissionData).eq('id', product.id)
-            : await supabase.from('products').insert([submissionData]);
+                if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
+                
+                const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+                imageUrl = data.publicUrl;
+            }
 
-        if (error) {
-            alert('Error saving product: ' + error.message);
-        } else {
-            onSuccess();
+            const payload = { 
+                ...formData,
+                price: Number(formData.price),
+                stock_quantity: Number(formData.stock_quantity),
+                image_url: imageUrl 
+            };
+
+            if (product) {
+                // Update existing product
+                const { error } = await supabase.from('products').update(payload).eq('id', product.id);
+                if (error) throw error;
+            } else {
+                // Create new product
+                const { error } = await supabase.from('products').insert(payload);
+                if (error) throw error;
+            }
+
+            onSave();
+
+        } catch (err: any) {
+            console.error('Error saving product:', err);
+            setError(err.message || 'An unexpected error occurred.');
+        } finally {
+            setIsLoading(false);
         }
-        setLoading(false);
     };
 
-    const inputClasses = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-primary focus:border-primary";
-
     return (
-        <div className="bg-white dark:bg-accent rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-slate-700">
-            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-                 <h2 className="text-2xl font-bold font-display">{product && product.id ? 'Edit Product' : 'Add New Product'}</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <form onSubmit={handleSubmit}>
+                    <div className="p-6 border-b">
+                        <h3 className="text-xl font-bold">{product ? 'Edit Product' : 'Add New Product'}</h3>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {error && <p className="md:col-span-2 text-sm text-red-600 bg-red-100 p-3 rounded-lg">{error}</p>}
+                        
+                        <div className="md:col-span-2">
+                            <label htmlFor="name" className="text-sm font-medium text-gray-700 block mb-2">Product Name</label>
+                            <input type="text" name="name" id="name" value={formData.name} onChange={handleInputChange} required className="w-full input"/>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label htmlFor="description" className="text-sm font-medium text-gray-700 block mb-2">Description</label>
+                            <textarea name="description" id="description" value={formData.description} onChange={handleInputChange} rows={4} className="w-full input"></textarea>
+                        </div>
+                        <div>
+                            <label htmlFor="price" className="text-sm font-medium text-gray-700 block mb-2">Price</label>
+                            <input type="number" name="price" id="price" value={formData.price} onChange={handleInputChange} required min="0" step="0.01" className="w-full input"/>
+                        </div>
+                        <div>
+                            <label htmlFor="stock_quantity" className="text-sm font-medium text-gray-700 block mb-2">Stock Quantity</label>
+                            <input type="number" name="stock_quantity" id="stock_quantity" value={formData.stock_quantity} onChange={handleInputChange} required min="0" className="w-full input"/>
+                        </div>
+                        <div className="md:col-span-2">
+                             <label htmlFor="category_id" className="text-sm font-medium text-gray-700 block mb-2">Category</label>
+                             <select name="category_id" id="category_id" value={formData.category_id} onChange={handleInputChange} required className="w-full input">
+                                <option value="" disabled>Select a category</option>
+                                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                             </select>
+                        </div>
+                         <div className="md:col-span-2">
+                            <label className="text-sm font-medium text-gray-700 block mb-2">Product Image</label>
+                            <div className="flex items-center gap-4">
+                               {imagePreview && <img src={imagePreview} alt="Preview" className="h-20 w-20 rounded-lg object-cover bg-gray-100" />}
+                               <input type="file" accept="image/*" onChange={handleFileChange} className="text-sm" />
+                            </div>
+                        </div>
+                         <div className="md:col-span-2 flex items-center">
+                            <input type="checkbox" name="is_active" id="is_active" checked={formData.is_active} onChange={handleInputChange} className="h-4 w-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500" />
+                            <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">Product is Active</label>
+                        </div>
+                    </div>
+                    <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
+                        <button type="button" onClick={onClose} className="py-2 px-4 rounded-lg text-sm font-semibold bg-gray-200 hover:bg-gray-300 transition">
+                            Cancel
+                        </button>
+                        <button type="submit" disabled={isLoading} className="py-2 px-4 rounded-lg text-sm font-semibold text-black bg-yellow-400 hover:bg-yellow-500 transition disabled:opacity-50 flex items-center">
+                            {isLoading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2"></div>}
+                            {product ? 'Save Changes' : 'Create Product'}
+                        </button>
+                    </div>
+                </form>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div>
-                    <label className="block text-sm font-medium">Name</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} className={inputClasses} required />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium">Description</label>
-                    <textarea name="description" value={formData.description || ''} onChange={handleChange} rows={4} className={inputClasses} />
-                </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium">Price</label>
-                        <input type="number" step="0.01" name="price" value={formData.price} onChange={handleChange} className={inputClasses} required />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium">Original Price (optional)</label>
-                        <input type="number" step="0.01" name="original_price" value={formData.original_price || ''} onChange={handleChange} className={inputClasses} />
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium">Image URL</label>
-                    <input type="text" name="image_url" value={formData.image_url || ''} onChange={handleChange} className={inputClasses} />
-                </div>
-                {formData.is_external && (
-                    <div>
-                        <label className="block text-sm font-medium text-emerald-500 dark:text-emerald-300">Source URL</label>
-                        <input type="text" name="source_url" value={formData.source_url} onChange={handleChange} className={`${inputClasses} bg-emerald-50 dark:bg-emerald-900/50`} />
-                    </div>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium">Stock Status</label>
-                        <select name="stock_status" value={formData.stock_status} onChange={handleChange} className={inputClasses}>
-                            <option>In Stock</option>
-                            <option>Low Stock</option>
-                            <option>Out of Stock</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div className="pt-6 flex justify-end space-x-4">
-                    <button type="button" onClick={onClose} className="bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-text-primary font-semibold py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-slate-600 transition">
-                        Cancel
-                    </button>
-                    <button type="submit" disabled={loading} className="bg-primary text-background dark:text-white font-semibold py-2 px-6 rounded-md hover:bg-yellow-600 transition disabled:bg-primary/50">
-                        {loading ? 'Saving...' : 'Save Product'}
-                    </button>
-                </div>
-            </form>
+            <style>{`.input { box-shadow: none !important; border-color: #d1d5db; border-radius: 0.5rem; padding: 0.5rem 1rem; transition: border-color 0.2s, box-shadow 0.2s; } .input:focus { border-color: #f59e0b; --tw-ring-color: #f59e0b; box-shadow: 0 0 0 2px var(--tw-ring-color) !important;}`}</style>
         </div>
     );
 };

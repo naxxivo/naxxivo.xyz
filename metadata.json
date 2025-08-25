@@ -1,5 +1,5 @@
 {
-  "name": "Nordic Commerce",
-  "description": "A modern e-commerce web application with a clean and premium Nordic-inspired layout. It features a home page, product listings, detailed product views, a shopping cart, and a user profile section.",
+  "name": "NaxStore",
+  "description": "A modern, visually appealing e-commerce store front with a smooth login and signup experience. Built with React, TypeScript, and Tailwind CSS for a fast, responsive, and clean UI/UX.",
   "requestFramePermissions": []
 }

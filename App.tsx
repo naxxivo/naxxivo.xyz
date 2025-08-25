@@ -1,108 +1,96 @@
-
-import React, { useEffect } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
-import { CartProvider } from './context/CartContext';
-import { AuthProvider } from './context/AuthContext';
-import { WishlistProvider } from './context/WishlistContext';
-import { CheckoutProvider } from './context/CheckoutContext';
-import { ThemeProvider } from './context/ThemeContext';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import ProductListingPage from './pages/ProductListingPage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import CartPage from './pages/CartPage';
-import ProfilePage from './pages/ProfilePage';
-import NotFoundPage from './pages/NotFoundPage';
-import LoginPage from './pages/LoginPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import SignUpPage from './pages/SignUpPage';
+import React, { useState, useEffect } from 'react';
 import { supabase } from './integrations/supabase/client';
+import type { Session } from '@supabase/supabase-js';
+import type { Profile } from './types';
+import Auth from './components/Auth';
+import Home from './components/Home';
+import LoadingScreen from './components/LoadingScreen';
+import ProfilePage from './components/profile/ProfilePage';
+import AdminDashboard from './components/admin/AdminDashboard';
 
-// Admin Imports
-import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
-import AdminLayout from './pages/admin/AdminLayout';
-import DashboardPage from './pages/admin/DashboardPage';
-import ProductListPage from './pages/admin/ProductListPage';
-import OrderListPage from './pages/admin/OrderListPage';
-import CustomerListPage from './pages/admin/CustomerListPage';
-
+export type View = 'home' | 'profile' | 'admin';
 
 const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<View>('home');
+
   useEffect(() => {
-    // This effect adds listeners to handle potential Supabase session issues
-    // that can occur when the browser tab is inactive or the device goes offline.
-    // The Supabase client's token auto-refresh can be affected by browser throttling.
+    const fetchSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
 
-    // Handles when the network connection is restored.
-    const handleOnline = () => {
-      console.log('Network status: online. Ensuring Supabase connection is active.');
-      supabase.auth.getSession();
-    };
-
-    // Handles when the browser tab becomes visible again.
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Tab became visible. Re-checking Supabase session to prevent token expiry issues.');
-        supabase.auth.getSession();
+      if (session) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(profileData);
       }
+      setLoading(false);
     };
 
-    window.addEventListener('online', handleOnline);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    fetchSessionAndProfile();
 
-    // Cleanup the event listeners when the component unmounts
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      if (session) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(profileData);
+      } else {
+        setProfile(null);
+      }
+      // Show loading screen briefly on auth change for smooth transition
+      if (_event !== 'INITIAL_SESSION') {
+          setLoading(true);
+          setTimeout(() => setLoading(false), 500);
+      }
+    });
+
     return () => {
-      window.removeEventListener('online', handleOnline);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      subscription.unsubscribe();
     };
   }, []);
 
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <CheckoutProvider>
-              <HashRouter>
-                <div className="bg-white dark:bg-background font-sans text-gray-900 dark:text-text-primary flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-grow">
-                    <Routes>
-                      {/* Public Routes */}
-                      <Route path="/" element={<HomePage />} />
-                      <Route path="/shop" element={<ProductListingPage />} />
-                      <Route path="/product/:id" element={<ProductDetailPage />} />
-                      <Route path="/cart" element={<CartPage />} />
-                      <Route path="/profile" element={<ProfilePage />} />
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route path="/signup" element={<SignUpPage />} />
-                      <Route path="/checkout" element={<CheckoutPage />} />
-                      <Route path="/order-success" element={<OrderSuccessPage />} />
-                      
-                      {/* Admin Routes */}
-                      <Route path="/admin" element={<AdminProtectedRoute />}>
-                        <Route element={<AdminLayout />}>
-                          <Route index element={<DashboardPage />} />
-                          <Route path="products" element={<ProductListPage />} />
-                          <Route path="orders" element={<OrderListPage />} />
-                          <Route path="customers" element={<CustomerListPage />} />
-                        </Route>
-                      </Route>
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setView('home');
+  };
 
-                      {/* Not Found */}
-                      <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
-                  </main>
-                  <Footer />
-                </div>
-              </HashRouter>
-            </CheckoutProvider>
-          </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
+  const navigate = (newView: View) => {
+    setView(newView);
+  };
+  
+  const renderContent = () => {
+      if (loading) {
+          return <LoadingScreen />;
+      }
+      if (!session) {
+          return <Auth />;
+      }
+      switch(view) {
+          case 'admin':
+              return profile?.is_admin
+                ? <AdminDashboard onNavigateHome={() => navigate('home')} />
+                : <Home user={session.user} profile={profile} onLogout={handleLogout} onNavigateToProfile={() => navigate('profile')} onNavigateToAdmin={() => navigate('admin')} />;
+          case 'profile':
+              return <ProfilePage user={session.user} onNavigateHome={() => navigate('home')} />;
+          case 'home':
+          default:
+              return <Home user={session.user} profile={profile} onLogout={handleLogout} onNavigateToProfile={() => navigate('profile')} onNavigateToAdmin={() => navigate('admin')} />;
+      }
+  }
+
+  return (
+    <div className="bg-gray-50 text-gray-900 min-h-screen font-sans">
+      {renderContent()}
+    </div>
   );
 };
 
