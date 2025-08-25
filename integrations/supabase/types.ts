@@ -366,7 +366,10 @@ export interface Database {
           quantity: number
           price: number
         }
-        Update: {}
+        Update: {
+          quantity?: number
+          price?: number
+        }
       },
       profile_gifs: {
         Row: {
@@ -434,17 +437,17 @@ export interface Database {
       }
     },
     Enums: {
-      notification_type: "follow" | "like" | "comment" | "mention" | "system"
-      order_payment_status: "pending" | "paid" | "failed" | "refunded"
+      notification_type: "follow" | "like" | "comment" | "mention" | "system",
+      order_payment_status: "pending" | "paid" | "failed" | "refunded",
       order_status:
         | "pending_payment"
         | "processing"
         | "shipped"
         | "delivered"
         | "cancelled"
-        | "refunded"
-      payment_method: "credit_card" | "paypal" | "bank_transfer"
-      payment_status: "pending" | "completed" | "failed"
+        | "refunded",
+      payment_method: "credit_card" | "paypal" | "bank_transfer",
+      payment_status: "pending" | "completed" | "failed",
       xp_product_type: "subscription" | "one_time" | "cosmetic"
     }
   }

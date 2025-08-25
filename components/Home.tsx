@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import type { User } from '@supabase/supabase-js';
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
-import type { ProductWithCategory, Profile } from '../types';
+import type { ProductWithCategory } from '../types';
 import ProductCard from './ProductCard';
 
 const NaxStoreLogo: React.FC = () => (
@@ -31,37 +32,38 @@ const AdminIcon: React.FC = () => (
 
 
 interface HeaderProps {
-    onLogout: () => void;
-    user: User;
-    profile: Profile | null;
     onNavigateToProfile: () => void;
     onNavigateToAdmin: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onLogout, user, profile, onNavigateToProfile, onNavigateToAdmin }) => (
-    <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-                <NaxStoreLogo />
-                <div className="flex items-center space-x-2 md:space-x-4">
-                    {profile?.is_admin && (
-                         <button onClick={onNavigateToAdmin} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium" aria-label="Admin Panel">
-                            <AdminIcon />
-                            <span className="hidden md:block">Admin</span>
+const Header: React.FC<HeaderProps> = ({ onNavigateToProfile, onNavigateToAdmin }) => {
+    const { user, profile, signOut } = useAuth();
+    
+    return (
+        <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16">
+                    <NaxStoreLogo />
+                    <div className="flex items-center space-x-2 md:space-x-4">
+                        {profile?.is_admin && (
+                             <button onClick={onNavigateToAdmin} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium" aria-label="Admin Panel">
+                                <AdminIcon />
+                                <span className="hidden md:block">Admin</span>
+                            </button>
+                        )}
+                        <button onClick={onNavigateToProfile} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                            <span className="text-sm font-medium text-gray-700 hidden md:block max-w-xs truncate" title={user?.email}>{user?.email}</span>
+                            <UserIcon />
                         </button>
-                    )}
-                    <button onClick={onNavigateToProfile} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                        <span className="text-sm font-medium text-gray-700 hidden md:block max-w-xs truncate" title={user.email}>{user.email}</span>
-                        <UserIcon />
-                    </button>
-                    <button onClick={onLogout} className="text-gray-500 hover:text-yellow-500 transition-colors p-2 rounded-lg hover:bg-gray-100" aria-label="Logout">
-                        <LogoutIcon />
-                    </button>
+                        <button onClick={signOut} className="text-gray-500 hover:text-yellow-500 transition-colors p-2 rounded-lg hover:bg-gray-100" aria-label="Logout">
+                            <LogoutIcon />
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
-);
+        </header>
+    );
+};
 
 const ProductGridSkeleton: React.FC = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -78,43 +80,42 @@ const ProductGridSkeleton: React.FC = () => (
     </div>
 );
 
+const fetchProducts = async (): Promise<ProductWithCategory[]> => {
+    const { data, error } = await supabase
+        .from('products')
+        .select('*, categories(name)')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-const Home: React.FC<{ onLogout: () => void; user: User; profile: Profile | null; onNavigateToProfile: () => void; onNavigateToAdmin: () => void; }> = ({ onLogout, user, profile, onNavigateToProfile, onNavigateToAdmin }) => {
-    const [products, setProducts] = useState<ProductWithCategory[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    if (error) {
+        console.error('Error fetching products:', error);
+        throw new Error('Failed to load products. Please try again later.');
+    }
+    return data as ProductWithCategory[];
+};
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('products')
-                .select('*, categories(name)')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Error fetching products:', error);
-                setError('Failed to load products. Please try again later.');
-            } else if (data) {
-                setProducts(data as any);
-            }
-            setLoading(false);
-        };
+interface HomeProps {
+    onNavigateToProfile: () => void;
+    onNavigateToAdmin: () => void;
+}
 
-        fetchProducts();
-    }, []);
+const Home: React.FC<HomeProps> = ({ onNavigateToProfile, onNavigateToAdmin }) => {
+    const { data: products, isLoading, error } = useQuery({
+        queryKey: ['products'],
+        queryFn: fetchProducts,
+    });
 
     const renderProductGrid = () => {
-        if (loading) {
+        if (isLoading) {
             return <ProductGridSkeleton />;
         }
 
         if (error) {
-            return <p className="text-center text-red-500">{error}</p>;
+            return <p className="text-center text-red-500">{error.message}</p>;
         }
 
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             return <p className="text-center text-gray-500">No products found.</p>;
         }
 
@@ -129,7 +130,7 @@ const Home: React.FC<{ onLogout: () => void; user: User; profile: Profile | null
 
     return (
         <div className="animate-fade-in">
-            <Header onLogout={onLogout} user={user} profile={profile} onNavigateToProfile={onNavigateToProfile} onNavigateToAdmin={onNavigateToAdmin} />
+            <Header onNavigateToProfile={onNavigateToProfile} onNavigateToAdmin={onNavigateToAdmin} />
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">New Arrivals</h2>
                 {renderProductGrid()}

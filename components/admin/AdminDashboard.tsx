@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '../../integrations/supabase/client';
 import type { Product, Category } from '../../types';
 import ProductList from './ProductList';
@@ -8,44 +9,48 @@ interface AdminDashboardProps {
     onNavigateHome: () => void;
 }
 
+const fetchAdminData = async () => {
+    const productsPromise = supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    const categoriesPromise = supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
+    
+    const [{ data: products, error: productsError }, { data: categories, error: categoriesError }] = await Promise.all([productsPromise, categoriesPromise]);
+
+    if (productsError) throw productsError;
+    if (categoriesError) throw categoriesError;
+
+    return { products: products || [], categories: categories || [] };
+};
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }) => {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const { data: productsData, error: productsError } = await supabase
-                .from('products')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            if (productsError) throw productsError;
-            setProducts(productsData || []);
-
-            const { data: categoriesData, error: categoriesError } = await supabase
-                .from('categories')
-                .select('*')
-                .order('name', { ascending: true });
-            
-            if (categoriesError) throw categoriesError;
-            setCategories(categoriesData || []);
-
-        } catch (err: any) {
-            console.error('Error fetching admin data:', err);
-            setError('Failed to load data. Please try again.');
-        } finally {
-            setLoading(false);
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['adminData'],
+        queryFn: fetchAdminData,
+    });
+    
+    const deleteMutation = useMutation({
+        mutationFn: async (productId: string) => {
+            const { error } = await supabase.from('products').delete().eq('id', productId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['adminData'] });
+        },
+        onError: (err: any) => {
+            console.error('Error deleting product:', err);
+            alert('Failed to delete product.');
         }
-    }, []);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+    });
 
     const handleEdit = (product: Product) => {
         setEditingProduct(product);
@@ -64,18 +69,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }) => {
 
     const handleSave = () => {
         handleCloseForm();
-        fetchData(); // Refresh data after save
+        queryClient.invalidateQueries({ queryKey: ['adminData'] });
+        queryClient.invalidateQueries({ queryKey: ['products'] }); // Invalidate public products too
     };
     
-    const handleDelete = async (productId: string) => {
+    const handleDelete = (productId: string) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
-            const { error } = await supabase.from('products').delete().eq('id', productId);
-            if (error) {
-                console.error('Error deleting product:', error);
-                alert('Failed to delete product.');
-            } else {
-                fetchData();
-            }
+            deleteMutation.mutate(productId);
         }
     };
 
@@ -90,7 +90,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }) => {
                 </div>
             </header>
             <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-                {error && <p className="text-red-500 bg-red-100 p-3 rounded-lg mb-4">{error}</p>}
+                {error && <p className="text-red-500 bg-red-100 p-3 rounded-lg mb-4">{error.message}</p>}
                 
                 <div className="bg-white p-6 rounded-2xl shadow-lg">
                     <div className="flex justify-between items-center mb-6">
@@ -102,10 +102,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }) => {
                             + Add New Product
                         </button>
                     </div>
-                    {loading ? (
+                    {isLoading ? (
                         <p>Loading products...</p>
                     ) : (
-                        <ProductList products={products} onEdit={handleEdit} onDelete={handleDelete} />
+                        <ProductList products={data?.products || []} onEdit={handleEdit} onDelete={handleDelete} />
                     )}
                 </div>
             </main>
@@ -113,7 +113,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }) => {
             {isFormOpen && (
                 <ProductForm 
                     product={editingProduct} 
-                    categories={categories}
+                    categories={data?.categories || []}
                     onClose={handleCloseForm} 
                     onSave={handleSave} 
                 />
